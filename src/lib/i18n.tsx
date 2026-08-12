@@ -91,6 +91,7 @@ const en: Translations = {
   "results.desc": "ECCL 40-over and T20 league results. Updated after each match.",
   "results.won": "Won",
   "results.lost": "Lost",
+  "results.drawn": "Draw",
   "results.more_note": "More results will be added as the season progresses.",
 
   // About
@@ -209,6 +210,18 @@ const en: Translations = {
   "about.la_elipa_desc": "Our local ground in Madrid for senior and junior matches. La Elipa is used for local games and junior cricket. Madrid City Council supports the club with subsidised pitch time.",
   "about.alicante_desc": "Our away home for the ECCL coastal league. Alfaz del Pi, Alicante, roughly 460km south of Madrid. The reality of cricket in Spain: we travel to compete.",
   "about.fed_desc": "Cricket España has been formally recognised as Spain's national federation.",
+  "about.base_tag": "Home Ground",
+  "about.training_tag": "Nets & Training",
+  "about.elipa_title": "La Elipa",
+  "about.league_tag": "ECCL Away Ground",
+  "about.alfaz_title": "Alfaz del Pi, Alicante",
+  "about.directions": "Directions",
+  "about.leadership_tag": "Our Committee",
+  "about.leadership_title": "The Club Committee",
+  "about.fed_tag": "Cricket España",
+  "about.fed_title": "Our National Federation",
+  "about.join_title": "Join Madrid Cricket Club",
+  "join.form_fees": "Membership Fees",
 
   // Auth
   "auth.signin_title": "Sign In",
@@ -311,6 +324,7 @@ const es: Translations = {
   "results.season": "Temporada 2026",
   "results.desc": "Resultados de la liga ECCL de 40 overs y T20. Se actualiza tras cada partido.",
   "results.won": "Victoria",
+  "results.drawn": "Empate",
   "results.lost": "Derrota",
   "results.more_note": "Se añadirán más resultados a medida que avance la temporada.",
 
@@ -431,6 +445,18 @@ const es: Translations = {
   "about.la_elipa_desc": "Nuestro campo local en Madrid para partidos sénior y juveniles. La Elipa se usa para partidos locales y cricket juvenil. El Ayuntamiento de Madrid nos subvenciona con tiempo de uso del campo.",
   "about.alicante_desc": "Nuestro campo de visita para la liga costera ECCL. Alfaz del Pi, Alicante, a unos 460 km al sur de Madrid. La realidad del cricket en España: viajamos para competir.",
   "about.fed_desc": "Cricket España ha sido reconocida formalmente como la federación nacional de cricket de España.",
+  "about.base_tag": "Campo Principal",
+  "about.training_tag": "Nets y Entrenamiento",
+  "about.elipa_title": "La Elipa",
+  "about.league_tag": "Campo de Visita ECCL",
+  "about.alfaz_title": "Alfaz del Pi, Alicante",
+  "about.directions": "Cómo llegar",
+  "about.leadership_tag": "Nuestro Comité",
+  "about.leadership_title": "El Comité del Club",
+  "about.fed_tag": "Cricket España",
+  "about.fed_title": "Nuestra Federación Nacional",
+  "about.join_title": "Únete al Madrid Cricket Club",
+  "join.form_fees": "Cuotas de Membresía",
 
   // Auth
   "auth.signin_title": "Iniciar Sesión",
