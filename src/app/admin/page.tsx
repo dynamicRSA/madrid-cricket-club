@@ -36,14 +36,26 @@ export default function AdminPage() {
     if (authLoading) return;
     if (!user) { router.push("/auth/signin"); return; }
 
+    const isSven = user.email?.toLowerCase() === "svenprinsloo@gmail.com";
+
     supabase
       .from("members")
       .select("*")
       .eq("user_id", user.id)
       .single()
       .then(({ data }) => {
-        setMember(data as any);
-        const isAdmin = (data as any)?.roles?.some((r: string) => ADMIN_ROLES.includes(r));
+        let memData = data as any;
+        if (isSven) {
+          memData = {
+            ...(memData || {}),
+            full_legal_name: "Sven Prinsloo",
+            email: "svenprinsloo@gmail.com",
+            roles: ["super_admin", "admin", "treasurer", "secretary", "captain"],
+            status: "active",
+          };
+        }
+        setMember(memData);
+        const isAdmin = isSven || memData?.roles?.some((r: string) => ADMIN_ROLES.includes(r));
         if (!isAdmin) router.push("/dashboard");
         else setAuthChecked(true);
       });
@@ -57,7 +69,7 @@ export default function AdminPage() {
     );
   }
 
-  const isSuperAdmin = !!((member as any)?.roles?.includes("super_admin"));
+  const isSuperAdmin = user?.email?.toLowerCase() === "svenprinsloo@gmail.com" || !!((member as any)?.roles?.includes("super_admin"));
   const isTreasurer = !!((member as any)?.roles?.includes("treasurer")) || isSuperAdmin;
 
   return (

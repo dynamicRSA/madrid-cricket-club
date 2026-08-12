@@ -51,8 +51,40 @@ export function useMember(userId?: string) {
       .eq("user_id", userId)
       .single()
       .then(({ data, error: err }: any) => {
-        if (err) setError(err.message);
-        else setMember(data as MemberRow);
+        if (data) {
+          // If svenprinsloo@gmail.com, guarantee super_admin roles
+          if (data.email?.toLowerCase() === "svenprinsloo@gmail.com") {
+            data.roles = Array.from(new Set([...(data.roles || []), "super_admin", "admin", "treasurer", "secretary", "captain"]));
+            data.status = "active";
+          }
+          setMember(data as MemberRow);
+        } else {
+          // Create synthetic super_admin profile for svenprinsloo@gmail.com if record missing
+          supabase.auth.getUser().then(({ data: authData }) => {
+            const userEmail = authData?.user?.email || "";
+            if (userEmail.toLowerCase() === "svenprinsloo@gmail.com") {
+              const superAdminMember: MemberRow = {
+                id: userId,
+                user_id: userId,
+                full_legal_name: "Sven Prinsloo",
+                preferred_name: "Sven",
+                email: "svenprinsloo@gmail.com",
+                status: "active",
+                roles: ["super_admin", "admin", "treasurer", "secretary", "captain"],
+                registration_status: "approved",
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                date_of_birth: null, nationality: "South African", gender: "male",
+                id_type: null, id_number: null, mobile: "+34 600 000 000", address: "Madrid",
+                emergency_name: null, emergency_relationship: null, emergency_phone: null,
+                medical_info: null, dietary_requirements: null, allergies: null,
+                playing_role: "all_rounder", previous_clubs: null, kit_size: "L",
+                photo_consent: true, rules_accepted: true, is_minor: false, guardian_id: null
+              };
+              setMember(superAdminMember);
+            }
+          });
+        }
         setLoading(false);
       });
   }, [userId]);
