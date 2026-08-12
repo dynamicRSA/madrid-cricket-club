@@ -17,7 +17,7 @@ import {
   Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Plane, ShieldCheck
 } from "lucide-react";
 
-type Tab = "overview" | "availability" | "selection" | "travel" | "charges" | "profile";
+type Tab = "overview" | "confirmations" | "availability" | "charges" | "profile";
 
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -39,6 +39,9 @@ export default function DashboardPage() {
   const pendingCharges = charges.filter((c) =>
     ["raised", "declared_paid", "partially_paid"].includes(c.status)
   );
+
+  // Selected events notification check
+  const isSelectedForMatch = member?.status === "active" || user?.email?.toLowerCase() === "svenprinsloo@gmail.com";
 
   if (authLoading || memberLoading) {
     return (
@@ -94,9 +97,8 @@ export default function DashboardPage() {
         <div className="container-wide px-4 mt-5 flex gap-1 overflow-x-auto pb-1">
           {([
             { id: "overview", label: "Overview", icon: Bell },
-            { id: "availability", label: "Availability Grid", icon: Calendar },
-            { id: "selection", label: "Squads & Catering", icon: Utensils },
-            { id: "travel", label: "Away Trip Travel", icon: Plane },
+            { id: "confirmations", label: "Match Confirmations & Event Choices", icon: CheckCircle },
+            { id: "availability", label: "Availability Sign-Up", icon: Calendar },
             { id: "charges", label: "Dues & Payments", icon: CreditCard },
             { id: "profile", label: "Profile & Documents", icon: User },
           ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
@@ -111,6 +113,9 @@ export default function DashboardPage() {
             >
               <Icon size={14} />
               <span>{label}</span>
+              {id === "confirmations" && isSelectedForMatch && (
+                <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
+              )}
             </button>
           ))}
         </div>
@@ -125,6 +130,27 @@ export default function DashboardPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Left column */}
               <div className="lg:col-span-2 space-y-6">
+
+                {/* Selection Notification Callout Banner */}
+                {isSelectedForMatch && (
+                  <div className="flex items-start gap-3 bg-brand-500/15 border border-brand-500/40 rounded-xl p-4 shadow-lg animate-fade-up">
+                    <CheckCircle size={20} className="text-brand-400 shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-white font-bold text-sm">
+                        🎉 Selection Notification: You are selected for the weekend fixture!
+                      </p>
+                      <p className="text-slate-300 text-xs mt-1">
+                        Captain Woodward has selected you for <strong className="text-white">MCC vs Barcelona International CC</strong>. Please confirm your attendance, choose your per-event meal, and set departure car-share travel.
+                      </p>
+                      <button
+                        onClick={() => setTab("confirmations")}
+                        className="btn-primary btn-sm text-xs mt-3 inline-flex items-center gap-1"
+                      >
+                        Open Match Confirmations & Event Choices →
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* Pending charges alert */}
                 {pendingCharges.length > 0 && (
@@ -305,188 +331,127 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* SQUADS & CATERING TAB */}
-          {tab === "selection" && (
+          {/* MATCH CONFIRMATIONS & EVENT CHOICES TAB */}
+          {tab === "confirmations" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-display font-bold text-white mb-1">Squad Selection & Catering</h2>
-                <p className="text-slate-400 text-sm">Squad lineups, meet times, and catering choices unlock once your selection is confirmed by the captain.</p>
+                <h2 className="text-2xl font-display font-bold text-white mb-1">Match Confirmations & Event Choices</h2>
+                <p className="text-slate-400 text-sm">Confirm your selection for upcoming matches, choose your per-event ground meals, and set travel arrangements.</p>
               </div>
 
-              {/* Conditional Selection View */}
-              {(() => {
-                // Check if logged in member is selected for active match
-                const isSelected = member?.status === "active" || member?.email?.toLowerCase() === "svenprinsloo@gmail.com";
-
-                if (!isSelected) {
-                  return (
-                    <div className="glass-dark p-8 text-center space-y-3">
-                      <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-400 font-bold">
-                        🔒
-                      </div>
-                      <h3 className="text-white font-semibold text-lg">Squad Selection Pending</h3>
-                      <p className="text-slate-400 text-sm max-w-md mx-auto">
-                        Please ensure your availability is set in the <strong className="text-white">Availability Grid</strong> tab. Detailed match logistics, team roster, meet times, and meal choices will unlock once the captain confirms your selection.
-                      </p>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      {/* Game 1 Catering */}
-                      <div className="glass-dark p-6 space-y-4">
-                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                          <div>
-                            <span className="badge-green text-[10px]">Game 1 · Sat 5 Sep</span>
-                            <h3 className="text-white font-semibold text-base mt-1">MCC vs Barcelona International CC (T20)</h3>
-                            <p className="text-slate-400 text-xs">Sporting Alfaz Ground</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3 text-xs">
-                          <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl space-y-1">
-                            <p className="text-brand-300 font-semibold">⏰ Meet: 07:30 AM | Start: 08:30 AM</p>
-                            <p className="text-slate-300">Broadcast: ECN Live Online Stream</p>
-                          </div>
-
-                          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                            <p className="text-white font-semibold text-xs">Ground Meal Choice for Game 1:</p>
-                            <select className="input text-xs">
-                              <option value="beef_burger">Beef Burger & Chips (Alfaz Special)</option>
-                              <option value="chicken_burger">Chicken Burger & Chips</option>
-                              <option value="veg_paella">Vegetarian Paella</option>
-                              <option value="halal_wrap">Halal Certified Chicken Wrap</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Game 2 Catering */}
-                      <div className="glass-dark p-6 space-y-4">
-                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                          <div>
-                            <span className="badge-gold text-[10px]">Game 2 · Sun 6 Sep</span>
-                            <h3 className="text-white font-semibold text-base mt-1">MCC vs Barcelona International CC (40-Over)</h3>
-                            <p className="text-slate-400 text-xs">La Manga Club Ground 1</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-3 text-xs">
-                          <div className="bg-gold-500/10 border border-gold-500/20 p-3 rounded-xl space-y-1">
-                            <p className="text-gold-300 font-semibold">⏰ Meet: 08:00 AM | Start: 09:00 AM</p>
-                            <p className="text-slate-300">Broadcast: ECN Live Online Stream</p>
-                          </div>
-
-                          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                            <p className="text-white font-semibold text-xs">Ground Meal Choice for Game 2:</p>
-                            <select className="input text-xs">
-                              <option value="post_match_bbq">Post-Match Club House BBQ</option>
-                              <option value="veg_lasagna">Vegetarian Lasagna & Salad</option>
-                              <option value="halal_lamb">Halal Lamb Wrap & Chips</option>
-                              <option value="salad_bowl">Fresh Mediterranean Salad Bowl</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Unlocked Confirmed XI */}
-                    <div className="glass-dark p-6 space-y-4">
-                      <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
-                        <h3 className="text-white font-semibold text-base">Confirmed Weekend Match XI</h3>
-                        <span className="badge-gold text-xs">Published Squad</span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        {[
-                          { name: "Jon Woodward", designation: "(C)", role: "All-rounder" },
-                          { name: "Sven Prinsloo", designation: "(VC)", role: "All-rounder / Admin" },
-                          { name: "Lewis Clark", designation: "", role: "Batsman" },
-                          { name: "Ashish Kumar", designation: "(WK)", role: "Wicketkeeper" },
-                          { name: "Waheed Raza", designation: "", role: "Bowler" },
-                          { name: "Ravi Sharma", designation: "", role: "Bowler" },
-                        ].map((p, idx) => (
-                          <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                            <span className="text-white font-medium">{idx + 1}. {p.name} <span className="text-gold-400">{p.designation}</span></span>
-                            <span className="text-slate-400 text-[11px]">{p.role}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+              {!isSelectedForMatch ? (
+                <div className="glass-dark p-8 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-400 font-bold">
+                    🔒
                   </div>
-                );
-              })()}
-            </div>
-          )}
-
-          {/* AWAY TRIP TRAVEL TAB */}
-          {tab === "travel" && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-display font-bold text-white mb-1">Away Trip Car Sharing & Transport</h2>
-                <p className="text-slate-400 text-sm">Organise driver departure times, passenger seat bookings, and travel arrangements.</p>
-              </div>
-
-              <div className="glass-dark p-6 space-y-5">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
-                  <div>
-                    <h3 className="text-white font-semibold text-lg">ECCL Away Match Transport — Alicante / La Manga</h3>
-                    <p className="text-slate-400 text-xs mt-0.5">Departure times set by drivers (Meet 07:30 AM at venue)</p>
-                  </div>
-                  <span className="badge-gold">Car-Pooling Open</span>
+                  <h3 className="text-white font-semibold text-lg">No Active Selection Pending</h3>
+                  <p className="text-slate-400 text-sm max-w-md mx-auto">
+                    You have not been selected for an active match squad yet. Please ensure your availability is marked in the <strong className="text-white">Availability Sign-Up</strong> tab. When the captain selects you for a match, event choices (meals, car pooling & squad roster) will appear here.
+                  </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                  {/* Transport Role Setup */}
-                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3">
-                    <p className="text-white font-semibold text-sm">Your Travel Status</p>
-                    <div>
-                      <label className="label text-xs">I am traveling as:</label>
-                      <select className="input text-xs">
-                        <option value="driver">Driver (Offering seats to team members)</option>
-                        <option value="passenger">Passenger (Booking seat in driver's car)</option>
-                        <option value="independent">Independent Travel (Train / Own arrangements)</option>
-                      </select>
+              ) : (
+                <div className="space-y-6">
+                  {/* Event 1 Selection Card */}
+                  <div className="glass-dark p-6 space-y-5 rounded-2xl border border-brand-500/30">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="badge-green text-xs">Selected for Squad</span>
+                          <span className="text-slate-500 text-xs">Sat 5 Sep 2026</span>
+                        </div>
+                        <h3 className="text-white font-display font-bold text-lg mt-1">MCC vs Barcelona International CC (Game 1 · T20)</h3>
+                        <p className="text-slate-400 text-xs">Sporting Alfaz Ground · Meet: 07:30 AM | Start: 08:30 AM · ECN Live Broadcast Streamed</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="btn-primary btn-sm text-xs">✓ Confirm Selection</button>
+                        <button className="btn-ghost btn-sm text-xs text-red-400 hover:text-red-300">Decline</button>
+                      </div>
                     </div>
 
-                    <div className="pt-2 space-y-2 border-t border-white/[0.06]">
-                      <p className="text-slate-300 font-medium">Driver Departure Details (If Driving):</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <input className="input text-xs" placeholder="Departure Location (e.g. Moncloa)" />
-                        <input className="input text-xs" placeholder="Departure Time (e.g. 06:45 AM)" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                      {/* Per-Event Meal Choice */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                        <p className="text-white font-semibold flex items-center gap-1.5">
+                          <Utensils size={14} className="text-brand-400" />
+                          <span>Game 1 Ground Meal Choice:</span>
+                        </p>
+                        <select className="input text-xs">
+                          <option value="beef_burger">Beef Burger & Chips (Alfaz Special)</option>
+                          <option value="chicken_burger">Chicken Burger & Chips</option>
+                          <option value="veg_paella">Vegetarian Paella</option>
+                          <option value="halal_wrap">Halal Certified Chicken Wrap</option>
+                        </select>
+                        <p className="text-slate-500 text-[11px]">Meal option submitted to Alfaz ground manager for Game 1.</p>
                       </div>
-                      <input type="number" min="1" max="6" className="input text-xs" placeholder="Available passenger seats (e.g. 3)" />
+
+                      {/* Per-Event Travel Choice */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                        <p className="text-white font-semibold flex items-center gap-1.5">
+                          <Plane size={14} className="text-gold-400" />
+                          <span>Game 1 Car-Pooling & Travel:</span>
+                        </p>
+                        <select className="input text-xs">
+                          <option value="passenger_jon">Passenger in Jon Woodward's Car (Leaves 06:45 AM from Moncloa)</option>
+                          <option value="passenger_sven">Passenger in Sven Prinsloo's Car (Leaves 07:00 AM from Nuevos Ministerios)</option>
+                          <option value="driver">Driving Own Car (Offering seats)</option>
+                          <option value="independent">Independent Travel</option>
+                        </select>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Drivers List & Available Passenger Seats */}
-                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3">
-                    <p className="text-white font-semibold text-sm">Available Drivers & Passenger Seats</p>
-                    <div className="space-y-2">
-                      <div className="p-3 rounded-lg bg-white/5 border border-white/[0.06] space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">Jon Woodward (Driver)</span>
-                          <span className="badge-green text-[10px]">2 Seats Free</span>
+                  {/* Event 2 Selection Card */}
+                  <div className="glass-dark p-6 space-y-5 rounded-2xl border border-gold-500/30">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="badge-gold text-xs">Selected for Squad</span>
+                          <span className="text-slate-500 text-xs">Sun 6 Sep 2026</span>
                         </div>
-                        <p className="text-slate-400 text-[11px]">Leaving Moncloa Station at 06:45 AM</p>
-                        <button className="btn-outline btn-sm text-[11px] mt-1 py-0.5">Reserve Passenger Seat</button>
+                        <h3 className="text-white font-display font-bold text-lg mt-1">MCC vs Barcelona International CC (Game 2 · 40-Over)</h3>
+                        <p className="text-slate-400 text-xs">La Manga Club Ground 1 · Meet: 08:00 AM | Start: 09:00 AM · ECN Live Broadcast Streamed</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="btn-primary btn-sm text-xs">✓ Confirm Selection</button>
+                        <button className="btn-ghost btn-sm text-xs text-red-400 hover:text-red-300">Decline</button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                      {/* Per-Event Meal Choice */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                        <p className="text-white font-semibold flex items-center gap-1.5">
+                          <Utensils size={14} className="text-brand-400" />
+                          <span>Game 2 Ground Meal Choice:</span>
+                        </p>
+                        <select className="input text-xs">
+                          <option value="bbq">Post-Match Club House BBQ</option>
+                          <option value="lasagna">Vegetarian Lasagna & Salad</option>
+                          <option value="halal_lamb">Halal Lamb Wrap & Chips</option>
+                          <option value="salad">Fresh Mediterranean Salad Bowl</option>
+                        </select>
+                        <p className="text-slate-500 text-[11px]">Meal option submitted to La Manga catering manager for Game 2.</p>
                       </div>
 
-                      <div className="p-3 rounded-lg bg-white/5 border border-white/[0.06] space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white font-medium">Sven Prinsloo (Driver)</span>
-                          <span className="badge-green text-[10px]">3 Seats Free</span>
-                        </div>
-                        <p className="text-slate-400 text-[11px]">Leaving Nuevos Ministerios at 07:00 AM</p>
-                        <button className="btn-outline btn-sm text-[11px] mt-1 py-0.5">Reserve Passenger Seat</button>
+                      {/* Per-Event Travel Choice */}
+                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                        <p className="text-white font-semibold flex items-center gap-1.5">
+                          <Plane size={14} className="text-gold-400" />
+                          <span>Game 2 Travel Arrangement:</span>
+                        </p>
+                        <select className="input text-xs">
+                          <option value="hotel_shuttle">La Manga Team Hotel Shuttle (Leaves 07:30 AM)</option>
+                          <option value="driver">Driving Own Vehicle</option>
+                          <option value="independent">Independent Transport</option>
+                        </select>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
+
           {tab === "charges" && (
             <div>
               <div className="flex items-center justify-between mb-6">
