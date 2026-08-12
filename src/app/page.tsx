@@ -61,12 +61,30 @@ const recentResults = [
     won: true,
   },
   {
-    date: "20 Jul 2026",
-    competition: "Tour — Blockley CC, England",
-    opponent: "Blockley CC (Fathers & Sprogs)",
-    score: "—",
-    oppScore: "—",
-    result: "Won — Weekend double",
+    date: "21 Jun 2026",
+    competition: "ECCL 40 Overs 2026",
+    opponent: "Sporting Alfas CC",
+    score: "246/10 (39 ov)",
+    oppScore: "247/2 (26.2 ov)",
+    result: "Lost by 8 Wickets",
+    won: false,
+  },
+  {
+    date: "20 Jun 2026",
+    competition: "ECCL T20 2026",
+    opponent: "Sporting Alfas CC",
+    score: "191/9 (20 ov)",
+    oppScore: "252/4 (20 ov)",
+    result: "Lost by 61 Runs",
+    won: false,
+  },
+  {
+    date: "30 May 2026",
+    competition: "ECCL T20 2026",
+    opponent: "La Manga Torrevieja CC",
+    score: "216/8 (20 ov)",
+    oppScore: "144/6 (20 ov)",
+    result: "Won by 72 Runs",
     won: true,
   },
 ];
@@ -99,17 +117,16 @@ export default function HomePage() {
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        {/* Background — real MCC match photo */}
+        {/* Background — Real MCC team photo (Fathers & Sprogs at Blockley CC, England) */}
         <div className="absolute inset-0">
           <Image
-            src="https://www.cricketinmadrid.com/images/501276491_10237154734265940_6073245859358905068_n.jpg"
-            alt="Madrid Cricket Club"
+            src="/images/social/mcc-fathers-sprogs.jpg"
+            alt="Madrid Cricket Club team"
             fill
-            className="object-cover object-center"
+            className="object-cover object-top"
             priority
-            unoptimized
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/80 via-[#120808]/60 to-[#120808]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/70 via-[#120808]/60 to-[#120808]" />
         </div>
 
         <div className="relative z-10 container-wide px-4 text-center">

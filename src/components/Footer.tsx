@@ -157,7 +157,7 @@ export default function Footer() {
             © {year} Madrid Cricket Club. All rights reserved.
           </p>
           <p className="text-slate-600 text-xs">
-            Affiliated to Cricket España · Est. 1975
+            Affiliated to Cricket España · Est. 1975 · La Elipa, Madrid
           </p>
         </div>
       </div>

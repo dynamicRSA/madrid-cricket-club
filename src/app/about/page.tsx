@@ -2,45 +2,58 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import Link from "next/link";
-import { COMMITTEE, VENUES } from "@/lib/mock-data";
-import { MapPin, ExternalLink, Users, Trophy, Star } from "lucide-react";
+import { COMMITTEE } from "@/lib/mock-data";
+import { MapPin, ExternalLink, Users, Trophy, Star, Mail, Phone, Calendar } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About",
-  description: "About Madrid Cricket Club — our history, home ground, committee and affiliation to Cricket España.",
+  title: "About — Madrid Cricket Club",
+  description: "About Madrid Cricket Club — history since 1975, home ground at La Elipa, committee, and affiliation to Cricket España.",
 };
 
 export default function AboutPage() {
-  const homeVenue = VENUES.find((v) => v.is_home);
-
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative pt-0 overflow-hidden">
+      {/* Hero — real team photo */}
+      <section className="relative min-h-[70vh] flex items-end overflow-hidden">
         <div className="absolute inset-0 z-0">
-          <Image src="/images/ground.jpg" alt="Casa de Campo Cricket Ground" fill className="object-cover" priority />
-          <div className="absolute inset-0 bg-gradient-to-b from-slate-950/50 via-slate-950/60 to-slate-950" />
+          {/* Real team photo — Fathers & Sprogs at Blockley CC */}
+          <Image
+            src="/images/social/mcc-fathers-sprogs.jpg"
+            alt="Madrid Cricket Club team"
+            fill
+            className="object-cover object-top"
+            priority
+          />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(18,8,8,0.3) 0%, rgba(18,8,8,0.6) 60%, rgba(18,8,8,1) 100%)" }} />
         </div>
-        <div className="relative z-10 pt-40 pb-24 container-wide px-4 text-center">
-          <Image src="/images/logo.png" alt="MCC Logo" width={100} height={100} className="rounded-full mx-auto mb-6 shadow-glow-green" />
-          <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-3">Est. 2008</p>
-          <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-4">Madrid Cricket Club</h1>
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto">Cricket in the heart of Spain since 2008</p>
+        <div className="relative z-10 w-full container-wide px-4 pb-16 pt-40">
+          {/* Real MCC logo */}
+          <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-brand-600/60 mb-4 shadow-glow-red" style={{ background: "#1a0505" }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://www.cricketinmadrid.com/images/logo_small.png"
+              alt="Madrid Cricket Club"
+              className="w-full h-full object-contain"
+            />
+          </div>
+          <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 1975</p>
+          <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-3">Madrid Cricket Club</h1>
+          <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain — for 50 years and counting</p>
         </div>
       </section>
 
       {/* Stats bar */}
-      <section className="bg-slate-900/60 py-8">
+      <section style={{ background: "linear-gradient(135deg, #1a0505, #120808)" }} className="py-8">
         <div className="container-wide px-4">
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             {[
-              { icon: Star, label: "Founded", value: "2008" },
-              { icon: Users, label: "Active Members", value: "60+" },
-              { icon: Trophy, label: "League", value: "Liga Nacional Div 2" },
-              { icon: MapPin, label: "Base", value: "Madrid, Spain" },
+              { icon: Calendar, label: "Founded", value: "1975" },
+              { icon: Users, label: "Members", value: "100+" },
+              { icon: Trophy, label: "Teams", value: "Men · Women · Juniors" },
+              { icon: MapPin, label: "Madrid Base", value: "La Elipa" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="text-center">
                 <Icon size={20} className="text-brand-400 mx-auto mb-2" />
@@ -52,125 +65,205 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* History */}
-      <section className="section bg-slate-950">
+      {/* Our Story — from El País feature Aug 2026 + real history */}
+      <section className="section px-4" style={{ background: "#120808" }}>
         <div className="container-content px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">Our Story</p>
-              <h2 className="text-4xl font-display font-bold text-white mb-6">Our History</h2>
-              <div className="space-y-4 text-slate-300 leading-relaxed">
+              <h2 className="text-4xl font-display font-bold text-white mb-6">A Club With Deep Roots</h2>
+              <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
                 <p>
-                  Madrid Cricket Club was founded in 2008 by a group of expats and Spanish cricket enthusiasts who wanted to bring competitive cricket to the Spanish capital. Starting with just a handful of players, we began playing friendly matches in the Casa de Campo park.
+                  Madrid Cricket Club was originally formed in <strong className="text-white">1975</strong> by a group of English and Indian expats.
+                  We were the only cricket club in Spain until 1982, when Barcelona CC was founded.
                 </p>
                 <p>
-                  Over the years the club has grown steadily. Today we are a vibrant, multicultural community of over 60 players — from 14 different nationalities — competing in the Liga Nacional División 2 under the banner of Cricket España.
+                  The modern chapter of the club began around 25 years ago when Jon Woodward — a Brit who has lived in Madrid for over 30 years — placed a small classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From that conversation over a beer, a club was reborn.
                 </p>
                 <p>
-                  We field a senior side that travels to Valencia, Alicante, Barcelona and beyond, and we run a junior programme to bring the next generation of Spanish cricketers into the game.
+                  Today MCC has over <strong className="text-white">100 members</strong> from more than a dozen nationalities and fields men's, women's (Madrid Royals), and junior teams.
+                  In August 2026, El País described us as <em className="text-slate-200">"una institución con solera"</em> — an institution with heritage.
                 </p>
                 <p>
-                  The club is affiliated to <strong className="text-white">Cricket España</strong>, the national governing body, and all our players are registered and insured under the national scheme. Our long-term ambition is promotion to División 1 and the development of home-grown Spanish cricket talent.
+                  The club trains at <strong className="text-white">Centro Deportivo Municipal La Elipa</strong> in Madrid, supported by Madrid City Council with subsidised weekly access. For 40-over and coastal league cricket, we travel to the <strong className="text-white">Sporting Alfaz cricket ground</strong> in Alicante — 460km away. That's the reality of cricket in Spain, and we embrace it.
                 </p>
+                <p>
+                  Cricket enters the <strong className="text-white">Olympics in Los Angeles 2028</strong>, and Spain now has its own <strong className="text-white">Federación Española de Cricket</strong>. The future has never looked brighter.
+                </p>
+                <a
+                  href="https://elpais.com/espana/madrid/2026-08-09/madrid-cricket-club-una-institucion-con-solera-pero-sin-sede-exiliado-en-la-costa-alicantina.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-brand-400 text-xs hover:underline mt-1"
+                >
+                  Read the El País feature <ExternalLink size={11} />
+                </a>
               </div>
             </div>
-            <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden">
-              <Image src="/images/news-hero-2.jpg" alt="Madrid Cricket Club team" fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+            {/* Charity & community photo */}
+            <div className="space-y-4">
+              <div className="relative h-56 rounded-2xl overflow-hidden">
+                <Image
+                  src="https://www.cricketinmadrid.com/images/cricket-bourj-2.jpg.webp"
+                  alt="Alsama Project — MCC supporting Syrian refugees in Lebanon"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
+                <div className="absolute bottom-3 left-3">
+                  <span className="text-xs text-white/80 bg-black/40 px-2 py-0.5 rounded">Alsama Project — supporting Syrian refugees in Lebanon</span>
+                </div>
+              </div>
+              <div className="relative h-48 rounded-2xl overflow-hidden">
+                <Image
+                  src="https://www.cricketinmadrid.com/images/serbia_2018/serbia2.jpg"
+                  alt="Obrevonac refugee camp visit, Serbia 2018"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
+                <div className="absolute bottom-3 left-3">
+                  <span className="text-xs text-white/80 bg-black/40 px-2 py-0.5 rounded">Obrevonac Refugee Camp, Serbia 2018</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Home ground */}
-      {homeVenue && (
-        <section className="section bg-slate-900/30">
-          <div className="container-content px-4">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-              <div className="lg:order-2">
-                <p className="text-gold-400 text-sm font-semibold uppercase tracking-widest mb-3">Where We Play</p>
-                <h2 className="text-4xl font-display font-bold text-white mb-6">Our Home Ground</h2>
-                <p className="text-slate-300 leading-relaxed mb-6">
-                  We play our home fixtures at the <strong className="text-white">Casa de Campo cricket ground</strong>, one of the finest club grounds in Spain, set in Madrid's beautiful 1,700-hectare western parkland — with views across to the Palacio Real.
-                </p>
-                <div className="glass-dark p-5 mb-5">
-                  <p className="text-white font-semibold mb-1">{homeVenue.name}</p>
-                  <p className="text-slate-400 text-sm flex items-center gap-1.5">
-                    <MapPin size={13} /> {homeVenue.address}
-                  </p>
-                  {homeVenue.notes && <p className="text-slate-400 text-sm mt-2">{homeVenue.notes}</p>}
-                </div>
-                <a
-                  href={homeVenue.map_link || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-outline btn-sm"
-                >
-                  <MapPin size={14} /> Get Directions <ExternalLink size={13} />
-                </a>
+      {/* Grounds */}
+      <section className="section px-4" style={{ background: "linear-gradient(135deg, #1a0505, #120808)" }}>
+        <div className="container-content px-4">
+          <p className="text-gold-400 text-sm font-semibold uppercase tracking-widest mb-3">Where We Play</p>
+          <h2 className="text-4xl font-display font-bold text-white mb-8">Our Grounds</h2>
+          <div className="grid md:grid-cols-2 gap-6">
+
+            <div className="glass-dark p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="badge-red text-xs">Madrid Base</span>
+                <span className="badge-gold text-xs">Training & Junior Cricket</span>
               </div>
-              <div className="relative h-80 rounded-2xl overflow-hidden lg:order-1">
-                <Image src="/images/ground.jpg" alt="Casa de Campo cricket ground" fill className="object-cover" />
+              <h3 className="text-white font-display font-bold text-xl mb-2">Centro Deportivo Municipal La Elipa</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                Our home in Madrid. La Elipa is where we train and run junior cricket. Madrid City Council supports the club with 2 hours/week of subsidised pitch time — a vital lifeline.
+                The new <strong className="text-white">Madrid 20-over league</strong> will also be played here from October 2026.
+              </p>
+              <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
+                <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
+                C. del Alcalde Garrido Juaristi 17, Moratalaz, 28030 Madrid
               </div>
+              <a
+                href="https://maps.google.com/?q=Centro+Deportivo+Municipal+La+Elipa+Madrid"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-outline btn-sm inline-flex items-center gap-1"
+              >
+                <MapPin size={12} /> Get Directions <ExternalLink size={11} />
+              </a>
             </div>
+
+            <div className="glass-dark p-6">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="badge-gold text-xs">40-Over League</span>
+                <span className="badge-gold text-xs">20-Over Coastal League</span>
+              </div>
+              <h3 className="text-white font-display font-bold text-xl mb-2">Sporting Alfaz Cricket Ground</h3>
+              <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                Our away home for the ECCL coastal league (40-over and 20-over). Alfaz del Pi, Alicante — roughly 460km south of Madrid. The reality of cricket in Spain: we travel to compete.
+                Also hosts the ECCL T20 league and La Manga Club fixtures.
+              </p>
+              <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
+                <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
+                Alfaz del Pi, Alicante, Spain (~4.5h from Madrid)
+              </div>
+              <a
+                href="https://maps.google.com/?q=Sporting+Alfaz+del+Pi+cricket"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-outline btn-sm inline-flex items-center gap-1"
+              >
+                <MapPin size={12} /> Get Directions <ExternalLink size={11} />
+              </a>
+            </div>
+
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Committee */}
-      <section className="section bg-slate-950">
+      <section className="section px-4" style={{ background: "#120808" }}>
         <div className="container-wide px-4">
           <div className="text-center mb-12">
             <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">Club Leadership</p>
-            <h2 className="text-4xl font-display font-bold text-white">Committee</h2>
+            <h2 className="text-4xl font-display font-bold text-white">Committee 2026</h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {COMMITTEE.map((member) => (
-              <div key={member.role} className="glass-dark p-6 card-hover">
-                <div className="w-12 h-12 rounded-full bg-brand-900/60 border border-brand-700/40 flex items-center justify-center mb-4">
+              <div key={member.role} className="glass-dark p-5 card-hover">
+                <div className="w-12 h-12 rounded-full bg-brand-900/40 border border-brand-700/30 flex items-center justify-center mb-3">
                   <Users size={20} className="text-brand-400" />
                 </div>
                 <p className="text-gold-400 text-xs font-semibold uppercase tracking-wider mb-1">{member.role}</p>
                 <p className="text-white font-display font-bold text-lg mb-2">{member.name}</p>
-                <p className="text-slate-400 text-sm leading-relaxed">{member.bio}</p>
+                <p className="text-slate-400 text-xs leading-relaxed mb-3">{member.bio}</p>
+                <div className="space-y-1">
+                  {"email" in member && member.email && (
+                    <a href={`mailto:${member.email}`} className="text-brand-400 text-xs flex items-center gap-1 hover:underline">
+                      <Mail size={10} /> {member.email}
+                    </a>
+                  )}
+                  {"phone" in member && member.phone && (
+                    <a href={`tel:${member.phone}`} className="text-slate-400 text-xs flex items-center gap-1">
+                      <Phone size={10} /> {member.phone}
+                    </a>
+                  )}
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Cricket España */}
-      <section className="section bg-slate-900/30">
+      {/* Federación Española de Cricket announcement */}
+      <section className="section px-4" style={{ background: "linear-gradient(135deg, #0d0303, #1a0505)" }}>
         <div className="container-content px-4">
-          <div className="glass-dark p-8 flex flex-col md:flex-row items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-brand-900/50 flex items-center justify-center shrink-0">
-              <Trophy size={32} className="text-brand-400" />
+          <div className="glass-dark p-8 flex flex-col md:flex-row items-center gap-8">
+            {/* Fed logo placeholder — official announcement image */}
+            <div className="w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-[#0a1535] flex items-center justify-center">
+              <div className="text-center p-2">
+                <Trophy size={32} className="text-gold-400 mx-auto mb-1" />
+                <p className="text-[8px] text-white font-bold leading-tight">FEDERACIÓN ESPAÑOLA DE CRICKET</p>
+              </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <p className="text-brand-300 text-xs font-semibold uppercase tracking-widest mb-1">National Affiliation</p>
-              <h3 className="text-2xl font-display font-bold text-white mb-2">Cricket España</h3>
-              <p className="text-slate-300 leading-relaxed">
-                MCC is affiliated to Cricket España, the governing body of cricket in Spain. All our players are registered and insured under the national scheme. Cricket España represents Spain at the European Cricket Council and International Cricket Council.
+              <p className="text-brand-400 text-xs font-semibold uppercase tracking-widest mb-1">🇪🇸 Big News for Spanish Cricket</p>
+              <h3 className="text-2xl font-display font-bold text-white mb-2">Spain Now Has a National Cricket Federation</h3>
+              <p className="text-slate-300 leading-relaxed text-sm">
+                Cricket España has been formally recognised as Spain's <strong className="text-white">Federación Española de Cricket</strong> — a national federation.
+                A huge milestone for the sport. With cricket entering the <strong className="text-white">Olympics in Los Angeles 2028</strong>, the future of the game in Spain has never looked brighter.
+                <br /><em className="text-slate-400">"Unidos por la pasión. Impulsados por la excelencia."</em>
               </p>
             </div>
             <a
               href="https://cricketespana.es"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-outline btn-sm whitespace-nowrap shrink-0"
+              className="btn-gold btn-sm whitespace-nowrap shrink-0"
             >
-              cricketespana.es <ExternalLink size={13} />
+              cricketespana.es <ExternalLink size={12} />
             </a>
           </div>
         </div>
       </section>
 
       {/* Join CTA */}
-      <section className="section bg-slate-950">
-        <div className="container-wide px-4 text-center">
+      <section className="section px-4 text-center" style={{ background: "#120808" }}>
+        <div className="container-wide px-4">
           <h2 className="text-3xl font-display font-bold text-white mb-4">Want to be part of it?</h2>
           <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-            All abilities welcome — senior and junior. Whether you've played all your life or picked up a bat for the first time last summer, we'd love to hear from you.
+            All abilities welcome — senior, women's, and junior. Whether you've played all your life or just want to give it a try, come down to La Elipa on a Sunday morning.
           </p>
           <Link href="/join" className="btn-gold btn-lg">
             <Users size={18} /> Join the Club

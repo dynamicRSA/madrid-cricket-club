@@ -1,126 +1,143 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Link from "next/link";
 import { EVENTS } from "@/lib/mock-data";
-import { formatDate, resultClass, resultLabel } from "@/lib/utils";
 import { MapPin, ExternalLink } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Results",
-  description: "Madrid Cricket Club match results and scorecards — 2026 Liga Nacional División 2 season.",
+  title: "Results — Madrid Cricket Club",
+  description: "Madrid Cricket Club 2026 season results — ECCL 40 Overs, ECCL T20, and tour results.",
 };
 
+function resultClass(r: string) {
+  if (r === "won") return "text-gold-400";
+  if (r === "lost") return "text-red-400";
+  return "text-slate-400";
+}
+function resultLabel(r: string) {
+  if (r === "won") return "WON";
+  if (r === "lost") return "LOST";
+  return "DRAW";
+}
+
 export default function ResultsPage() {
-  const results = EVENTS.filter((e) => e.status === "completed" && e.result);
+  const results = EVENTS
+    .filter((e) => e.status === "completed" && e.result)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  const won = results.filter((e) => e.result?.result === "won").length;
+  const lost = results.filter((e) => e.result?.result === "lost").length;
+
+  // Group by competition
+  const byComp: Record<string, typeof results> = {};
+  for (const r of results) {
+    const key = r.competition || "Other";
+    if (!byComp[key]) byComp[key] = [];
+    byComp[key].push(r);
+  }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col">
       <Navbar />
 
-      <section className="pt-32 pb-16 bg-gradient-to-b from-slate-900 to-slate-950">
-        <div className="container-wide px-4">
-          <p className="text-gold-400 text-sm font-semibold uppercase tracking-widest mb-3">Performance</p>
-          <h1 className="text-5xl font-display font-bold text-white mb-4">Results</h1>
-          <p className="text-slate-400 text-lg max-w-2xl">
-            2026 Liga Nacional División 2 season results and scorecards.
+      <section className="pt-28 pb-12 px-4" style={{ background: "linear-gradient(135deg, #1a0505 0%, #120808 100%)" }}>
+        <div className="container-wide">
+          <p className="text-brand-400 text-xs uppercase tracking-widest mb-2">Season 2026</p>
+          <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-3">Results</h1>
+          <p className="text-slate-400 max-w-xl">
+            Official ECCL scorecards and tour results for Madrid Cricket Club 2026.
+            More results to be added as the season progresses.
           </p>
         </div>
       </section>
 
-      <section className="section bg-slate-950">
-        <div className="container-wide px-4">
+      {/* Season summary pills */}
+      <div className="px-4 py-5 border-b border-white/[0.06]" style={{ background: "#1a0505" }}>
+        <div className="container-wide flex flex-wrap gap-3">
+          <div className="badge-slate px-4 py-2 text-sm">{results.length} Played</div>
+          <div className="badge-gold px-4 py-2 text-sm">{won} Won</div>
+          <div className="badge-red px-4 py-2 text-sm">{lost} Lost</div>
+        </div>
+      </div>
 
-          {/* Summary pills */}
-          <div className="flex flex-wrap gap-3 mb-10">
-            {[
-              { label: "Played", value: results.length, cls: "badge-slate" },
-              { label: "Won", value: results.filter((e) => e.result?.result === "won").length, cls: "badge-green" },
-              { label: "Lost", value: results.filter((e) => e.result?.result === "lost").length, cls: "badge-red" },
-              { label: "Draw", value: results.filter((e) => e.result?.result === "draw").length, cls: "badge-gold" },
-            ].map((s) => (
-              <div key={s.label} className={`badge ${s.cls} px-4 py-2 text-sm`}>
-                {s.value} {s.label}
-              </div>
-            ))}
-          </div>
+      <section className="section px-4" style={{ background: "#120808" }}>
+        <div className="container-wide max-w-4xl space-y-10">
+          {Object.entries(byComp).map(([comp, matches]) => (
+            <div key={comp}>
+              <h2 className="text-lg font-display font-bold text-white mb-4 flex items-center gap-2">
+                <span className="w-1 h-5 bg-brand-600 rounded-full inline-block" />
+                {comp}
+              </h2>
+              <div className="space-y-3">
+                {matches.map((event) => (
+                  <div key={event.id} className="glass-dark p-5 flex flex-wrap gap-4 items-start">
+                    {/* Date */}
+                    <div className="w-14 text-center flex-shrink-0">
+                      <div className="text-[10px] uppercase tracking-wide text-slate-500">
+                        {new Date(event.date).toLocaleString("en", { month: "short" })}
+                      </div>
+                      <div className="text-2xl font-bold text-white leading-none">
+                        {new Date(event.date).getDate()}
+                      </div>
+                    </div>
 
-          {results.length === 0 ? (
-            <p className="text-slate-400">No results yet.</p>
-          ) : (
-            <div className="space-y-5">
-              {results.map((event) => (
-                <div key={event.id} className="glass-dark p-6 card-hover">
-                  <div className="flex flex-col md:flex-row md:items-start gap-6">
-                    {/* Result badge */}
-                    <div className="md:w-28 shrink-0">
-                      <div className={`text-2xl font-display font-bold ${resultClass(event.result!.result)}`}>
+                    {/* Result */}
+                    <div className="w-14 text-center flex-shrink-0">
+                      <div className={`text-lg font-display font-bold ${resultClass(event.result!.result)}`}>
                         {resultLabel(event.result!.result)}
                       </div>
                       {event.result?.margin && (
-                        <p className="text-slate-400 text-sm">by {event.result.margin}</p>
+                        <p className="text-slate-500 text-[10px] leading-tight">by {event.result.margin}</p>
                       )}
                     </div>
 
                     {/* Scores */}
-                    <div className="flex-1">
-                      <h3 className="text-white font-display font-bold text-xl mb-1">{event.title}</h3>
-                      <p className="text-slate-400 text-sm mb-3">
-                        {formatDate(event.date, "en", "d MMMM yyyy")}
-                        {event.venue && (
-                          <>
-                            {" · "}
-                            <MapPin size={12} className="inline mr-0.5" />
-                            {event.venue.name}
-                          </>
-                        )}
-                        {event.competition && ` · ${event.competition}`}
-                      </p>
-
-                      {/* Score display */}
-                      <div className="flex items-center gap-6">
+                    <div className="flex-1 min-w-[180px]">
+                      <h3 className="text-white font-semibold text-sm mb-1">{event.title}</h3>
+                      {event.venue && (
+                        <p className="text-slate-500 text-xs flex items-center gap-1 mb-2">
+                          <MapPin size={10} /> {event.venue.name}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-5 flex-wrap">
                         <div>
-                          <p className="text-3xl font-display font-bold text-white">{event.result?.our_score}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">Madrid CC</p>
+                          <p className="text-2xl font-display font-bold text-white">{event.result?.our_score}</p>
+                          <p className="text-[10px] text-slate-500">MCC</p>
                         </div>
-                        <div className="text-slate-600 font-bold text-sm">vs</div>
+                        <div className="text-slate-600 text-sm font-bold">vs</div>
                         <div>
-                          <p className="text-3xl font-display font-bold text-slate-300">{event.result?.opposition_score}</p>
-                          <p className="text-xs text-slate-500 mt-0.5">{event.opponent}</p>
+                          <p className="text-2xl font-display font-bold text-slate-300">{event.result?.opposition_score}</p>
+                          <p className="text-[10px] text-slate-500">{event.opponent || "Opponent"}</p>
                         </div>
                         {event.result?.overs && (
-                          <div className="text-slate-500 text-sm ml-4">({event.result.overs} ov)</div>
+                          <p className="text-slate-500 text-xs">({event.result.overs} ov)</p>
                         )}
                       </div>
-
                       {event.result?.summary && (
-                        <p className="text-slate-300 text-sm mt-4 leading-relaxed border-l-2 border-brand-700 pl-3">
+                        <p className="text-slate-400 text-xs mt-2 leading-relaxed border-l-2 border-brand-700 pl-2">
                           {event.result.summary}
                         </p>
                       )}
                     </div>
 
-                    {/* Links */}
-                    <div className="flex flex-col gap-2 shrink-0">
-                      <Link href={`/results/${event.id}`} className="btn-primary btn-sm">
-                        Full Scorecard
-                      </Link>
-                      {event.result?.cricclubs_link && (
-                        <a
-                          href={event.result.cricclubs_link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-outline btn-sm flex items-center gap-1"
-                        >
-                          CricClubs <ExternalLink size={12} />
-                        </a>
-                      )}
+                    {/* Format badge */}
+                    <div className="flex-shrink-0">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-900/30 text-brand-400 border border-brand-800/40 font-medium uppercase">
+                        {event.format === "40_over" ? "40 Ov" : event.format === "t20" ? "T20" : event.format === "t10" ? "T10" : event.format}
+                      </span>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          )}
+          ))}
+
+          {/* Add more placeholder */}
+          <div className="glass-dark p-5 opacity-40 border border-dashed border-white/[0.1]">
+            <p className="text-slate-500 text-sm text-center">
+              More results will be added as the season progresses — or via the admin panel.
+            </p>
+          </div>
         </div>
       </section>
 

@@ -80,7 +80,7 @@ export interface JuniorProfile {
 
 // ─── Events ──────────────────────────────────────────────────────────────────
 export type EventType = "match" | "nets" | "social" | "agm_meeting";
-export type MatchFormat = "t20" | "40_over" | "50_over" | "friendly" | "other";
+export type MatchFormat = "t20" | "t10" | "40_over" | "50_over" | "friendly" | "other";
 export type AvailabilityStatus = "available" | "not_available" | "maybe" | "no_response";
 
 export interface Venue {
