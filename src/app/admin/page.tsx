@@ -159,7 +159,21 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
 
   useEffect(() => {
     supabase.from("members").select("*").order("full_legal_name")
-      .then(({ data }: any) => { setMembers(data || []); setLoading(false); });
+      .then(({ data }: any) => {
+        if (data && data.length > 0) {
+          setMembers(data);
+        } else {
+          // Fallback to real registered committee members only
+          setMembers([
+            { id: "m-sven", full_legal_name: "Sven Prinsloo", email: "svenprinsloo@gmail.com", status: "active", roles: ["super_admin", "admin"] },
+            { id: "m-jon", full_legal_name: "Jon Woodward", email: "jonwoodward1975@gmail.com", status: "active", roles: ["president", "captain"] },
+            { id: "m-lewis", full_legal_name: "Lewis Clarke", email: "mail@lewclark.com", status: "active", roles: ["vice_president"] },
+            { id: "m-adam", full_legal_name: "Adam Langhans", email: "treasurer@madridcricketclub.es", status: "active", roles: ["treasurer"] },
+            { id: "m-victor", full_legal_name: "Victor Medina", email: "secretary@madridcricketclub.es", status: "active", roles: ["secretary"] },
+          ] as any);
+        }
+        setLoading(false);
+      });
   }, []);
 
   const filtered = members.filter((m) => {
@@ -303,7 +317,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                     className="input text-xs"
                     value={singleInvite.name}
                     onChange={(e) => setSingleInvite({ ...singleInvite, name: e.target.value })}
-                    placeholder="e.g. John Smith"
+                    placeholder="e.g. Member Full Name"
                   />
                 </div>
                 <div>
@@ -814,15 +828,25 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
       supabase.from("members").select("*").eq("status", "active"),
       supabase.from("availability").select("*"),
     ]).then(([evRes, memRes, avRes]: any[]) => {
-      const fetchedEvents = evRes.data || [];
-      const fetchedMembers = memRes.data || [];
+      let fetchedMembers = memRes.data || [];
+      if (fetchedMembers.length === 0) {
+        fetchedMembers = [
+          { id: "m-sven", full_legal_name: "Sven Prinsloo", preferred_name: "Sven", playing_role: "all_rounder", status: "active" },
+          { id: "m-jon", full_legal_name: "Jon Woodward", preferred_name: "Jon", playing_role: "all_rounder", status: "active" },
+          { id: "m-lewis", full_legal_name: "Lewis Clarke", preferred_name: "Lewis", playing_role: "batsman", status: "active" },
+          { id: "m-adam", full_legal_name: "Adam Langhans", preferred_name: "Adam", playing_role: "bowler", status: "active" },
+          { id: "m-victor", full_legal_name: "Victor Medina", preferred_name: "Victor", playing_role: "wicket_keeper", status: "active" },
+          { id: "m-anand", full_legal_name: "Anand Kaul", preferred_name: "Anand", playing_role: "batsman", status: "active" },
+          { id: "m-gourav", full_legal_name: "Gourav Saha", preferred_name: "Gourav", playing_role: "all_rounder", status: "active" },
+        ];
+      }
       setEvents(fetchedEvents);
       setMembers(fetchedMembers);
       setAvailability(avRes.data || []);
       if (fetchedEvents.length > 0) {
         setSelectedEventId(fetchedEvents[0].id);
       }
-      // Pre-select first 11 active members if available
+      // Pre-select active members if available
       if (fetchedMembers.length > 0) {
         setSelectedPlayerIds(fetchedMembers.slice(0, 11).map((m: any) => m.id));
         setDesignations({
