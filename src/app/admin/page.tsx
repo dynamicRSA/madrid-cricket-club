@@ -575,138 +575,284 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Captain Team Selection Tab ────────────────────────────────────────────────
 
 function CaptainSelectionTab({ supabase }: { supabase: any }) {
-  const [selectedMatch, setSelectedMatch] = useState("mcc-bicc-lamanga-sep5");
+  const [events, setEvents] = useState<any[]>([]);
+  const [members, setMembers] = useState<any[]>([]);
+  const [availability, setAvailability] = useState<any[]>([]);
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+
+  // Event creation form state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newEvent, setNewEvent] = useState({
+    title: "MCC vs Barcelona International CC",
+    opponent: "Barcelona International CC",
+    date: "2026-09-05",
+    venue_name: "La Manga Club Ground 1",
+    format: "T20 (2 x Matches)",
+    meet_time: "07:30 AM",
+    start_time: "08:30 AM",
+    is_streamed_ecn: true,
+    catering_options: "Post-match Meal, Match Tea & Refreshments",
+  });
+  const [creating, setCreating] = useState(false);
+
+  // Selected squad state per event
+  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
+  const [designations, setDesignations] = useState<Record<string, string>>({});
   const [published, setPublished] = useState(false);
-  const [notifying, setNotifying] = useState(false);
+  const [publishing, setPublishing] = useState(false);
 
-  const [squad, setSquad] = useState([
-    { id: "1", name: "Jon Woodward", role: "All-rounder", captaincy: "C", dietary: "Standard", travel: "Driving (3 seats)", status: "Confirmed" },
-    { id: "2", name: "Sven Prinsloo", role: "All-rounder / Admin", captaincy: "VC", dietary: "Standard", travel: "Driving (2 seats)", status: "Confirmed" },
-    { id: "3", name: "Lewis Clark", role: "Batsman", captaincy: "", dietary: "Vegetarian", travel: "Passenger", status: "Confirmed" },
-    { id: "4", name: "Ashish Kumar", role: "Wicket-keeper", captaincy: "WK", dietary: "Halal", travel: "Passenger", status: "Confirmed" },
-    { id: "5", name: "Waheed Raza", role: "Bowler", captaincy: "", dietary: "Halal", travel: "Passenger", status: "Pending Confirmation" },
-    { id: "6", name: "Ravi Sharma", role: "Bowler", captaincy: "", dietary: "Vegetarian", travel: "Independent", status: "Confirmed" },
-    { id: "7", name: "Daniel Smith", role: "Batsman", captaincy: "", dietary: "Standard", travel: "Passenger", status: "Confirmed" },
-    { id: "8", name: "Marcus Rourke", role: "All-rounder", captaincy: "", dietary: "Standard", travel: "Driving (3 seats)", status: "Pending Confirmation" },
-    { id: "9", name: "Victor Parmekar", role: "Bowler", captaincy: "", dietary: "Standard", travel: "Passenger", status: "Confirmed" },
-    { id: "10", name: "Paul Mason", role: "Batsman", captaincy: "", dietary: "Gluten-free", travel: "Passenger", status: "Confirmed" },
-    { id: "11", name: "Adam Grant", role: "Bowler", captaincy: "", dietary: "Standard", travel: "Independent", status: "Confirmed" },
-  ]);
+  useEffect(() => {
+    Promise.all([
+      supabase.from("events").select("*").order("date"),
+      supabase.from("members").select("*").eq("status", "active"),
+      supabase.from("availability").select("*"),
+    ]).then(([evRes, memRes, avRes]: any[]) => {
+      const fetchedEvents = evRes.data || [];
+      const fetchedMembers = memRes.data || [];
+      setEvents(fetchedEvents);
+      setMembers(fetchedMembers);
+      setAvailability(avRes.data || []);
+      if (fetchedEvents.length > 0) {
+        setSelectedEventId(fetchedEvents[0].id);
+      }
+      // Pre-select first 11 active members if available
+      if (fetchedMembers.length > 0) {
+        setSelectedPlayerIds(fetchedMembers.slice(0, 11).map((m: any) => m.id));
+        setDesignations({
+          [fetchedMembers[0]?.id]: "C",
+          [fetchedMembers[1]?.id]: "VC",
+          [fetchedMembers[2]?.id]: "WK",
+        });
+      }
+      setLoading(false);
+    });
+  }, []);
 
-  const [reserves, setReserves] = useState([
-    { id: "12", name: "Stephan Salter (12th Man)", role: "Batsman", status: "On Standby" },
-    { id: "13", name: "Giles Walters", role: "Bowler", status: "On Standby" }
-  ]);
+  const currentEvent = events.find((e) => e.id === selectedEventId);
 
-  function handlePublishSquad() {
-    setNotifying(true);
-    setTimeout(() => {
-      setNotifying(false);
-      setPublished(true);
-    }, 1200);
+  // Filter members available for selected event
+  const availableMemberIds = availability
+    .filter((a) => a.event_id === selectedEventId && a.status === "available")
+    .map((a) => a.member_id);
+
+  function togglePlayerSelection(memberId: string) {
+    if (selectedPlayerIds.includes(memberId)) {
+      setSelectedPlayerIds(selectedPlayerIds.filter((id) => id !== memberId));
+    } else {
+      setSelectedPlayerIds([...selectedPlayerIds, memberId]);
+    }
+  }
+
+  function setPlayerRole(memberId: string, role: string) {
+    setDesignations((prev) => ({ ...prev, [memberId]: role }));
+  }
+
+  async function handleCreateEvent(e: React.FormEvent) {
+    e.preventDefault();
+    setCreating(true);
+    const { data, error } = await supabase.from("events").insert({
+      title: newEvent.title,
+      opponent: newEvent.opponent,
+      date: newEvent.date,
+      format: newEvent.format,
+      status: "scheduled",
+      venue: { name: newEvent.venue_name },
+      notes: `Meet: ${newEvent.meet_time} | Start: ${newEvent.start_time} | ECN Stream: ${newEvent.is_streamed_ecn ? "Yes" : "No"} | Catering: ${newEvent.catering_options}`,
+    }).select().single();
+
+    if (data) {
+      setEvents([data, ...events]);
+      setSelectedEventId(data.id);
+    }
+    setCreating(false);
+    setShowCreateModal(false);
+  }
+
+  async function handlePublishSquad() {
+    setPublishing(true);
+    // Persist squad selection in events metadata / notes
+    await supabase.from("events").update({
+      notes: `${currentEvent?.notes || ""} | SQUAD_SELECTED: ${selectedPlayerIds.join(",")}`,
+      updated_at: new Date().toISOString(),
+    }).eq("id", selectedEventId);
+
+    setPublishing(false);
+    setPublished(true);
+  }
+
+  if (loading) {
+    return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>;
   }
 
   return (
     <div className="space-y-6">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
         <div>
           <h2 className="text-2xl font-display font-bold text-white mb-1 flex items-center gap-2">
-            <span>Captain&apos;s Team Selection Panel</span>
-            <span className="badge-red text-xs">Captain / VC Control</span>
+            <span>Captain&apos;s Match Setup & Team Selection</span>
+            <span className="badge-red text-xs">Captain Control</span>
           </h2>
-          <p className="text-slate-400 text-sm">Select player XI, assign leadership roles, manage match teas & travel arrangements.</p>
+          <p className="text-slate-400 text-sm">Create fixtures, specify start times & meal choices, and publish official team XI.</p>
         </div>
-        <button onClick={handlePublishSquad} disabled={notifying} className="btn-primary">
-          {notifying ? <><Loader2 size={14} className="animate-spin" /> Publishing Squad...</> : published ? "✓ Squad Announced & Sent" : "Publish XI & Notify Squad"}
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowCreateModal(true)} className="btn-outline btn-sm">
+            + Create New Fixture / Event
+          </button>
+          <button onClick={handlePublishSquad} disabled={publishing || !selectedEventId} className="btn-primary btn-sm">
+            {publishing ? <><Loader2 size={13} className="animate-spin" /> Publishing...</> : published ? "✓ Squad Confirmed & Published" : "Publish XI & Unlock Details"}
+          </button>
+        </div>
       </div>
 
-      {/* Match selector */}
+      {/* Create Event Modal */}
+      {showCreateModal && (
+        <div className="glass-dark p-6 rounded-2xl border border-brand-500/30 space-y-4">
+          <h3 className="text-lg font-display font-bold text-white border-b border-white/[0.06] pb-2">Create New Match Fixture</h3>
+          <form onSubmit={handleCreateEvent} className="space-y-4 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label text-xs">Fixture Title</label>
+                <input className="input text-xs" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} required />
+              </div>
+              <div>
+                <label className="label text-xs">Opponent Team</label>
+                <input className="input text-xs" value={newEvent.opponent} onChange={(e) => setNewEvent({ ...newEvent, opponent: e.target.value })} required />
+              </div>
+              <div>
+                <label className="label text-xs">Match Date</label>
+                <input type="date" className="input text-xs" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} required />
+              </div>
+              <div>
+                <label className="label text-xs">Format / Overs</label>
+                <input className="input text-xs" value={newEvent.format} onChange={(e) => setNewEvent({ ...newEvent, format: e.target.value })} required />
+              </div>
+              <div>
+                <label className="label text-xs">Player Meet Arrival Time</label>
+                <input className="input text-xs" value={newEvent.meet_time} onChange={(e) => setNewEvent({ ...newEvent, meet_time: e.target.value })} placeholder="e.g. 07:30 AM" />
+              </div>
+              <div>
+                <label className="label text-xs">Match Start Time</label>
+                <input className="input text-xs" value={newEvent.start_time} onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })} placeholder="e.g. 08:30 AM" />
+              </div>
+              <div>
+                <label className="label text-xs">Venue Location</label>
+                <input className="input text-xs" value={newEvent.venue_name} onChange={(e) => setNewEvent({ ...newEvent, venue_name: e.target.value })} required />
+              </div>
+              <div>
+                <label className="label text-xs">Meal & Catering Options Provided</label>
+                <input className="input text-xs" value={newEvent.catering_options} onChange={(e) => setNewEvent({ ...newEvent, catering_options: e.target.value })} placeholder="e.g. Post-match Paella, Halal & Veg teas" />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input type="checkbox" id="ecn-check" checked={newEvent.is_streamed_ecn} onChange={(e) => setNewEvent({ ...newEvent, is_streamed_ecn: e.target.checked })} />
+              <label htmlFor="ecn-check" className="text-slate-300">Live Broadcasted on ECN channels (Player consent required)</label>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <button type="button" onClick={() => setShowCreateModal(false)} className="btn-ghost btn-sm">Cancel</button>
+              <button type="submit" disabled={creating} className="btn-primary btn-sm">
+                {creating ? <Loader2 size={13} className="animate-spin" /> : "Save Fixture & Open Sign-Ups"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Target Event Selector */}
       <div className="glass-dark p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <label className="label text-xs">Target Match Fixture</label>
+        <div className="flex-1">
+          <label className="label text-xs">Active Fixture Selection</label>
           <select
-            value={selectedMatch}
-            onChange={(e) => setSelectedMatch(e.target.value)}
-            className="input text-sm min-w-[320px]"
+            value={selectedEventId}
+            onChange={(e) => setSelectedEventId(e.target.value)}
+            className="input text-sm w-full"
           >
-            <option value="mcc-bicc-lamanga-sep5">5 Sep 2026 — MCC 1st XI vs Barcelona Intl CC (La Manga)</option>
-            <option value="mcc-bicc-lamanga-sep6">6 Sep 2026 — MCC 1st XI vs Barcelona Intl CC (40-Over)</option>
-            <option value="mcc-ecs-t10-oct19">19 Oct 2026 — ECS T10 Madrid Opener (La Elipa)</option>
+            {events.map((ev) => (
+              <option key={ev.id} value={ev.id}>
+                {ev.date} — {ev.title} ({ev.venue?.name || "TBC"})
+              </option>
+            ))}
           </select>
         </div>
-        <div className="flex gap-4 text-xs">
+        <div className="flex gap-3 text-xs">
           <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block">Available Players</span>
-            <span className="text-brand-400 font-bold text-base">14 Players Available</span>
+            <span className="text-slate-400 block">Signed Up / Available</span>
+            <span className="text-brand-400 font-bold text-sm">{availableMemberIds.length > 0 ? `${availableMemberIds.length} Members` : `${members.length} Total Roster`}</span>
           </div>
           <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block">Squad Selected</span>
-            <span className="text-gold-400 font-bold text-base">11 XI + 2 Reserves</span>
+            <span className="text-slate-400 block">Selected Squad XI</span>
+            <span className="text-gold-400 font-bold text-sm">{selectedPlayerIds.length} Selected</span>
           </div>
         </div>
       </div>
 
-      {/* Selected XI Roster */}
+      {/* Dynamic Member Roster Selection */}
       <div className="glass-dark p-6 space-y-4">
         <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
-          <h3 className="text-white font-semibold text-lg">Official Selected XI ({squad.length} Players)</h3>
-          <span className="text-xs text-slate-400">Match arrival: 07:30 – 08:00 AM</span>
+          <h3 className="text-white font-semibold text-base">Select Players for Squad XI ({selectedPlayerIds.length} Picked)</h3>
+          <span className="text-xs text-slate-400">Click checkboxes to include in team</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="table-auto text-xs min-w-[700px]">
+          <table className="table-auto text-xs min-w-[650px]">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Player Name</th>
-                <th>Role</th>
+                <th>Select</th>
+                <th>Member Name</th>
+                <th>Playing Role</th>
+                <th>Availability</th>
                 <th>Designation</th>
-                <th>Dietary / Catering</th>
-                <th>Travel Arrangement</th>
-                <th>Player Confirmation</th>
+                <th>Dietary Requirement</th>
               </tr>
             </thead>
             <tbody>
-              {squad.map((p, idx) => (
-                <tr key={p.id}>
-                  <td className="font-bold text-brand-400">{idx + 1}</td>
-                  <td className="font-semibold text-white">{p.name}</td>
-                  <td className="text-slate-300">{p.role}</td>
-                  <td>
-                    {p.captaincy ? (
-                      <span className="badge-gold font-bold">{p.captaincy}</span>
-                    ) : (
-                      <span className="text-slate-600">—</span>
-                    )}
-                  </td>
-                  <td className="text-slate-400">{p.dietary}</td>
-                  <td className="text-slate-400">{p.travel}</td>
-                  <td>
-                    <span className={p.status === "Confirmed" ? "badge-green" : "badge-gold"}>
-                      {p.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+              {members.map((m) => {
+                const isSelected = selectedPlayerIds.includes(m.id);
+                const isAvail = availableMemberIds.includes(m.id);
+                return (
+                  <tr key={m.id} className={isSelected ? "bg-brand-500/10" : ""}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => togglePlayerSelection(m.id)}
+                        className="rounded accent-brand-500 w-4 h-4 cursor-pointer"
+                      />
+                    </td>
+                    <td className="font-semibold text-white">
+                      {m.preferred_name || m.full_legal_name}
+                      {isSelected && <span className="ml-2 text-[10px] text-brand-400 font-normal">(Selected)</span>}
+                    </td>
+                    <td className="text-slate-300 capitalize">{m.playing_role?.replace("_", " ") || "All-rounder"}</td>
+                    <td>
+                      {isAvail ? <span className="badge-green text-[10px]">Available</span> : <span className="badge-slate text-[10px]">Pending Sign-up</span>}
+                    </td>
+                    <td>
+                      {isSelected ? (
+                        <select
+                          value={designations[m.id] || ""}
+                          onChange={(e) => setPlayerRole(m.id, e.target.value)}
+                          className="input text-[11px] py-1 px-2"
+                        >
+                          <option value="">Member XI</option>
+                          <option value="C">Captain (C)</option>
+                          <option value="VC">Vice-Captain (VC)</option>
+                          <option value="WK">Wicketkeeper (WK)</option>
+                          <option value="12th">12th Man</option>
+                        </select>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
+                    </td>
+                    <td className="text-slate-400">{m.dietary_requirements || "Standard"}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Standby & Reserves */}
-      <div className="glass-dark p-6 space-y-3">
-        <h3 className="text-white font-semibold text-base border-b border-white/[0.06] pb-2">Standby Reserves (12th & 13th Man)</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          {reserves.map((r) => (
-            <div key={r.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-900/60 border border-white/[0.04]">
-              <div>
-                <p className="text-white font-medium">{r.name}</p>
-                <p className="text-slate-500 text-[11px]">{r.role}</p>
-              </div>
-              <span className="badge-slate text-[10px]">{r.status}</span>
-            </div>
-          ))}
         </div>
       </div>
     </div>

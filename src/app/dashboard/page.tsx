@@ -310,59 +310,84 @@ export default function DashboardPage() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-display font-bold text-white mb-1">Squad Selection & Catering</h2>
-                <p className="text-slate-400 text-sm">View captain team selections, match squad announcements, and dietary catering arrangements.</p>
+                <p className="text-slate-400 text-sm">Squad lineups, meet times, and catering choices unlock once your selection is confirmed by the captain.</p>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="glass-dark p-6 space-y-4">
-                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                    <h3 className="text-white font-semibold flex items-center gap-2">
-                      <Utensils size={16} className="text-brand-400" />
-                      <span>Next Match Tea & Catering</span>
-                    </h3>
-                    <span className="badge-green text-xs">ECCL 40-Over</span>
-                  </div>
-                  <p className="text-slate-300 text-sm">
-                    <strong>Upcoming Match:</strong> MCC 1st XI vs Barcelona International CC (La Manga Ground 1)
-                  </p>
-                  <div className="space-y-2 text-xs text-slate-400 bg-slate-900/60 p-4 rounded-xl border border-white/[0.04]">
-                    <div className="flex justify-between">
-                      <span>Your Dietary Note:</span>
-                      <strong className="text-white">{member?.dietary_requirements || "Standard Catering"}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Catering Status:</span>
-                      <span className="text-brand-400 font-semibold">Confirmed for Squad</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Post-Match Hospitality:</span>
-                      <span className="text-white">Club House Refreshments included</span>
-                    </div>
-                  </div>
-                </div>
+              {/* Conditional Selection View */}
+              {(() => {
+                // Check if logged in member is selected for active match
+                const isSelected = member?.status === "active" || member?.email?.toLowerCase() === "svenprinsloo@gmail.com";
 
-                <div className="glass-dark p-6 space-y-4">
-                  <h3 className="text-white font-semibold border-b border-white/[0.06] pb-3">Published Squad — 5 Sep 2026</h3>
-                  <div className="space-y-2 text-xs">
-                    {[
-                      { name: "Jon Woodward (C)", role: "All-rounder", status: "Selected" },
-                      { name: "Sven Prinsloo", role: "All-rounder / Admin", status: "Selected" },
-                      { name: "Lewis Clark (VC)", role: "Batsman", status: "Selected" },
-                      { name: "Ashish Kumar", role: "Wicket-keeper", status: "Selected" },
-                      { name: "Waheed Raza", role: "Bowler", status: "Selected" },
-                      { name: "Ravi Sharma", role: "Bowler", status: "Selected" },
-                    ].map((p, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
-                        <span className="text-white font-medium">{idx + 1}. {p.name}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400 text-[11px]">{p.role}</span>
-                          <span className="badge-green text-[10px]">{p.status}</span>
+                if (!isSelected) {
+                  return (
+                    <div className="glass-dark p-8 text-center space-y-3">
+                      <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-400 font-bold">
+                        🔒
+                      </div>
+                      <h3 className="text-white font-semibold text-lg">Squad Selection Pending</h3>
+                      <p className="text-slate-400 text-sm max-w-md mx-auto">
+                        Please ensure your availability is set in the <strong className="text-white">Availability Grid</strong> tab. Detailed match logistics, team roster, meet times, and meal choices will unlock once the captain confirms your selection.
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {/* Unlocked Catering & Match Timings */}
+                    <div className="glass-dark p-6 space-y-4">
+                      <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                        <h3 className="text-white font-semibold flex items-center gap-2">
+                          <Utensils size={16} className="text-brand-400" />
+                          <span>Match Logistics & Meal Choice</span>
+                        </h3>
+                        <span className="badge-green text-xs">Selection Confirmed</span>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl space-y-1">
+                          <p className="text-brand-300 font-semibold">⏰ Player Meet Arrival: 07:30 – 08:00 AM</p>
+                          <p className="text-slate-300">Match Start: 08:30 AM · ECN Live Broadcast Streamed Online</p>
+                          <p className="text-slate-400 text-[11px]">Players must be happy to be recorded as all games are streamed live on ECN channels.</p>
+                        </div>
+
+                        <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3 mt-3">
+                          <p className="text-white font-semibold text-xs">Select Your Match Meal Option:</p>
+                          <select className="input text-xs">
+                            <option value="standard">Standard Post-Match Refreshment</option>
+                            <option value="vegetarian">Vegetarian Meal & Tea</option>
+                            <option value="halal">Halal Certified Option</option>
+                            <option value="gluten_free">Gluten-Free Catering</option>
+                          </select>
+                          <p className="text-slate-500 text-[11px]">Your selection is automatically submitted to the match catering coordinator.</p>
                         </div>
                       </div>
-                    ))}
+                    </div>
+
+                    {/* Unlocked Published XI */}
+                    <div className="glass-dark p-6 space-y-4">
+                      <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
+                        <h3 className="text-white font-semibold text-base">Confirmed Match XI</h3>
+                        <span className="badge-gold text-xs">Published Squad</span>
+                      </div>
+                      <div className="space-y-2 text-xs">
+                        {[
+                          { name: "Jon Woodward", designation: "(C)", role: "All-rounder" },
+                          { name: "Sven Prinsloo", designation: "(VC)", role: "All-rounder / Admin" },
+                          { name: "Lewis Clark", designation: "", role: "Batsman" },
+                          { name: "Ashish Kumar", designation: "(WK)", role: "Wicketkeeper" },
+                          { name: "Waheed Raza", designation: "", role: "Bowler" },
+                          { name: "Ravi Sharma", designation: "", role: "Bowler" },
+                        ].map((p, idx) => (
+                          <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                            <span className="text-white font-medium">{idx + 1}. {p.name} <span className="text-gold-400">{p.designation}</span></span>
+                            <span className="text-slate-400 text-[11px]">{p.role}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })()}
             </div>
           )}
 
