@@ -44,7 +44,7 @@ export default function Navbar() {
           <img
             src={imgSrc("/images/logo_mcc.png")}
             alt="Madrid Cricket Club"
-            className="h-9 w-auto object-contain transition-opacity group-hover:opacity-80"
+            className="h-12 w-auto object-contain transition-opacity group-hover:opacity-80"
             style={{ filter: "drop-shadow(0 0 6px rgba(180,0,0,0.35))" }}
           />
         </Link>
