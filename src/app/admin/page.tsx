@@ -2271,33 +2271,42 @@ function JerseyTab({ supabase }: { supabase: any }) {
 
   async function load() {
     setLoading(true);
-    // First try with jersey columns (requires DB migration to add those columns)
-    const { data, error } = await supabase
+
+    // Step 1: load all members using only columns we KNOW exist (matches MembersTab)
+    const { data: baseData, error: baseError } = await supabase
       .from("members")
-      .select("id, preferred_name, full_legal_name, status, membership_category, jersey_number, jersey_number_requested, jersey_number_status")
+      .select("id, preferred_name, full_legal_name, email, status, roles, created_at")
       .order("full_legal_name");
 
-    if (error) {
-      // Jersey columns don't exist yet — fall back to core columns only
-      const { data: fallback } = await supabase
-        .from("members")
-        .select("id, preferred_name, full_legal_name, status, membership_category")
-        .order("full_legal_name");
-      const rows = (fallback || []).map((m: any) => ({
-        ...m,
-        jersey_number: null,
-        jersey_number_requested: null,
-        jersey_number_status: "none",
-      }));
-      setMembers(rows);
-      const init: Record<string, string> = {};
-      rows.forEach((m: any) => { init[m.id] = ""; });
-      setDrafts(init);
+    if (baseError || !baseData) {
       setLoading(false);
       return;
     }
 
-    const rows = data || [];
+    // Step 2: try to get jersey columns (needs DB migration — silently skip if missing)
+    const { data: jerseyData } = await supabase
+      .from("members")
+      .select("id, jersey_number, jersey_number_requested, jersey_number_status");
+
+    // Build a lookup map for jersey data
+    const jerseyMap: Record<string, any> = {};
+    (jerseyData || []).forEach((j: any) => {
+      jerseyMap[j.id] = {
+        jersey_number: j.jersey_number ?? null,
+        jersey_number_requested: j.jersey_number_requested ?? null,
+        jersey_number_status: j.jersey_number_status ?? "none",
+      };
+    });
+
+    // Merge: every member gets jersey data if available, otherwise nulls
+    const rows = baseData.map((m: any) => ({
+      ...m,
+      jersey_number: jerseyMap[m.id]?.jersey_number ?? null,
+      jersey_number_requested: jerseyMap[m.id]?.jersey_number_requested ?? null,
+      jersey_number_status: jerseyMap[m.id]?.jersey_number_status ?? "none",
+      membership_category: m.membership_category ?? null,
+    }));
+
     setMembers(rows);
     const init: Record<string, string> = {};
     rows.forEach((m: any) => { init[m.id] = m.jersey_number != null ? String(m.jersey_number) : ""; });
