@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 import { imgSrc } from "@/lib/imgSrc";
@@ -89,7 +91,7 @@ export default function Footer() {
                 { href: "/dashboard", label: "My Dashboard" },
                 { href: "/admin", label: "Committee Admin" },
                 { href: "/join", label: "Join the Club" },
-                { href: "/contact", label: "Contact Committee" },
+                { href: "/privacy", label: "Privacy & GDPR Notice" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-slate-400 hover:text-white text-sm transition-colors">
@@ -97,6 +99,14 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <button
+                  onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
+                  className="text-slate-400 hover:text-white text-sm transition-colors text-left"
+                >
+                  Cookie Preferences
+                </button>
+              </li>
             </ul>
           </div>
 

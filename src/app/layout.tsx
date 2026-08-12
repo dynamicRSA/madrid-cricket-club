@@ -40,6 +40,8 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+import CookieConsent from "@/components/CookieConsent";
+
 export default function RootLayout({
   children,
 }: {
@@ -53,6 +55,7 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${playfair.variable} font-sans antialiased`}>
         {children}
+        <CookieConsent />
       </body>
     </html>
   );
