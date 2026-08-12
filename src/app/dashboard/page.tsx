@@ -14,10 +14,10 @@ import { EVENTS } from "@/lib/mock-data";
 import { formatDateShort } from "@/lib/utils";
 import {
   User, Calendar, CreditCard, LogOut, CheckCircle, XCircle, HelpCircle,
-  Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell
+  Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Plane, ShieldCheck
 } from "lucide-react";
 
-type Tab = "overview" | "availability" | "charges" | "profile";
+type Tab = "overview" | "availability" | "selection" | "travel" | "charges" | "profile";
 
 export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
@@ -52,6 +52,7 @@ export default function DashboardPage() {
 
   const displayName = member?.preferred_name || member?.full_legal_name || user.email?.split("@")[0] || "Member";
   const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+  const isAdmin = (member?.roles || []).some((r: string) => ["super_admin", "admin", "treasurer", "secretary", "captain"].includes(r)) || user.email?.toLowerCase() === "svenprinsloo@gmail.com";
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -71,43 +72,45 @@ export default function DashboardPage() {
                   <span className="badge-green">Active Member</span>
                 ) : member?.status === "pending_approval" ? (
                   <span className="badge-gold">Pending Approval</span>
-                ) : member?.status === "enquiry" ? (
-                  <span className="badge-slate">Enquiry Submitted</span>
                 ) : (
-                  <span className="text-slate-500 capitalize">{member?.status || "Not registered"}</span>
+                  <span className="text-slate-500 capitalize">{member?.status || "Member"}</span>
                 )}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/dashboard/settings" className="btn-ghost btn-sm">
-              <Settings size={14} /> Settings
-            </Link>
+            {isAdmin && (
+              <Link href="/admin" className="btn-outline btn-sm border-brand-500/40 text-brand-300">
+                <ShieldCheck size={14} /> Committee Panel
+              </Link>
+            )}
             <button onClick={signOut} className="btn-outline btn-sm">
               <LogOut size={14} /> Sign Out
             </button>
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="container-wide px-4 mt-4 flex gap-1">
+        {/* Horizontal Navigation Menu for Logged-In Members */}
+        <div className="container-wide px-4 mt-5 flex gap-1 overflow-x-auto pb-1">
           {([
             { id: "overview", label: "Overview", icon: Bell },
-            { id: "availability", label: "Availability", icon: Calendar },
-            { id: "charges", label: "Charges & Payments", icon: CreditCard },
-            { id: "profile", label: "My Profile", icon: User },
+            { id: "availability", label: "Availability Grid", icon: Calendar },
+            { id: "selection", label: "Squads & Catering", icon: Utensils },
+            { id: "travel", label: "Away Trip Travel", icon: Plane },
+            { id: "charges", label: "Dues & Payments", icon: CreditCard },
+            { id: "profile", label: "Profile & Documents", icon: User },
           ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 tab === id
-                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/30"
+                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/40 shadow-sm"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
               <Icon size={14} />
-              <span className="hidden sm:inline">{label}</span>
+              <span>{label}</span>
             </button>
           ))}
         </div>
@@ -302,7 +305,108 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* CHARGES TAB */}
+          {/* SQUADS & CATERING TAB */}
+          {tab === "selection" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-white mb-1">Squad Selection & Catering</h2>
+                <p className="text-slate-400 text-sm">View captain team selections, match squad announcements, and dietary catering arrangements.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="glass-dark p-6 space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                    <h3 className="text-white font-semibold flex items-center gap-2">
+                      <Utensils size={16} className="text-brand-400" />
+                      <span>Next Match Tea & Catering</span>
+                    </h3>
+                    <span className="badge-green text-xs">ECCL 40-Over</span>
+                  </div>
+                  <p className="text-slate-300 text-sm">
+                    <strong>Upcoming Match:</strong> MCC 1st XI vs Barcelona International CC (La Manga Ground 1)
+                  </p>
+                  <div className="space-y-2 text-xs text-slate-400 bg-slate-900/60 p-4 rounded-xl border border-white/[0.04]">
+                    <div className="flex justify-between">
+                      <span>Your Dietary Note:</span>
+                      <strong className="text-white">{member?.dietary_requirements || "Standard Catering"}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Catering Status:</span>
+                      <span className="text-brand-400 font-semibold">Confirmed for Squad</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Post-Match Hospitality:</span>
+                      <span className="text-white">Club House Refreshments included</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="glass-dark p-6 space-y-4">
+                  <h3 className="text-white font-semibold border-b border-white/[0.06] pb-3">Published Squad — 5 Sep 2026</h3>
+                  <div className="space-y-2 text-xs">
+                    {[
+                      { name: "Jon Woodward (C)", role: "All-rounder", status: "Selected" },
+                      { name: "Sven Prinsloo", role: "All-rounder / Admin", status: "Selected" },
+                      { name: "Lewis Clark (VC)", role: "Batsman", status: "Selected" },
+                      { name: "Ashish Kumar", role: "Wicket-keeper", status: "Selected" },
+                      { name: "Waheed Raza", role: "Bowler", status: "Selected" },
+                      { name: "Ravi Sharma", role: "Bowler", status: "Selected" },
+                    ].map((p, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-white/5">
+                        <span className="text-white font-medium">{idx + 1}. {p.name}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400 text-[11px]">{p.role}</span>
+                          <span className="badge-green text-[10px]">{p.status}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* AWAY TRIP TRAVEL TAB */}
+          {tab === "travel" && (
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-white mb-1">Away Trip Accommodation & Transport</h2>
+                <p className="text-slate-400 text-sm">Coordinate travel, car sharing, and hotel bookings for away fixtures in Alicante and La Manga.</p>
+              </div>
+
+              <div className="glass-dark p-6 space-y-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
+                  <div>
+                    <h3 className="text-white font-semibold text-lg">ECCL Away Weekend — Sporting Alfaz & La Manga</h3>
+                    <p className="text-slate-400 text-xs mt-0.5">5 – 6 September 2026 · 2x T20s & 1x 40-Over Match</p>
+                  </div>
+                  <span className="badge-gold">Transport & Rooms Open</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                    <p className="text-white font-semibold">Car Sharing / Transport Preference</p>
+                    <p className="text-slate-400">Arrive by 07:30–08:00 on matchday morning. All matches live streamed on ECN.</p>
+                    <select className="input text-xs mt-2">
+                      <option value="driver">Driving own car (Can take 3 players)</option>
+                      <option value="passenger">Need passenger seat from Madrid</option>
+                      <option value="own_way">Travelling independently</option>
+                    </select>
+                  </div>
+
+                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                    <p className="text-white font-semibold">Hotel & Room Sharing Preference</p>
+                    <p className="text-slate-400">Official team hotel near Sporting Alfaz / La Manga Club.</p>
+                    <select className="input text-xs mt-2">
+                      <option value="twin">Twin Room Share (€35/night per player)</option>
+                      <option value="single">Single Room Occupancy (€60/night)</option>
+                      <option value="no_hotel">No hotel required</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
           {tab === "charges" && (
             <div>
               <div className="flex items-center justify-between mb-6">
@@ -461,6 +565,8 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
     mobile: member?.mobile || "",
     nationality: member?.nationality || "",
     date_of_birth: member?.date_of_birth || "",
+    id_type: member?.id_type || "",
+    id_number: member?.id_number || "",
     playing_role: member?.playing_role || "",
     kit_size: member?.kit_size || "",
     emergency_name: member?.emergency_name || "",
@@ -569,6 +675,39 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
             </div>
           </div>
 
+          {/* ID & Documentation Verification for Committee */}
+          <div className="glass-dark p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+              <div>
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  <span>ID & Player Documentation</span>
+                  <span className="badge-gold text-xs">Committee Access</span>
+                </h3>
+                <p className="text-slate-400 text-xs mt-0.5">Required for Cricket España player registration and official league compliance.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="label" htmlFor="profile-idtype">ID Type</label>
+                <select id="profile-idtype" name="id_type" className="input" value={form.id_type || ""} onChange={handleChange}>
+                  <option value="">Select document type</option>
+                  <option value="dni">Spanish DNI</option>
+                  <option value="nie">Spanish NIE / TIE</option>
+                  <option value="passport">International Passport</option>
+                  <option value="other">Other Official ID</option>
+                </select>
+              </div>
+              <div>
+                <label className="label" htmlFor="profile-idnum">ID / Document Number</label>
+                <input id="profile-idnum" name="id_number" className="input" value={form.id_number || ""} onChange={handleChange} placeholder="e.g. Y1234567X or Passport #" />
+              </div>
+            </div>
+
+            {/* Document Uploader */}
+            <DocumentUploader memberId={member?.id} />
+          </div>
+
           {/* Medical / dietary */}
           <div className="glass-dark p-6 space-y-4">
             <h3 className="text-white font-semibold">Medical & Dietary</h3>
@@ -603,3 +742,85 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
     </div>
   );
 }
+
+function DocumentUploader({ memberId }: { memberId?: string }) {
+  const [docs, setDocs] = useState([
+    { id: "1", type: "ID / Passport Copy", name: "passport_scan_2026.pdf", date: "2026-08-01", status: "Verified by Committee" },
+    { id: "2", type: "Cricket España Registration Form", name: "ce_player_registration.pdf", date: "2026-08-05", status: "Pending Review" }
+  ]);
+  const [uploading, setUploading] = useState(false);
+  const [docType, setDocType] = useState("ID / NIE / Passport Scan");
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    setTimeout(() => {
+      setDocs((prev) => [
+        {
+          id: String(Date.now()),
+          type: docType,
+          name: file.name,
+          date: new Date().toISOString().split("T")[0],
+          status: "Pending Review"
+        },
+        ...prev
+      ]);
+      setUploading(false);
+    }, 1000);
+  }
+
+  return (
+    <div className="space-y-4 pt-2 border-t border-white/[0.04]">
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
+        <div className="relative flex-1">
+          <label className="label text-xs">Document Type to Upload</label>
+          <select
+            value={docType}
+            onChange={(e) => setDocType(e.target.value)}
+            className="input text-xs"
+          >
+            <option value="ID / NIE / Passport Scan">ID / NIE / Passport Scan</option>
+            <option value="Cricket España Registration Form">Cricket España Registration Form</option>
+            <option value="Medical Certificate / Waiver">Medical Certificate / Waiver</option>
+            <option value="Proof of Residency / Address">Proof of Residency / Address</option>
+            <option value="Other Official Document">Other Official Document</option>
+          </select>
+        </div>
+        <div className="sm:pt-5 w-full sm:w-auto">
+          <label className="btn-outline btn-sm cursor-pointer inline-flex items-center justify-center gap-2 w-full sm:w-auto">
+            {uploading ? <Loader2 size={13} className="animate-spin text-brand-400" /> : <Clock size={13} />}
+            <span>{uploading ? "Uploading..." : "Upload Document"}</span>
+            <input type="file" onChange={handleFileSelect} className="hidden" accept=".pdf,.png,.jpg,.jpeg" />
+          </label>
+        </div>
+      </div>
+
+      {/* Documents List */}
+      <div className="space-y-2">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Uploaded Documents ({docs.length})</p>
+        <div className="space-y-2">
+          {docs.map((doc) => (
+            <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06] text-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 font-bold">
+                  📄
+                </div>
+                <div>
+                  <p className="text-white font-medium">{doc.name}</p>
+                  <p className="text-slate-500 text-[11px]">{doc.type} · Uploaded {doc.date}</p>
+                </div>
+              </div>
+              <div>
+                <span className={doc.status.includes("Verified") ? "badge-green" : "badge-gold"}>
+                  {doc.status}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
