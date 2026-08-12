@@ -93,22 +93,22 @@ const recentResults = [
 
 const socialPosts = [
   {
-    image: "/images/social/mcc-25th-anniversary.jpg",
-    caption: "Happy 25th Anniversary MCC! What started with three friends, a conversation over a beer, and a dream...",
-    date: "23 July 2026",
-    likes: 43,
+    image: "/images/real/mcc-ecn-lineup.jpg",
+    caption: "ECS T10 Tournament coming to Madrid this October — all matches live streamed on ECN! 🏏",
+    date: "12 August 2026",
+    likes: 68,
   },
   {
-    image: "/images/social/mcc-fathers-sprogs.jpg",
-    caption: "Madrid CC Fathers and Sprogs — a successful weekend, two matches, two wins! 🏏",
-    date: "20 July 2026",
-    likes: 55,
+    image: "/images/real/mcc-juniors.jpg",
+    caption: "Youth & Junior Squad showing incredible form in regional competition 🏆",
+    date: "5 August 2026",
+    likes: 54,
   },
   {
-    image: "/images/social/mcc-la-manga.jpg",
-    caption: "Un inicio fenomenal de temporada con una victoria por 31 carreras ante La Manga... 🏆",
-    date: "24 April 2024",
-    likes: 34,
+    image: "/images/real/mcc-batting-cages.jpg",
+    caption: "Weekly training sessions under way at CDM La Elipa municipal sports ground 🏏",
+    date: "28 July 2026",
+    likes: 42,
   },
 ];
 
@@ -121,8 +121,8 @@ export default function HomePage() {
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
         {/* Background — Real MCC team photo */}
         <div
-          className="absolute inset-0 bg-cover bg-top"
-          style={{ backgroundImage: `url(${imgSrc("/images/social/mcc-fathers-sprogs.jpg")})` }}
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${imgSrc("/images/real/mcc-team-alicante.jpg")})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/70 via-[#120808]/60 to-[#120808]" />
         </div>

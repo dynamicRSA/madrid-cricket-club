@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-gb" lang="en-gb" >
+  <head>
+        <base href="https://www.cricketinmadrid.com/index.php/404" />
+	<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+	<meta name="author" content="Super User" />
+	<meta name="generator" content="Joomla! - Open Source Content Management" />
+	<title>404 Page</title>
+	<link href="https://www.cricketinmadrid.com/index.php/component/search/?Itemid=204&amp;format=opensearch" rel="search" title="Search Madrid Cricket Club" type="application/opensearchdescription+xml" />
+	<link href="/templates/theme3096/favicon.ico" rel="shortcut icon" type="image/vnd.microsoft.icon" />
+	<link href="/plugins/system/jce/css/content.css?badb4208be409b1335b815dde676300e" rel="stylesheet" type="text/css" />
+	<link href="https://www.cricketinmadrid.com/templates/theme3096/css/layout.css" rel="stylesheet" type="text/css" />
+	<link href="/templates/theme3096/css/jquery.fancybox.css" rel="stylesheet" type="text/css" />
+	<link href="/templates/theme3096/css/jquery.fancybox-buttons.css" rel="stylesheet" type="text/css" />
+	<link href="/templates/theme3096/css/jquery.fancybox-thumbs.css" rel="stylesheet" type="text/css" />
+	<link href="/templates/theme3096/css/template.css" rel="stylesheet" type="text/css" />
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,600,600i,700,700i&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet" type="text/css" />
+	<link href="/media/com_facebookgrouppro/css/frontend.css?v=1.7.6" rel="stylesheet" type="text/css" />
+	<link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,600,600i,700,700i&subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet" type="text/css" />
+	<link href="/media/com_ingallery/css/frontend.css?v=1.217.7" rel="stylesheet" type="text/css" />
+	<script type="application/json" class="joomla-script-options new">{"csrf.token":"30febf3c671bdba77667cc0ba62a0d7f","system.paths":{"root":"","base":""}}</script>
+	<script src="/media/jui/js/jquery.min.js?e57bdfcbf2dd5114e9616defd41cb2eb" type="text/javascript"></script>
+	<script src="/media/jui/js/jquery-noconflict.js?e57bdfcbf2dd5114e9616defd41cb2eb" type="text/javascript"></script>
+	<script src="/media/jui/js/jquery-migrate.min.js?e57bdfcbf2dd5114e9616defd41cb2eb" type="text/javascript"></script>
+	<script src="/media/system/js/caption.js?e57bdfcbf2dd5114e9616defd41cb2eb" type="text/javascript"></script>
+	<script src="/media/jui/js/bootstrap.min.js?e57bdfcbf2dd5114e9616defd41cb2eb" type="text/javascript"></script>
+	<script src="/media/system/js/core.js?e57bdfcbf2dd5114e9616defd41cb2eb" type="text/javascript"></script>
+	<script src="/media/com_facebookgrouppro/js/frontend.js?v=1.7.6" type="text/javascript"></script>
+	<script src="/media/com_ingallery/js/masonry.pkgd.min.js?v=1.217.7" type="text/javascript"></script>
+	<script src="/media/com_ingallery/js/frontend.js?v=1.217.7" type="text/javascript"></script>
+	<script type="text/javascript">
+jQuery(window).on('load',  function() {
+				new JCaption('img.caption');
+			});
+	</script>
+	<script type="application/json" id="fgp-frontend-cfg">{"i18n":{"posts":"Posts","posts_":"Posts","photos":"Photos","videos":"Videos","like_page":"Like Page","share":"Share","people_like_this":"people like this","display_created_date":"Show created date","display_fb_link":"Show link to Facebook","likes":"likes","comments":"comments","shares":"shares","view_on_fb":"View on Facebook","items_per_page":"Items per page","load_more":"Load more","all_photos":"All Photos","albums":"Albums","show_more":"Show More","show_less":"Show Less","ajax_error":"AJAX error","connect_to_facebook":"Please click \"Connect to Facebook\" button and authorize the application","photos_":"photo","members":"members","no_posts_found":"No recent (published within the last 90 days) posts found.","no_videos_found":"No recent (published within the last 90 days) videos found.","no_photos_found":"No recent (published within the last 90 days) photos found."},"feedConfig":{"id":0,"ajax_url":"\/index.php\/component\/facebookgrouppro\/?task=feed.data&language=en-GB","alldata_uri":"\/index.php\/component\/facebookgrouppro\/?task=feed.alldata&language=en-GB","templates_url":"\/media\/com_facebookgrouppro\/templates\/","template":"feed","version":"1.7.6"}}</script>
+	<script type="application/json" id="ingallery-cfg">{"ajax_url":"\/index.php\/component\/ingallery\/?task=gallery.view&language=en-GB","lang":{"error_title":"Unfortunately, an error occurred","system_error":"Sytem error. Please view logs for more information or enable display errors in InGallery components settings."}}</script>
+
+    <!--[if lt IE 9]>
+      <link rel="stylesheet" href="/templates/theme3096/css/ie8.css" />
+      <script src="/templates/theme3096/js/html5shiv+printshiv.js"></script>
+    <![endif]-->
+    <link href='//fonts.googleapis.com/css?family=Lato:400,100,100italic,300,300italic,400italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+    <link href='//fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic,900,900italic' rel='stylesheet' type='text/css'>
+  </head>
+  <body class=" com_content view-article task- itemid-204 body__404">
+    <!--[if lt IE 9]>
+      <div style=' clear: both; text-align:center; position: relative;'>
+        <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie">
+          <img src="/templates/theme3096/images/warning_bar_0000_us.jpg" border="0" height="42" width="820" alt="You are using an outdated browser. For a faster, safer browsing experience, upgrade for free today." />
+        </a>
+      </div>
+    <![endif]-->
+    <!-- Body -->
+    <div id="wrapper">
+      <div class="wrapper-inner">
+                <!-- Top -->
+        <div id="top">
+          <!-- Logo -->
+          <div id="logo">
+            <a href="https://www.cricketinmadrid.com/">
+                            <img src="/images/logo_small.png" alt="Madrid Cricket Club">
+              <h1>Madrid Cricket Club</h1>
+                          </a>
+          </div>
+          
+          <div class="clearfix"></div>
+        </div>
+                <!-- Header -->
+                                                <!-- Main Content row -->
+        <div id="content">
+          <div class="row-container">
+            <div class="container-fluid">
+              <div class="content-inner row-fluid">   
+                        
+                <div id="component" class="span12">
+                  <main role="main">
+                           
+                       
+                    <div id="system-message-container">
+	</div>
+     
+                    
+<article class="page-item page-item__404">
+		<div class="item_fulltext"><div class="row-fluid">
+<div class="span5">
+<div class="big-404">404</div>
+</div>
+<div class="span7">
+<h2>Sorry!</h2>
+<p><big>Page Not Found</big></p>
+<big>The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.</big>
+<p>Please try using our search box below to look for information on the internet.</p>
+		<div class="moduletable span12">
+						<div role="search" class="mod-search mod-search__">
+  <form action="/index.php/404" method="post" class="navbar-form">
+  	<label for="searchword-103" class="element-invisible">Search ...</label> <input id="searchword-103" name="searchword" maxlength="200"  class="inputbox mod-search_searchword" type="text" size="20" placeholder="Search ..." required> <button class="button btn btn-primary" onclick="this.form.searchword.focus();">Search</button>  	<input type="hidden" name="task" value="search">
+  	<input type="hidden" name="option" value="com_search">
+  	<input type="hidden" name="Itemid" value="204">
+  </form>
+</div>		</div>
+	
+</div>
+</div> </div>
+		
+	
+	<!-- Social Sharing -->
+	 
+	<!-- Pagination -->
+	 	<div class="clearfix"></div>
+</article>   
+                                      </main>
+                </div>        
+                              </div>
+            </div>
+          </div>
+        </div>
+                                                                          
+        <div id="push"></div>
+      </div>
+    </div>
+        <div id="footer-wrapper">
+      <div class="footer-wrapper-inner">    
+        <!-- Copyright -->
+        <div id="copyright" role="contentinfo">
+          <div class="row-container">
+            <div class="container-fluid">
+              <div class="row-fluid">
+                
+                <div class="copyright span12">
+                                    <span class="siteName"><span class="item_title_part0 item_title_part_odd item_title_part_first_half item_title_part_first">Madrid</span> <span class="item_title_part1 item_title_part_even item_title_part_first_half">Cricket</span> <span class="item_title_part2 item_title_part_odd item_title_part_second_half">Club</span> </span>
+    					      					      <span class="copy">&copy;</span>  					      <span class="year">2026</span>                                    <a class="privacy_link" rel="license" href="/index.php/privacy-policy">Privacy policy</a>
+    					                                      </div>
+                                More <a  rel='nofollow' href='http://www.templatemonster.com/category/cricket-joomla-templates/' target='_blank'>Cricket Joomla Templates at TemplateMonster.com</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+        <div id="back-top">
+      <a href="#"><span></span> </a>
+    </div>
+            
+            <script src="/templates/theme3096/js/jquery.modernizr.min.js"></script>
+        <script src="/templates/theme3096/js/jquery.stellar.min.js"></script>
+    <script>
+      jQuery(function($) {
+        if (!Modernizr.touch) {
+          $(window).load(function(){
+            $.stellar({responsive: true,horizontalScrolling: false});
+          });
+        }
+      });
+    </script>
+        <script src="/templates/theme3096/js/jquery.simplr.smoothscroll.min.js"></script>
+    <script>
+      jQuery(function($) {
+        if (!Modernizr.touch) {
+          var platform = navigator.platform.toLowerCase();
+          if (platform.indexOf('win') == 0 || platform.indexOf('linux') == 0) {
+            if ($.browser.webkit) {
+              $.srSmoothscroll({ease: 'easeOutQuart'});
+            }
+          }
+        }
+      });
+    </script>
+        <script src="/templates/theme3096/js/jquery.BlackAndWhite.min.js"></script>
+    <script>
+      ;(function($, undefined) {
+      $.fn.BlackAndWhite_init = function () {
+        var selector = $(this);
+        selector.find('img').not(".slide-img").parent().BlackAndWhite({
+          invertHoverEffect: ".$this->params->get('invertHoverEffect').",
+          intensity: 1,
+          responsive: true,
+          speed: {
+              fadeIn: ".$this->params->get('fadeIn').",
+              fadeOut: ".$this->params->get('fadeOut')." 
+          }
+        });
+      }
+      })(jQuery);
+      jQuery(window).load(function($){
+        jQuery('.item_img a').find('img').not('.lazy').parent().BlackAndWhite_init();
+      });
+    </script>
+        <script src="/templates/theme3096/js/jquery.fancybox.pack.js"></script>
+    <script src="/templates/theme3096/js/jquery.fancybox-buttons.js"></script>
+    <script src="/templates/theme3096/js/jquery.fancybox-media.js"></script>
+    <script src="/templates/theme3096/js/jquery.fancybox-thumbs.js"></script>
+    <script src="/templates/theme3096/js/jquery.pep.js"></script>
+    <script src="/templates/theme3096/js/jquery.vide.min.js"></script>
+    <script src="/templates/theme3096/js/scripts.js"></script>
+      </body>
+</html>

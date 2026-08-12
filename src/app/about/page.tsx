@@ -15,7 +15,7 @@ export default function AboutPage() {
       <section className="relative min-h-[70vh] flex items-end overflow-hidden">
         <div
           className="absolute inset-0 z-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${imgSrc("/images/social/mcc-fathers-sprogs.jpg")})` }}
+          style={{ backgroundImage: `url(${imgSrc("/images/real/mcc-team-alicante.jpg")})` }}
         >
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(18,8,8,0.3) 0%, rgba(18,8,8,0.6) 60%, rgba(18,8,8,1) 100%)" }} />
         </div>
@@ -82,28 +82,29 @@ export default function AboutPage() {
                 </a>
               </div>
             </div>
-            {/* Charity & community photo */}
+            {/* Real photos */}
             <div className="space-y-4">
-              <div className="relative h-56 rounded-2xl overflow-hidden">
+              <div className="relative h-64 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imgSrc("/images/social/mcc-alsama-project.jpg")} alt="Alsama Project — MCC supporting Syrian refugees in Lebanon" className="w-full h-full object-cover" />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
+                <img src={imgSrc("/images/real/mcc-1982.png")} alt="Madrid Cricket Club team 1982" className="w-full h-full object-cover" />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.8) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-xs text-white/80 bg-black/40 px-2 py-0.5 rounded">Alsama Project — supporting Syrian refugees in Lebanon</span>
+                  <span className="text-xs text-white/90 font-medium bg-black/60 px-2.5 py-1 rounded-md backdrop-blur">Historic Squad (1982/83) — Early Days of MCC</span>
                 </div>
               </div>
-              <div className="relative h-48 rounded-2xl overflow-hidden">
+              <div className="relative h-52 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imgSrc("/images/social/mcc-serbia-2018.jpg")} alt="Obrevonac refugee camp visit, Serbia 2018" className="w-full h-full object-cover" />
-                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
+                <img src={imgSrc("/images/real/mcc-juniors.jpg")} alt="Madrid Cricket Club Junior Squad" className="w-full h-full object-cover" />
+                <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.8) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-xs text-white/80 bg-black/40 px-2 py-0.5 rounded">Obrevonac Refugee Camp, Serbia 2018</span>
+                  <span className="text-xs text-white/90 font-medium bg-black/60 px-2.5 py-1 rounded-md backdrop-blur">Junior & Youth Development Squad at La Elipa</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
 
       {/* Grounds */}
       <section className="section px-4" style={{ background: "linear-gradient(135deg, #1a0505, #120808)" }}>
@@ -112,57 +113,80 @@ export default function AboutPage() {
           <h2 className="text-4xl font-display font-bold text-white mb-8">Our Grounds</h2>
           <div className="grid md:grid-cols-2 gap-6">
 
-            <div className="glass-dark p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="badge-red text-xs">Madrid Base</span>
-                <span className="badge-gold text-xs">Training & Junior Cricket</span>
+            <div className="glass-dark overflow-hidden rounded-2xl border border-white/10 flex flex-col">
+              <div className="relative h-48 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imgSrc("/images/real/mcc-batting-cages.jpg")} alt="CDM La Elipa Batting Cages" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#120808] to-transparent" />
               </div>
-              <h3 className="text-white font-display font-bold text-xl mb-2">Centro Deportivo Municipal La Elipa</h3>
-              <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                Our home in Madrid. La Elipa is where we train and run junior cricket. Madrid City Council supports the club with 2 hours/week of subsidised pitch time — a vital lifeline.
-                The new <strong className="text-white">Madrid 20-over league</strong> will also be played here from October 2026.
-              </p>
-              <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
-                <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
-                C. del Alcalde Garrido Juaristi 17, Moratalaz, 28030 Madrid
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="badge-red text-xs">Madrid Base</span>
+                    <span className="badge-gold text-xs">Training & Junior Cricket</span>
+                  </div>
+                  <h3 className="text-white font-display font-bold text-xl mb-2">Centro Deportivo Municipal La Elipa</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                    Our home in Madrid. La Elipa is where we train and run junior cricket. Madrid City Council supports the club with 2 hours/week of subsidised pitch time — a vital lifeline.
+                    The new <strong className="text-white">Madrid 20-over league</strong> will also be played here from October 2026.
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
+                    <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
+                    C. del Alcalde Garrido Juaristi 17, Moratalaz, 28030 Madrid
+                  </div>
+                  <a
+                    href="https://maps.google.com/?q=Centro+Deportivo+Municipal+La+Elipa+Madrid"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-outline btn-sm inline-flex items-center gap-1"
+                  >
+                    <MapPin size={12} /> Get Directions <ExternalLink size={11} />
+                  </a>
+                </div>
               </div>
-              <a
-                href="https://maps.google.com/?q=Centro+Deportivo+Municipal+La+Elipa+Madrid"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-outline btn-sm inline-flex items-center gap-1"
-              >
-                <MapPin size={12} /> Get Directions <ExternalLink size={11} />
-              </a>
             </div>
 
-            <div className="glass-dark p-6">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="badge-gold text-xs">40-Over League</span>
-                <span className="badge-gold text-xs">20-Over Coastal League</span>
+            <div className="glass-dark overflow-hidden rounded-2xl border border-white/10 flex flex-col">
+              <div className="relative h-48 overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imgSrc("/images/real/mcc-ecn-lineup.jpg")} alt="Sporting Alfaz Cricket Ground" className="w-full h-full object-cover" />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#120808] to-transparent" />
               </div>
-              <h3 className="text-white font-display font-bold text-xl mb-2">Sporting Alfaz Cricket Ground</h3>
-              <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                Our away home for the ECCL coastal league (40-over and 20-over). Alfaz del Pi, Alicante — roughly 460km south of Madrid. The reality of cricket in Spain: we travel to compete.
-                Also hosts the ECCL T20 league and La Manga Club fixtures.
-              </p>
-              <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
-                <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
-                Alfaz del Pi, Alicante, Spain (~4.5h from Madrid)
+              <div className="p-6 flex-1 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="badge-gold text-xs">40-Over League</span>
+                    <span className="badge-gold text-xs">20-Over Coastal League</span>
+                  </div>
+                  <h3 className="text-white font-display font-bold text-xl mb-2">Sporting Alfaz Cricket Ground</h3>
+                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
+                    Our away home for the ECCL coastal league (40-over and 20-over). Alfaz del Pi, Alicante — roughly 460km south of Madrid. The reality of cricket in Spain: we travel to compete.
+                    Also hosts the ECCL T20 league and La Manga Club fixtures.
+                  </p>
+                </div>
+                <div>
+                  <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
+                    <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
+                    Alfaz del Pi, Alicante, Spain (~4.5h from Madrid)
+                  </div>
+                  <a
+                    href="https://maps.google.com/?q=Sporting+Alfaz+del+Pi+cricket"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-outline btn-sm inline-flex items-center gap-1"
+                  >
+                    <MapPin size={12} /> Get Directions <ExternalLink size={11} />
+                  </a>
+                </div>
               </div>
-              <a
-                href="https://maps.google.com/?q=Sporting+Alfaz+del+Pi+cricket"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-outline btn-sm inline-flex items-center gap-1"
-              >
-                <MapPin size={12} /> Get Directions <ExternalLink size={11} />
-              </a>
             </div>
 
           </div>
         </div>
       </section>
+
 
       {/* Committee */}
       <section className="section px-4" style={{ background: "#120808" }}>

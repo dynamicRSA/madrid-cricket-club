@@ -15,7 +15,7 @@ const articles = [
     title: "Happy 25th Anniversary, Madrid Cricket Club!",
     category: "Club News",
     date: "23 Jul 2026",
-    image: "/images/social/mcc-25th-anniversary.jpg",
+    image: "/images/real/mcc-1982.png",
     excerpt:
       "Twenty-five years ago, Madrid Cricket Club was reborn from a simple idea shared between three friends over a beer. Today we celebrate a quarter-century of cricket, friendship, and community in Madrid.",
     isPlaceholder: false,
@@ -26,7 +26,7 @@ const articles = [
     title: "MCC Win ECCL 40 Overs Clash vs La Manga Torrevieja CC",
     category: "Match Report",
     date: "19 Jul 2026",
-    image: "/images/social/mcc-eccl-result-2.jpg",
+    image: "/images/real/mcc-la-manga-pro.jpg",
     excerpt:
       "Madrid Cricket Club posted 272/10 in 37.4 overs against La Manga Torrevieja Cricket Club, who fell short for 246/9. A commanding 26-run victory in the ECCL 40 Overs 2026.",
     isPlaceholder: false,
@@ -37,7 +37,7 @@ const articles = [
     title: "Fathers & Sprogs Tour — Two Wins in England at Blockley CC",
     category: "Tour Report",
     date: "20 Jul 2026",
-    image: "/images/social/mcc-fathers-sprogs.jpg",
+    image: "/images/real/mcc-ecn-lineup.jpg",
     excerpt:
       "A successful weekend away — Madrid CC's Fathers and Sprogs side travelled to Blockley Cricket Club in England and returned with two wins. A weekend to remember.",
     isPlaceholder: false,
@@ -48,7 +48,7 @@ const articles = [
     title: "Madrid Royals Make National League Debut",
     category: "Women's Cricket",
     date: "24 Apr 2024",
-    image: "/images/social/mcc-la-manga.jpg",
+    image: "/images/real/mcc-team-alicante.jpg",
     excerpt:
       "El Madrid Royals debutó en el primer fin de semana de la liga nacional femenina en Barcelona — a historic milestone for women's cricket at MCC. Un inicio fenomenal con una victoria ante La Manga.",
     isPlaceholder: false,
@@ -59,8 +59,7 @@ const articles = [
     title: "When Dhoni Came to Madrid",
     category: "Club History",
     date: "6 Nov 2016",
-    image: null,
-    imageUrl: "/images/news-hero-4.jpg",
+    image: "/images/real/mcc-article.jpg",
     excerpt:
       "On a glorious sunny Sunday, India's limited-overs captain and cricketing legend Mahendra Singh Dhoni paid a visit to our club in San Fernando de Henares, along with over 300 fans as part of a corporate event.",
     isPlaceholder: false,
@@ -71,8 +70,7 @@ const articles = [
     title: "Cricket Comes to the Obrevonac Refugee Camp, Serbia",
     category: "Community",
     date: "Aug 2017",
-    image: null,
-    imageUrl: "/images/news-hero-5.jpg",
+    image: "/images/real/mcc-youth-training.webp",
     excerpt:
       "How did some Brits playing cricket in Spain end up in Serbia playing with Afghans? Could it really be down to some Spaniards playing cricket in France? The remarkable story of our refugee camp visit.",
     isPlaceholder: false,
@@ -169,10 +167,10 @@ export default function NewsPage() {
             <article key={article.id} className={`glass-dark overflow-hidden card-hover ${article.isPlaceholder ? "opacity-40" : ""}`}>
               {/* Image */}
               <div className="relative aspect-[16/9] bg-[#1a0505]">
-                {(article.image || article.imageUrl) ? (
+                {article.image ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={imgSrc(article.image || article.imageUrl!)}
+                    src={imgSrc(article.image)}
                     alt={article.title}
                     className="w-full h-full object-cover absolute inset-0"
                   />
