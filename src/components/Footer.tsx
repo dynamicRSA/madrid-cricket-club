@@ -26,19 +26,13 @@ export default function Footer() {
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              {/* Real MCC logo */}
-              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-700/50" style={{ background: "#1a0505" }}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imgSrc("/images/logo_mcc.png")}
-                  alt="Madrid Cricket Club"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-              <div>
-                <div className="text-white font-display font-bold text-sm">MADRID</div>
-                <div className="text-gold-400 text-xs font-semibold tracking-widest">CRICKET CLUB</div>
-              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgSrc("/images/logo_mcc.png")}
+                alt="Madrid Cricket Club"
+                className="h-10 w-auto object-contain"
+                style={{ filter: "drop-shadow(0 0 8px rgba(180,0,0,0.4))" }}
+              />
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
               Cricket in the heart of Spain since <strong className="text-slate-300">1975</strong>.
@@ -82,14 +76,12 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Members */}
+          {/* Member Access */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Members</h3>
+            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Member Access</h3>
             <ul className="space-y-2.5">
               {[
                 { href: "/auth/signin", label: "Member Login" },
-                { href: "/dashboard", label: "My Dashboard" },
-                { href: "/admin", label: "Committee Admin" },
                 { href: "/join", label: "Join the Club" },
                 { href: "/privacy", label: "Privacy & GDPR Notice" },
               ].map((l) => (
@@ -108,6 +100,9 @@ export default function Footer() {
                 </button>
               </li>
             </ul>
+            <p className="text-slate-600 text-xs mt-4 leading-relaxed">
+              The member dashboard and committee panel are only accessible to registered members after signing in.
+            </p>
           </div>
 
           {/* Contact & Social */}
