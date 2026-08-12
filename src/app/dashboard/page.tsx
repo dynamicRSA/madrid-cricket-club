@@ -256,7 +256,7 @@ export default function DashboardPage() {
                   </div>
                 )}
 
-                {/* Upcoming fixtures */}
+                {/* Availability widget — only shows fixtures actually open */}
                 <div className="glass-dark p-6">
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-white font-display font-bold text-lg">Set Your Availability</h2>
@@ -264,41 +264,49 @@ export default function DashboardPage() {
                       View all <ChevronRight size={14} />
                     </button>
                   </div>
-                  <div className="space-y-3">
-                    {upcomingEvents.slice(0, 3).map((event) => {
-                      const status = getStatus(event.id);
-                      return (
-                        <div key={event.id} className="flex items-center gap-3 py-3 border-b border-white/[0.04] last:border-0">
-                          <div className="text-center min-w-[40px]">
-                            <div className="text-xs text-slate-500 uppercase">{formatDateShort(event.date).split(" ")[0]}</div>
-                            <div className="text-white font-bold text-sm">{formatDateShort(event.date).split(" ")[1]}</div>
+                  {registrationEvents.length === 0 ? (
+                    <div className="py-6 text-center">
+                      <Calendar size={24} className="text-slate-600 mx-auto mb-2" />
+                      <p className="text-slate-400 text-sm font-medium">No fixtures open for sign-up yet</p>
+                      <p className="text-slate-600 text-xs mt-1">The captain will open registration when the time is right.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {registrationEvents.slice(0, 3).map((event: any) => {
+                        const status = getStatus(event.id);
+                        return (
+                          <div key={event.id} className="flex items-center gap-3 py-3 border-b border-white/[0.04] last:border-0">
+                            <div className="text-center min-w-[40px]">
+                              <div className="text-xs text-slate-500 uppercase">{formatDateShort(event.date).split(" ")[0]}</div>
+                              <div className="text-white font-bold text-sm">{formatDateShort(event.date).split(" ")[1]}</div>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white text-sm font-medium truncate">{event.title}</p>
+                              <p className="text-slate-500 text-xs">{event.venue?.name || "TBC"}</p>
+                            </div>
+                            <div className="flex gap-1">
+                              {(["available", "maybe", "not_available"] as const).map((s) => (
+                                <button
+                                  key={s}
+                                  onClick={() => setEventAvailability(event.id, s)}
+                                  title={s === "available" ? "Available" : s === "maybe" ? "Maybe" : "Not available"}
+                                  className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
+                                    status === s
+                                      ? s === "available" ? "bg-brand-500/30 border-brand-500 text-brand-300"
+                                        : s === "maybe" ? "bg-gold-500/30 border-gold-500 text-gold-300"
+                                        : "bg-red-500/30 border-red-500 text-red-300"
+                                      : "bg-white/5 border-white/10 text-slate-500 hover:text-white"
+                                  }`}
+                                >
+                                  {s === "available" ? <CheckCircle size={14} /> : s === "maybe" ? <HelpCircle size={14} /> : <XCircle size={14} />}
+                                </button>
+                              ))}
+                            </div>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white text-sm font-medium truncate">{event.title}</p>
-                            <p className="text-slate-500 text-xs">{event.venue?.name || "TBC"}</p>
-                          </div>
-                          <div className="flex gap-1">
-                            {(["available", "maybe", "not_available"] as const).map((s) => (
-                              <button
-                                key={s}
-                                onClick={() => setEventAvailability(event.id, s)}
-                                title={s === "available" ? "Available" : s === "maybe" ? "Maybe" : "Not available"}
-                                className={`w-8 h-8 rounded-lg border flex items-center justify-center transition-all ${
-                                  status === s
-                                    ? s === "available" ? "bg-brand-500/30 border-brand-500 text-brand-300"
-                                      : s === "maybe" ? "bg-gold-500/30 border-gold-500 text-gold-300"
-                                      : "bg-red-500/30 border-red-500 text-red-300"
-                                    : "bg-white/5 border-white/10 text-slate-500 hover:text-white"
-                                }`}
-                              >
-                                {s === "available" ? <CheckCircle size={14} /> : s === "maybe" ? <HelpCircle size={14} /> : <XCircle size={14} />}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
