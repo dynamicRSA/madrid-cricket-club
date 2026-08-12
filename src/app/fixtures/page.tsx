@@ -10,10 +10,13 @@ export const metadata: Metadata = {
 };
 
 const typeConfig: Record<string, { label: string; className: string }> = {
-  match:   { label: "Match",    className: "bg-brand-600/20 text-brand-300 border border-brand-600/30" },
-  nets:    { label: "Training", className: "bg-gold-500/20 text-gold-400 border border-gold-500/30" },
+  match:      { label: "Match",      className: "bg-brand-600/20 text-brand-300 border border-brand-600/30" },
+  nets:       { label: "Training",   className: "bg-gold-500/20 text-gold-400 border border-gold-500/30" },
   tournament: { label: "Tournament", className: "bg-purple-500/20 text-purple-300 border border-purple-500/30" },
 };
+
+// Events that require registered membership to attend
+const MEMBERS_ONLY_TYPES = ["nets"];
 
 const formatLabel: Record<string, string> = {
   "40_over": "40 Overs",
@@ -131,12 +134,16 @@ export default function FixturesPage() {
                         <MapPin size={10} className="flex-shrink-0 text-brand-500" /> {e.venue.name}
                       </span>
                     )}
-                    {e.availability_deadline && (
-                      <span className="flex items-center gap-1 text-gold-600">
-                        <Calendar size={10} /> Availability by {new Date(e.availability_deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                      </span>
-                    )}
+                    {/* availability_deadline intentionally NOT shown publicly — members only */}
                   </div>
+
+                  {/* Members-only notice on training/nets events */}
+                  {MEMBERS_ONLY_TYPES.includes(e.type) && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[11px] text-gold-500/80">
+                      <Users size={10} />
+                      <span>Registered members only. <a href="/join" className="underline hover:text-gold-400">Join the club</a> to attend training.</span>
+                    </div>
+                  )}
 
                   {e.notes && (
                     <p className="text-slate-500 text-xs mt-1.5 italic leading-relaxed">{e.notes}</p>
@@ -148,19 +155,34 @@ export default function FixturesPage() {
         </div>
       </section>
 
-      {/* Note */}
-      <div className="pb-12 px-4" style={{ background: "#120808" }}>
-        <div className="container-wide max-w-4xl">
+      {/* Info callouts */}
+      <div className="pb-12 px-4 space-y-3" style={{ background: "#120808" }}>
+        <div className="container-wide max-w-4xl space-y-3">
+
+          {/* Training requires membership */}
+          <div className="glass-dark p-4 flex gap-3 items-start border border-gold-500/20">
+            <Users size={14} className="text-gold-400 mt-0.5 flex-shrink-0" />
+            <div>
+              <p className="text-gold-300 font-semibold text-xs mb-0.5">Training sessions are for registered members only</p>
+              <p className="text-slate-400 text-xs">
+                Net practice and all club training is open to paid-up MCC members. If you want to get involved,{" "}
+                <a href="/join" className="text-brand-400 hover:underline">join the club</a>{" "}
+                or <a href="/contact" className="text-brand-400 hover:underline">get in touch</a> first.
+              </p>
+            </div>
+          </div>
+
+          {/* Calendar note */}
           <div className="glass-dark p-4 flex gap-3 items-start">
-            <Info size={14} className="text-gold-400 mt-0.5 flex-shrink-0" />
+            <Info size={14} className="text-brand-400 mt-0.5 flex-shrink-0" />
             <p className="text-slate-400 text-xs">
-              For last-minute changes and full availability tracking, check{" "}
+              For the latest fixture updates and cancellations, check{" "}
               <a href="https://cricketinmadrid.com" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">cricketinmadrid.com</a>{" "}
               or follow{" "}
               <a href="https://www.instagram.com/madridcricketclub" target="_blank" rel="noopener noreferrer" className="text-brand-400 hover:underline">@madridcricketclub</a>.
-              Player availability requests will be sent out via WhatsApp/email ahead of each game.
             </p>
           </div>
+
         </div>
       </div>
 
