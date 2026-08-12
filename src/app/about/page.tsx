@@ -27,7 +27,7 @@ export default function AboutPage() {
           </div>
           <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 2001</p>
           <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-3">Madrid Cricket Club</h1>
-          <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain for 50 years and counting</p>
+          <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain, celebrating 25 years in 2026</p>
         </div>
       </section>
 
@@ -60,11 +60,11 @@ export default function AboutPage() {
               <h2 className="text-4xl font-display font-bold text-white mb-6">A Club With Deep Roots</h2>
               <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
                 <p>
-                  Madrid Cricket Club was formed in 2001, with the club celebrating its 25th anniversary in 2026.
-                  We were the only cricket club in Spain until Barcelona CC was founded in 1982.
+                  Madrid Cricket Club was formed in 2001 and is celebrating its 25th anniversary in 2026.
+                  What started as a small group of enthusiasts has grown into one of Spain's most active cricket clubs.
                 </p>
                 <p>
-                  The modern chapter began around 25 years ago when Jon Woodward, a Brit who has lived in Madrid for over 30 years, placed a classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From a conversation over a beer, a club was reborn.
+                  The club was founded when Jon Woodward, a Brit who has lived in Madrid for over 30 years, placed a classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From a conversation over a beer, Madrid Cricket Club was born.
                 </p>
                 <p>
                   El País described us in August 2026 as <em className="text-slate-200">"una institución con solera pero sin sede"</em> (an institution with heritage but without a home). That headline captures a real tension: Madrid City Council subsidises us with 2 hours a week at <strong className="text-white">La Elipa</strong> and around €7,000 a year in support for youth cricket. But for league matches, we travel 460km south to the Alicante coast.
@@ -89,7 +89,7 @@ export default function AboutPage() {
                 <img src={imgSrc("/images/real/mcc-1982.png")} alt="Madrid Cricket Club team 1982" className="w-full h-full object-cover" />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.8) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
-                  <span className="text-xs text-white/90 font-medium bg-black/60 px-2.5 py-1 rounded-md backdrop-blur">Historic Squad (1982/83) — Early Days of MCC</span>
+                  <span className="text-xs text-white/90 font-medium bg-black/60 px-2.5 py-1 rounded-md backdrop-blur">Early MCC at La Elipa, Madrid</span>
                 </div>
               </div>
               <div className="relative h-52 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
@@ -259,7 +259,8 @@ export default function AboutPage() {
         <div className="container-wide px-4">
           <h2 className="text-3xl font-display font-bold text-white mb-4">Want to be part of it?</h2>
           <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-            All abilities welcome — senior, women's, and junior. Whether you've played all your life or just want to give it a try, come down to La Elipa on a Sunday morning.
+            All abilities welcome — senior, women's, and junior. To join training sessions and games, you first need to be a registered member. Apply online, pay your membership fee, and once registered with Cricket España you will receive your login and can sign up for matches and net sessions.
+
           </p>
           <Link href="/join" className="btn-gold btn-lg">
             <Users size={18} /> Join the Club

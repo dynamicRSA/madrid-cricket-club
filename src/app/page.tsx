@@ -122,28 +122,29 @@ export default function HomePage() {
       <section className="relative min-h-[92vh] flex items-end overflow-hidden">
         {/* Background — Real MCC team photo */}
         <div
-          className="absolute inset-0 bg-cover bg-center bg-top"
+          className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: `url(${imgSrc("/images/real/mcc-team-alicante.jpg")})` }}
         >
-          {/* Lighter overlay at top (faces visible), heavier at bottom (text readable) */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/30 via-transparent to-[#120808]/95" />
+          {/* Strong dark gradient on the LEFT where text sits, fades out right so faces show */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#120808]/95 via-[#120808]/50 to-transparent" />
+          {/* Dark base at bottom for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#120808]/80 via-transparent to-[#1a0505]/40" />
         </div>
 
-        <div className="relative z-10 container-wide px-4 pb-20 text-center w-full">
-
-          <div className="animate-fade-up">
-            <p className="text-gold-400 text-sm font-semibold tracking-[0.3em] uppercase mb-3">
-              Est. 2001 · Cricket in the Heart of Spain
+        <div className="relative z-10 container-wide px-6 pb-20 w-full">
+          <div className="max-w-xl animate-fade-up">
+            <p className="text-gold-400 text-xs font-semibold tracking-[0.3em] uppercase mb-4">
+              Est. 2001 · Cricket in Madrid
             </p>
-            <h1 className="font-display text-5xl sm:text-7xl font-bold text-white mb-2 leading-tight">
+            <h1 className="font-display text-5xl sm:text-6xl lg:text-7xl font-bold text-white mb-4 leading-tight">
               Madrid<br />
               <span className="gradient-text-gold">Cricket Club</span>
             </h1>
-            <p className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto mt-4 mb-8">
-              One of Spain's oldest cricket clubs: playing, growing, and giving back since 2001.
-              All nationalities, all abilities, all welcome.
+            <p className="text-slate-300 text-base sm:text-lg max-w-md mb-8">
+              Playing, growing, and welcoming all since 2001.
+              All nationalities, all abilities.
             </p>
-            <div className="flex flex-wrap justify-center gap-3">
+            <div className="flex flex-wrap gap-3">
               <Link href="/join" className="btn-primary btn-lg">
                 Join the Club
               </Link>
@@ -160,6 +161,7 @@ export default function HomePage() {
           <ChevronDown size={16} className="text-red-500" />
         </div>
       </section>
+
 
       {/* ── Latest Result ──────────────────────────────────────────────────── */}
       <section className="py-8 px-4" style={{ background: "linear-gradient(135deg, #1a0505 0%, #200808 100%)" }}>
@@ -364,11 +366,11 @@ export default function HomePage() {
           </h2>
           <p className="text-slate-300 text-lg mb-8 max-w-xl mx-auto">
             Whether you're a seasoned player or have never picked up a bat,
-            Madrid Cricket Club is your home. Net practice every week — all levels welcome.
+            Madrid Cricket Club is your home. Join as a member, get registered with Cricket España, and sign up for games and training.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Link href="/join" className="btn-primary btn-lg">
-              Join Now — Free to Try
+              Join the Club
             </Link>
             <Link href="/contact" className="btn-outline btn-lg">
               Contact Us

@@ -62,7 +62,7 @@ export default function JoinPage() {
         <div className="container-content px-4 text-center">
           <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">Membership</p>
           <h1 className="text-5xl font-display font-bold text-white mb-4">Join Madrid Cricket Club</h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">Send us an enquiry and we&apos;ll be in touch within 48 hours to arrange a trial nets session.</p>
+          <p className="text-slate-400 text-lg max-w-xl mx-auto">Complete your application, pay your membership fee, and get registered with Cricket España. Once confirmed, you receive your member login to sign up for games and training sessions.</p>
         </div>
       </section>
 
@@ -76,12 +76,12 @@ export default function JoinPage() {
                 <h3 className="text-white font-display font-bold text-lg mb-4">What to Expect</h3>
                 <ul className="space-y-3 text-slate-300 text-sm">
                   {[
-                    "We'll reply within 48 hours",
-                    "Invited to a nets session to meet the squad",
-                    "Full membership application submitted",
-                    "Committee review and approval",
-                    "Pay membership fee (€100 senior / €60 junior full year)",
-                    "Registered with Cricket España — ready to play!",
+                    "Fill in the application form below",
+                    "Committee reviews your details and confirms eligibility",
+                    "Pay your membership fee (see fees below)",
+                    "Submit all details required for Cricket España registration",
+                    "Registration confirmed — you receive your member login",
+                    "Sign up for fixtures and nets sessions through your dashboard",
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <span className="w-5 h-5 rounded-full bg-brand-700/60 text-brand-300 text-xs flex items-center justify-center shrink-0 font-bold mt-0.5">
