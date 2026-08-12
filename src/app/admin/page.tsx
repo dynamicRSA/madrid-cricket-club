@@ -17,7 +17,7 @@ import {
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type ChargeRow = Database["public"]["Tables"]["charges"]["Row"];
-type Tab = "members" | "payments" | "availability" | "reports";
+type Tab = "members" | "selection" | "payments" | "availability" | "reports";
 
 // Role check — admins must have role "admin", "super_admin", or "treasurer"
 const ADMIN_ROLES = ["admin", "super_admin", "treasurer", "captain", "secretary"];
@@ -25,7 +25,7 @@ const ADMIN_ROLES = ["admin", "super_admin", "treasurer", "captain", "secretary"
 export default function AdminPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("members");
+  const [tab, setTab] = useState<Tab>("selection");
 
   // Auth & role check
   const [member, setMember] = useState<MemberRow | null>(null);
@@ -70,6 +70,7 @@ export default function AdminPage() {
   }
 
   const isSuperAdmin = user?.email?.toLowerCase() === "svenprinsloo@gmail.com" || !!((member as any)?.roles?.includes("super_admin"));
+  const isCaptain = isSuperAdmin || !!((member as any)?.roles?.some((r: string) => ["captain", "vice_captain", "admin"].includes(r)));
   const isTreasurer = !!((member as any)?.roles?.includes("treasurer")) || isSuperAdmin;
 
   return (
@@ -84,7 +85,7 @@ export default function AdminPage() {
               <ShieldAlert size={18} className="text-brand-400" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-bold text-white">Admin Dashboard</h1>
+              <h1 className="text-xl font-display font-bold text-white">Admin & Captaincy Panel</h1>
               <p className="text-slate-500 text-xs">
                 {member?.roles?.map((r: string) => r.replace("_", " ")).join(", ")}
               </p>
@@ -103,7 +104,8 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="container-wide px-4 mt-4 flex gap-1 overflow-x-auto">
           {([
-            { id: "members", label: "Members", icon: Users },
+            { id: "selection", label: "Team Selection (Captain)", icon: CheckCircle },
+            { id: "members", label: "Members Roster", icon: Users },
             ...(isTreasurer ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
             { id: "availability", label: "Availability Grid", icon: Calendar },
             { id: "reports", label: "Reports", icon: BarChart3 },
@@ -126,6 +128,7 @@ export default function AdminPage() {
       {/* Tab content */}
       <div className="flex-1" style={{ background: "#0d1420" }}>
         <div className="container-wide px-4 py-8">
+          {tab === "selection" && <CaptainSelectionTab supabase={supabase} />}
           {tab === "members" && <MembersTab supabase={supabase} isSuperAdmin={isSuperAdmin} />}
           {tab === "payments" && <PaymentsTab supabase={supabase} />}
           {tab === "availability" && <AvailabilityTab supabase={supabase} />}
@@ -568,3 +571,145 @@ function StatusBadge({ status }: { status: string }) {
   };
   return <span className={map[status] || "badge-slate"}>{status.replace(/_/g, " ")}</span>;
 }
+
+// ─── Captain Team Selection Tab ────────────────────────────────────────────────
+
+function CaptainSelectionTab({ supabase }: { supabase: any }) {
+  const [selectedMatch, setSelectedMatch] = useState("mcc-bicc-lamanga-sep5");
+  const [published, setPublished] = useState(false);
+  const [notifying, setNotifying] = useState(false);
+
+  const [squad, setSquad] = useState([
+    { id: "1", name: "Jon Woodward", role: "All-rounder", captaincy: "C", dietary: "Standard", travel: "Driving (3 seats)", status: "Confirmed" },
+    { id: "2", name: "Sven Prinsloo", role: "All-rounder / Admin", captaincy: "VC", dietary: "Standard", travel: "Driving (2 seats)", status: "Confirmed" },
+    { id: "3", name: "Lewis Clark", role: "Batsman", captaincy: "", dietary: "Vegetarian", travel: "Passenger", status: "Confirmed" },
+    { id: "4", name: "Ashish Kumar", role: "Wicket-keeper", captaincy: "WK", dietary: "Halal", travel: "Passenger", status: "Confirmed" },
+    { id: "5", name: "Waheed Raza", role: "Bowler", captaincy: "", dietary: "Halal", travel: "Passenger", status: "Pending Confirmation" },
+    { id: "6", name: "Ravi Sharma", role: "Bowler", captaincy: "", dietary: "Vegetarian", travel: "Independent", status: "Confirmed" },
+    { id: "7", name: "Daniel Smith", role: "Batsman", captaincy: "", dietary: "Standard", travel: "Passenger", status: "Confirmed" },
+    { id: "8", name: "Marcus Rourke", role: "All-rounder", captaincy: "", dietary: "Standard", travel: "Driving (3 seats)", status: "Pending Confirmation" },
+    { id: "9", name: "Victor Parmekar", role: "Bowler", captaincy: "", dietary: "Standard", travel: "Passenger", status: "Confirmed" },
+    { id: "10", name: "Paul Mason", role: "Batsman", captaincy: "", dietary: "Gluten-free", travel: "Passenger", status: "Confirmed" },
+    { id: "11", name: "Adam Grant", role: "Bowler", captaincy: "", dietary: "Standard", travel: "Independent", status: "Confirmed" },
+  ]);
+
+  const [reserves, setReserves] = useState([
+    { id: "12", name: "Stephan Salter (12th Man)", role: "Batsman", status: "On Standby" },
+    { id: "13", name: "Giles Walters", role: "Bowler", status: "On Standby" }
+  ]);
+
+  function handlePublishSquad() {
+    setNotifying(true);
+    setTimeout(() => {
+      setNotifying(false);
+      setPublished(true);
+    }, 1200);
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white mb-1 flex items-center gap-2">
+            <span>Captain&apos;s Team Selection Panel</span>
+            <span className="badge-red text-xs">Captain / VC Control</span>
+          </h2>
+          <p className="text-slate-400 text-sm">Select player XI, assign leadership roles, manage match teas & travel arrangements.</p>
+        </div>
+        <button onClick={handlePublishSquad} disabled={notifying} className="btn-primary">
+          {notifying ? <><Loader2 size={14} className="animate-spin" /> Publishing Squad...</> : published ? "✓ Squad Announced & Sent" : "Publish XI & Notify Squad"}
+        </button>
+      </div>
+
+      {/* Match selector */}
+      <div className="glass-dark p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <label className="label text-xs">Target Match Fixture</label>
+          <select
+            value={selectedMatch}
+            onChange={(e) => setSelectedMatch(e.target.value)}
+            className="input text-sm min-w-[320px]"
+          >
+            <option value="mcc-bicc-lamanga-sep5">5 Sep 2026 — MCC 1st XI vs Barcelona Intl CC (La Manga)</option>
+            <option value="mcc-bicc-lamanga-sep6">6 Sep 2026 — MCC 1st XI vs Barcelona Intl CC (40-Over)</option>
+            <option value="mcc-ecs-t10-oct19">19 Oct 2026 — ECS T10 Madrid Opener (La Elipa)</option>
+          </select>
+        </div>
+        <div className="flex gap-4 text-xs">
+          <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
+            <span className="text-slate-400 block">Available Players</span>
+            <span className="text-brand-400 font-bold text-base">14 Players Available</span>
+          </div>
+          <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
+            <span className="text-slate-400 block">Squad Selected</span>
+            <span className="text-gold-400 font-bold text-base">11 XI + 2 Reserves</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Selected XI Roster */}
+      <div className="glass-dark p-6 space-y-4">
+        <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
+          <h3 className="text-white font-semibold text-lg">Official Selected XI ({squad.length} Players)</h3>
+          <span className="text-xs text-slate-400">Match arrival: 07:30 – 08:00 AM</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="table-auto text-xs min-w-[700px]">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Player Name</th>
+                <th>Role</th>
+                <th>Designation</th>
+                <th>Dietary / Catering</th>
+                <th>Travel Arrangement</th>
+                <th>Player Confirmation</th>
+              </tr>
+            </thead>
+            <tbody>
+              {squad.map((p, idx) => (
+                <tr key={p.id}>
+                  <td className="font-bold text-brand-400">{idx + 1}</td>
+                  <td className="font-semibold text-white">{p.name}</td>
+                  <td className="text-slate-300">{p.role}</td>
+                  <td>
+                    {p.captaincy ? (
+                      <span className="badge-gold font-bold">{p.captaincy}</span>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
+                  </td>
+                  <td className="text-slate-400">{p.dietary}</td>
+                  <td className="text-slate-400">{p.travel}</td>
+                  <td>
+                    <span className={p.status === "Confirmed" ? "badge-green" : "badge-gold"}>
+                      {p.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Standby & Reserves */}
+      <div className="glass-dark p-6 space-y-3">
+        <h3 className="text-white font-semibold text-base border-b border-white/[0.06] pb-2">Standby Reserves (12th & 13th Man)</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+          {reserves.map((r) => (
+            <div key={r.id} className="flex justify-between items-center p-3 rounded-xl bg-slate-900/60 border border-white/[0.04]">
+              <div>
+                <p className="text-white font-medium">{r.name}</p>
+                <p className="text-slate-500 text-[11px]">{r.role}</p>
+              </div>
+              <span className="badge-slate text-[10px]">{r.status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
