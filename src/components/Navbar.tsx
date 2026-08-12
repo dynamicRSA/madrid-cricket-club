@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Menu, X, Globe, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { imgSrc } from "@/lib/imgSrc";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -42,7 +43,7 @@ export default function Navbar() {
           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-brand-600/50 shadow-glow-red">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/images/logo_mcc.png"
+              src={imgSrc("/images/logo_mcc.png")}
               alt="MCC Logo"
               className="w-full h-full object-contain bg-[#1a0505]"
             />

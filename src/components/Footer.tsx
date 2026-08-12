@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin, ExternalLink } from "lucide-react";
+import { imgSrc } from "@/lib/imgSrc";
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -27,7 +28,7 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-700/50" style={{ background: "#1a0505" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/images/logo_mcc.png"
+                  src={imgSrc("/images/logo_mcc.png")}
                   alt="Madrid Cricket Club"
                   className="w-full h-full object-contain"
                 />

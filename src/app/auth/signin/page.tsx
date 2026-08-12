@@ -5,6 +5,8 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import Image from "next/image";
 import { useState, Suspense } from "react";
+import { imgSrc } from "@/lib/imgSrc";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import { Eye, EyeOff, Loader2, Mail, Lock, AlertCircle } from "lucide-react";
@@ -56,13 +58,13 @@ function SignInForm() {
 
           {/* Logo */}
           <div className="text-center mb-8">
-            <Image
-              src="/images/logo.png"
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imgSrc("/images/logo_mcc.png")}
               alt="MCC Logo"
               width={72}
               height={72}
-              className="rounded-full mx-auto mb-4"
-              loading="eager"
+              className="rounded-full mx-auto mb-4 w-18 h-18"
             />
             <h1 className="text-2xl font-display font-bold text-white">Member Sign In</h1>
             <p className="text-slate-400 text-sm mt-1">Madrid Cricket Club</p>

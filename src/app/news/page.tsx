@@ -1,8 +1,9 @@
+"use client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Image from "next/image";
 import Link from "next/link";
 import { Calendar, Clock, ArrowRight, Tag } from "lucide-react";
+import { imgSrc } from "@/lib/imgSrc";
 
 // ─── Real & placeholder news items ─────────────────────────────────────────
 // Real articles sourced from cricketinmadrid.com and @madridcricketclub Instagram
@@ -134,13 +135,12 @@ export default function NewsPage() {
         <div className="container-wide">
           <div className="glass-dark overflow-hidden card-hover">
             <div className="grid md:grid-cols-2">
-              <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[320px]">
-                <Image
-                  src={featured.image!}
+              <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[320px] overflow-hidden">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={imgSrc(featured.image!)}
                   alt={featured.title}
-                  fill
-                  className="object-cover"
-                  unoptimized
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute top-4 left-4">
                   <span className="badge-red">{featured.category}</span>
@@ -170,12 +170,11 @@ export default function NewsPage() {
               {/* Image */}
               <div className="relative aspect-[16/9] bg-[#1a0505]">
                 {(article.image || article.imageUrl) ? (
-                  <Image
-                    src={article.image || article.imageUrl!}
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imgSrc(article.image || article.imageUrl!)}
                     alt={article.title}
-                    fill
-                    className="object-cover"
-                    unoptimized
+                    className="w-full h-full object-cover absolute inset-0"
                   />
                 ) : (
                   <div className="absolute inset-0 flex items-center justify-center">

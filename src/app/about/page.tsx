@@ -1,15 +1,10 @@
+"use client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Image from "next/image";
 import Link from "next/link";
 import { COMMITTEE } from "@/lib/mock-data";
 import { MapPin, ExternalLink, Users, Trophy, Star, Mail, Phone, Calendar } from "lucide-react";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "About — Madrid Cricket Club",
-  description: "About Madrid Cricket Club — history since 1975, home ground at La Elipa, committee, and affiliation to Cricket España.",
-};
+import { imgSrc } from "@/lib/imgSrc";
 
 export default function AboutPage() {
   return (
@@ -18,27 +13,17 @@ export default function AboutPage() {
 
       {/* Hero — real team photo */}
       <section className="relative min-h-[70vh] flex items-end overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          {/* Real team photo — Fathers & Sprogs at Blockley CC */}
-          <Image
-            src="/images/social/mcc-fathers-sprogs.jpg"
-            alt="Madrid Cricket Club team"
-            fill
-            className="object-cover object-top"
-            priority
-          />
+        <div
+          className="absolute inset-0 z-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${imgSrc("/images/social/mcc-fathers-sprogs.jpg")})` }}
+        >
           <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(18,8,8,0.3) 0%, rgba(18,8,8,0.6) 60%, rgba(18,8,8,1) 100%)" }} />
         </div>
         <div className="relative z-10 w-full container-wide px-4 pb-16 pt-40">
           {/* Real MCC logo */}
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-brand-600/60 mb-4 shadow-glow-red" style={{ background: "#1a0505" }}>
-            <Image
-              src="/images/logo_mcc.png"
-              alt="Madrid Cricket Club"
-              width={80}
-              height={80}
-              className="w-full h-full object-contain"
-            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={imgSrc("/images/logo_mcc.png")} alt="Madrid Cricket Club" width={80} height={80} className="w-full h-full object-contain" />
           </div>
           <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 1975</p>
           <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-3">Madrid Cricket Club</h1>
@@ -100,24 +85,16 @@ export default function AboutPage() {
             {/* Charity & community photo */}
             <div className="space-y-4">
               <div className="relative h-56 rounded-2xl overflow-hidden">
-                <Image
-                  src="/images/social/mcc-alsama-project.jpg"
-                  alt="Alsama Project — MCC supporting Syrian refugees in Lebanon"
-                  fill
-                  className="object-cover"
-                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imgSrc("/images/social/mcc-alsama-project.jpg")} alt="Alsama Project — MCC supporting Syrian refugees in Lebanon" className="w-full h-full object-cover" />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-xs text-white/80 bg-black/40 px-2 py-0.5 rounded">Alsama Project — supporting Syrian refugees in Lebanon</span>
                 </div>
               </div>
               <div className="relative h-48 rounded-2xl overflow-hidden">
-                <Image
-                  src="/images/social/mcc-serbia-2018.jpg"
-                  alt="Obrevonac refugee camp visit, Serbia 2018"
-                  fill
-                  className="object-cover"
-                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={imgSrc("/images/social/mcc-serbia-2018.jpg")} alt="Obrevonac refugee camp visit, Serbia 2018" className="w-full h-full object-cover" />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-xs text-white/80 bg-black/40 px-2 py-0.5 rounded">Obrevonac Refugee Camp, Serbia 2018</span>

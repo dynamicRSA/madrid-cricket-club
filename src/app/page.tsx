@@ -1,8 +1,10 @@
-import Image from "next/image";
+"use client";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { imgSrc } from "@/lib/imgSrc";
 import { Calendar, Trophy, Users, MapPin, ChevronRight, Star } from "lucide-react";
+
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
@@ -117,15 +119,11 @@ export default function HomePage() {
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
-        {/* Background — Real MCC team photo (Fathers & Sprogs at Blockley CC, England) */}
-        <div className="absolute inset-0">
-          <Image
-            src="/images/social/mcc-fathers-sprogs.jpg"
-            alt="Madrid Cricket Club team"
-            fill
-            className="object-cover object-top"
-            priority
-          />
+        {/* Background — Real MCC team photo */}
+        <div
+          className="absolute inset-0 bg-cover bg-top"
+          style={{ backgroundImage: `url(${imgSrc("/images/social/mcc-fathers-sprogs.jpg")})` }}
+        >
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/70 via-[#120808]/60 to-[#120808]" />
         </div>
 
@@ -133,13 +131,13 @@ export default function HomePage() {
           {/* Logo emblem */}
           <div className="mb-6 flex justify-center">
             <div className="w-24 h-24 rounded-full border-4 border-red-600/60 bg-[#1a0505]/80 backdrop-blur flex items-center justify-center shadow-glow-red">
-              <Image
-                src="/images/logo_mcc.png"
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imgSrc("/images/logo_mcc.png")}
                 alt="Madrid Cricket Club logo"
                 width={80}
                 height={80}
-                className="object-contain"
-                unoptimized
+                className="object-contain w-20 h-20"
               />
             </div>
           </div>
@@ -348,12 +346,11 @@ export default function HomePage() {
                 className="glass-dark overflow-hidden card-hover group"
               >
                 <div className="relative aspect-[4/3] overflow-hidden">
-                  <Image
-                    src={p.image}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={imgSrc(p.image)}
                     alt={p.caption}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    unoptimized
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#120808]/70 to-transparent" />
                 </div>

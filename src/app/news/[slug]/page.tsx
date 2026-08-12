@@ -1,12 +1,12 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import Image from "next/image";
 import Link from "next/link";
 import { NEWS } from "@/lib/mock-data";
 import { formatDate } from "@/lib/utils";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
 import type { Metadata } from "next";
+import { imgSrc } from "@/lib/imgSrc";
 
 interface Props {
   params: { slug: string };
@@ -50,16 +50,12 @@ export default function ArticlePage({ params }: Props) {
       {/* Hero */}
       <section className="relative pt-24 pb-0">
         {article.hero_image_url && (
-          <div className="relative h-[50vh] md:h-[60vh] overflow-hidden">
-            <Image
-              src={article.hero_image_url}
-              alt={article.title}
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20" />
-          </div>
+          <div
+              className="relative h-[50vh] md:h-[60vh] overflow-hidden bg-cover bg-center"
+              style={{ backgroundImage: `url(${imgSrc(article.hero_image_url)})` }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-slate-950/20" />
+            </div>
         )}
       </section>
 
@@ -129,9 +125,10 @@ export default function ArticlePage({ params }: Props) {
             {NEWS.filter((a) => a.slug !== params.slug).slice(0, 2).map((a) => (
               <Link key={a.slug} href={`/news/${a.slug}`} className="glass-dark p-5 card-hover group flex gap-4">
                 {a.hero_image_url && (
-                  <div className="relative w-24 h-20 rounded-lg overflow-hidden shrink-0">
-                    <Image src={a.hero_image_url} alt={a.title} fill className="object-cover" />
-                  </div>
+                  <div
+                      className="relative w-24 h-20 rounded-lg overflow-hidden shrink-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${imgSrc(a.hero_image_url)})` }}
+                    />
                 )}
                 <div>
                   <p className="text-slate-500 text-xs mb-1">{formatDate(a.published_at, "en", "d MMM yyyy")}</p>
