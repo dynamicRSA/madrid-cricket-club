@@ -2271,11 +2271,10 @@ function JerseyTab({ supabase }: { supabase: any }) {
 
   async function load() {
     setLoading(true);
-    // First try with jersey columns (requires DB migration)
+    // First try with jersey columns (requires DB migration to add those columns)
     const { data, error } = await supabase
       .from("members")
       .select("id, preferred_name, full_legal_name, status, membership_category, jersey_number, jersey_number_requested, jersey_number_status")
-      .in("status", ["active", "pending_approval", "application"])
       .order("full_legal_name");
 
     if (error) {
@@ -2283,9 +2282,13 @@ function JerseyTab({ supabase }: { supabase: any }) {
       const { data: fallback } = await supabase
         .from("members")
         .select("id, preferred_name, full_legal_name, status, membership_category")
-        .in("status", ["active", "pending_approval", "application"])
         .order("full_legal_name");
-      const rows = (fallback || []).map((m: any) => ({ ...m, jersey_number: null, jersey_number_requested: null, jersey_number_status: "none" }));
+      const rows = (fallback || []).map((m: any) => ({
+        ...m,
+        jersey_number: null,
+        jersey_number_requested: null,
+        jersey_number_status: "none",
+      }));
       setMembers(rows);
       const init: Record<string, string> = {};
       rows.forEach((m: any) => { init[m.id] = ""; });
@@ -2296,7 +2299,6 @@ function JerseyTab({ supabase }: { supabase: any }) {
 
     const rows = data || [];
     setMembers(rows);
-    // Initialise drafts from current values
     const init: Record<string, string> = {};
     rows.forEach((m: any) => { init[m.id] = m.jersey_number != null ? String(m.jersey_number) : ""; });
     setDrafts(init);
