@@ -333,33 +333,61 @@ export default function DashboardPage() {
                 }
 
                 return (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Unlocked Catering & Ground Meal Options */}
-                    <div className="glass-dark p-6 space-y-4">
-                      <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
-                        <h3 className="text-white font-semibold flex items-center gap-2">
-                          <Utensils size={16} className="text-brand-400" />
-                          <span>Match Logistics & Ground Meal Choice</span>
-                        </h3>
-                        <span className="badge-green text-xs">Selection Confirmed</span>
-                      </div>
-                      <div className="space-y-2 text-xs">
-                        <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl space-y-1">
-                          <p className="text-brand-300 font-semibold">⏰ Player Meet Arrival: 07:30 – 08:00 AM</p>
-                          <p className="text-slate-300">Match Start: 08:30 AM · ECN Live Broadcast Streamed Online</p>
-                          <p className="text-slate-400 text-[11px]">Players must be happy to be recorded as all games are streamed live on ECN channels.</p>
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Game 1 Catering */}
+                      <div className="glass-dark p-6 space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                          <div>
+                            <span className="badge-green text-[10px]">Game 1 · Sat 5 Sep</span>
+                            <h3 className="text-white font-semibold text-base mt-1">MCC vs Barcelona International CC (T20)</h3>
+                            <p className="text-slate-400 text-xs">Sporting Alfaz Ground</p>
+                          </div>
                         </div>
 
-                        <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3 mt-3">
-                          <p className="text-white font-semibold text-xs">Select Ground Meal Choice for Post-Match:</p>
-                          <select className="input text-xs">
-                            <option value="beef_burger">Beef Burger & Chips (Ground Special)</option>
-                            <option value="chicken_burger">Chicken Burger & Chips</option>
-                            <option value="veg_paella">Vegetarian Paella</option>
-                            <option value="halal_wrap">Halal Certified Chicken Wrap</option>
-                            <option value="salad_bowl">Fresh Mediterranean Salad Bowl</option>
-                          </select>
-                          <p className="text-slate-500 text-[11px]">Your meal choice is sent directly to the ground catering manager once selected.</p>
+                        <div className="space-y-3 text-xs">
+                          <div className="bg-brand-500/10 border border-brand-500/20 p-3 rounded-xl space-y-1">
+                            <p className="text-brand-300 font-semibold">⏰ Meet: 07:30 AM | Start: 08:30 AM</p>
+                            <p className="text-slate-300">Broadcast: ECN Live Online Stream</p>
+                          </div>
+
+                          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                            <p className="text-white font-semibold text-xs">Ground Meal Choice for Game 1:</p>
+                            <select className="input text-xs">
+                              <option value="beef_burger">Beef Burger & Chips (Alfaz Special)</option>
+                              <option value="chicken_burger">Chicken Burger & Chips</option>
+                              <option value="veg_paella">Vegetarian Paella</option>
+                              <option value="halal_wrap">Halal Certified Chicken Wrap</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Game 2 Catering */}
+                      <div className="glass-dark p-6 space-y-4">
+                        <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                          <div>
+                            <span className="badge-gold text-[10px]">Game 2 · Sun 6 Sep</span>
+                            <h3 className="text-white font-semibold text-base mt-1">MCC vs Barcelona International CC (40-Over)</h3>
+                            <p className="text-slate-400 text-xs">La Manga Club Ground 1</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3 text-xs">
+                          <div className="bg-gold-500/10 border border-gold-500/20 p-3 rounded-xl space-y-1">
+                            <p className="text-gold-300 font-semibold">⏰ Meet: 08:00 AM | Start: 09:00 AM</p>
+                            <p className="text-slate-300">Broadcast: ECN Live Online Stream</p>
+                          </div>
+
+                          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                            <p className="text-white font-semibold text-xs">Ground Meal Choice for Game 2:</p>
+                            <select className="input text-xs">
+                              <option value="post_match_bbq">Post-Match Club House BBQ</option>
+                              <option value="veg_lasagna">Vegetarian Lasagna & Salad</option>
+                              <option value="halal_lamb">Halal Lamb Wrap & Chips</option>
+                              <option value="salad_bowl">Fresh Mediterranean Salad Bowl</option>
+                            </select>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -367,10 +395,10 @@ export default function DashboardPage() {
                     {/* Unlocked Confirmed XI */}
                     <div className="glass-dark p-6 space-y-4">
                       <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
-                        <h3 className="text-white font-semibold text-base">Confirmed Match XI</h3>
+                        <h3 className="text-white font-semibold text-base">Confirmed Weekend Match XI</h3>
                         <span className="badge-gold text-xs">Published Squad</span>
                       </div>
-                      <div className="space-y-2 text-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                         {[
                           { name: "Jon Woodward", designation: "(C)", role: "All-rounder" },
                           { name: "Sven Prinsloo", designation: "(VC)", role: "All-rounder / Admin" },
