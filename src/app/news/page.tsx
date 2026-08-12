@@ -59,7 +59,7 @@ const articles = [
     category: "Club History",
     date: "6 Nov 2016",
     image: null,
-    imageUrl: "https://www.cricketinmadrid.com/images/blog/articles/P1080419.jpg",
+    imageUrl: "/images/news-hero-4.jpg",
     excerpt:
       "On a glorious sunny Sunday, India's limited-overs captain and cricketing legend Mahendra Singh Dhoni paid a visit to our club in San Fernando de Henares, along with over 300 fans as part of a corporate event.",
     isPlaceholder: false,
@@ -71,7 +71,7 @@ const articles = [
     category: "Community",
     date: "Aug 2017",
     image: null,
-    imageUrl: "https://www.cricketinmadrid.com/images/blog/posts/P1090833copy.jpg",
+    imageUrl: "/images/news-hero-5.jpg",
     excerpt:
       "How did some Brits playing cricket in Spain end up in Serbia playing with Afghans? Could it really be down to some Spaniards playing cricket in France? The remarkable story of our refugee camp visit.",
     isPlaceholder: false,

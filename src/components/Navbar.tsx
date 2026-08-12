@@ -42,7 +42,7 @@ export default function Navbar() {
           <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-brand-600/50 shadow-glow-red">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="https://www.cricketinmadrid.com/images/logo_small.png"
+              src="/images/logo_mcc.png"
               alt="MCC Logo"
               className="w-full h-full object-contain bg-[#1a0505]"
             />

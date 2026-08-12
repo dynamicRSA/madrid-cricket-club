@@ -58,7 +58,7 @@ export default function JoinPage() {
                     "Invited to a nets session to meet the squad",
                     "Full membership application submitted",
                     "Committee review and approval",
-                    "Pay membership fee (€80 senior / €40 junior)",
+                    "Pay membership fee (€100 senior / €60 junior full year)",
                     "Registered with Cricket España — ready to play!",
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-3">
@@ -75,10 +75,10 @@ export default function JoinPage() {
                 <h3 className="text-white font-display font-bold mb-3">Membership Fees</h3>
                 <div className="space-y-2 text-sm">
                   {[
-                    { cat: "Senior Full Year", fee: "€80" },
-                    { cat: "Senior Half Year", fee: "€50" },
-                    { cat: "Junior Full Year", fee: "€40" },
-                    { cat: "Junior Half Year", fee: "€25" },
+                    { cat: "Senior Full Year", fee: "€100" },
+                    { cat: "Senior Half Year", fee: "€60" },
+                    { cat: "Junior Full Year", fee: "€60" },
+                    { cat: "Junior Half Year", fee: "€35" },
                   ].map((row) => (
                     <div key={row.cat} className="flex justify-between text-slate-300">
                       <span>{row.cat}</span>

@@ -32,10 +32,11 @@ export default function AboutPage() {
         <div className="relative z-10 w-full container-wide px-4 pb-16 pt-40">
           {/* Real MCC logo */}
           <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-brand-600/60 mb-4 shadow-glow-red" style={{ background: "#1a0505" }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://www.cricketinmadrid.com/images/logo_small.png"
+            <Image
+              src="/images/logo_mcc.png"
               alt="Madrid Cricket Club"
+              width={80}
+              height={80}
               className="w-full h-full object-contain"
             />
           </div>
@@ -74,21 +75,17 @@ export default function AboutPage() {
               <h2 className="text-4xl font-display font-bold text-white mb-6">A Club With Deep Roots</h2>
               <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
                 <p>
-                  Madrid Cricket Club was originally formed in <strong className="text-white">1975</strong> by a group of English and Indian expats.
-                  We were the only cricket club in Spain until 1982, when Barcelona CC was founded.
+                  Madrid Cricket Club was formed in <strong className="text-white">1975</strong>, making us one of Spain's oldest cricket clubs.
+                  We were the only cricket club in Spain until Barcelona CC was founded in 1982.
                 </p>
                 <p>
-                  The modern chapter of the club began around 25 years ago when Jon Woodward — a Brit who has lived in Madrid for over 30 years — placed a small classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From that conversation over a beer, a club was reborn.
+                  The modern chapter began around 25 years ago when Jon Woodward — a Brit who has lived in Madrid for over 30 years — placed a classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From a conversation over a beer, a club was reborn.
                 </p>
                 <p>
-                  Today MCC has over <strong className="text-white">100 members</strong> from more than a dozen nationalities and fields men's, women's (Madrid Royals), and junior teams.
-                  In August 2026, El País described us as <em className="text-slate-200">"una institución con solera"</em> — an institution with heritage.
+                  El País described us in August 2026 as <em className="text-slate-200">"una institución con solera pero sin sede"</em> — an institution with heritage but without a home. That headline captures a real tension: Madrid City Council subsidises us with 2 hours a week at <strong className="text-white">La Elipa</strong> and around €7,000 a year in support for youth cricket. But for league matches, we travel 460km south to the Alicante coast.
                 </p>
                 <p>
-                  The club trains at <strong className="text-white">Centro Deportivo Municipal La Elipa</strong> in Madrid, supported by Madrid City Council with subsidised weekly access. For 40-over and coastal league cricket, we travel to the <strong className="text-white">Sporting Alfaz cricket ground</strong> in Alicante — 460km away. That's the reality of cricket in Spain, and we embrace it.
-                </p>
-                <p>
-                  Cricket enters the <strong className="text-white">Olympics in Los Angeles 2028</strong>, and Spain now has its own <strong className="text-white">Federación Española de Cricket</strong>. The future has never looked brighter.
+                  Today MCC has over <strong className="text-white">100 members</strong> from more than a dozen nationalities. There are now 200+ registered cricketers across 6 clubs in Madrid, plus around 15 informal groups. Cricket enters the <strong className="text-white">Olympics at Los Angeles 2028</strong>, and this autumn Madrid hosts its first ever <strong className="text-white">20-over city league at La Elipa</strong> — six teams, three months. The tide is turning.
                 </p>
                 <a
                   href="https://elpais.com/espana/madrid/2026-08-09/madrid-cricket-club-una-institucion-con-solera-pero-sin-sede-exiliado-en-la-costa-alicantina.html"
@@ -96,7 +93,7 @@ export default function AboutPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-brand-400 text-xs hover:underline mt-1"
                 >
-                  Read the El País feature <ExternalLink size={11} />
+                  Read the El País feature (Aug 2026) <ExternalLink size={11} />
                 </a>
               </div>
             </div>
@@ -104,11 +101,10 @@ export default function AboutPage() {
             <div className="space-y-4">
               <div className="relative h-56 rounded-2xl overflow-hidden">
                 <Image
-                  src="https://www.cricketinmadrid.com/images/cricket-bourj-2.jpg.webp"
+                  src="/images/social/mcc-alsama-project.jpg"
                   alt="Alsama Project — MCC supporting Syrian refugees in Lebanon"
                   fill
                   className="object-cover"
-                  unoptimized
                 />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
@@ -117,11 +113,10 @@ export default function AboutPage() {
               </div>
               <div className="relative h-48 rounded-2xl overflow-hidden">
                 <Image
-                  src="https://www.cricketinmadrid.com/images/serbia_2018/serbia2.jpg"
+                  src="/images/social/mcc-serbia-2018.jpg"
                   alt="Obrevonac refugee camp visit, Serbia 2018"
                   fill
                   className="object-cover"
-                  unoptimized
                 />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.7) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">

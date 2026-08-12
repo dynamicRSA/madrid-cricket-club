@@ -134,7 +134,7 @@ export default function HomePage() {
           <div className="mb-6 flex justify-center">
             <div className="w-24 h-24 rounded-full border-4 border-red-600/60 bg-[#1a0505]/80 backdrop-blur flex items-center justify-center shadow-glow-red">
               <Image
-                src="https://www.cricketinmadrid.com/images/logo_small.png"
+                src="/images/logo_mcc.png"
                 alt="Madrid Cricket Club logo"
                 width={80}
                 height={80}

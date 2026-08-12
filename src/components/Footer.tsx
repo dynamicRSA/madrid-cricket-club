@@ -27,7 +27,7 @@ export default function Footer() {
               <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-700/50" style={{ background: "#1a0505" }}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="https://www.cricketinmadrid.com/images/logo_small.png"
+                  src="/images/logo_mcc.png"
                   alt="Madrid Cricket Club"
                   className="w-full h-full object-contain"
                 />
