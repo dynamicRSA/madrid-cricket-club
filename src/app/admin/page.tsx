@@ -2272,10 +2272,10 @@ function JerseyTab({ supabase }: { supabase: any }) {
   async function load() {
     setLoading(true);
 
-    // Step 1: load all members using only columns we KNOW exist (matches MembersTab)
+    // Step 1: load all members — same as MembersTab (select * works regardless of schema)
     const { data: baseData, error: baseError } = await supabase
       .from("members")
-      .select("id, preferred_name, full_legal_name, email, status, roles, created_at")
+      .select("*")
       .order("full_legal_name");
 
     if (baseError || !baseData) {
@@ -2283,28 +2283,13 @@ function JerseyTab({ supabase }: { supabase: any }) {
       return;
     }
 
-    // Step 2: try to get jersey columns (needs DB migration — silently skip if missing)
-    const { data: jerseyData } = await supabase
-      .from("members")
-      .select("id, jersey_number, jersey_number_requested, jersey_number_status");
-
-    // Build a lookup map for jersey data
-    const jerseyMap: Record<string, any> = {};
-    (jerseyData || []).forEach((j: any) => {
-      jerseyMap[j.id] = {
-        jersey_number: j.jersey_number ?? null,
-        jersey_number_requested: j.jersey_number_requested ?? null,
-        jersey_number_status: j.jersey_number_status ?? "none",
-      };
-    });
-
-    // Merge: every member gets jersey data if available, otherwise nulls
+    // select("*") already includes jersey columns if they exist in the DB.
+    // Add null defaults for any that may not exist yet (pre-migration).
     const rows = baseData.map((m: any) => ({
       ...m,
-      jersey_number: jerseyMap[m.id]?.jersey_number ?? null,
-      jersey_number_requested: jerseyMap[m.id]?.jersey_number_requested ?? null,
-      jersey_number_status: jerseyMap[m.id]?.jersey_number_status ?? "none",
-      membership_category: m.membership_category ?? null,
+      jersey_number: m.jersey_number ?? null,
+      jersey_number_requested: m.jersey_number_requested ?? null,
+      jersey_number_status: m.jersey_number_status ?? "none",
     }));
 
     setMembers(rows);
