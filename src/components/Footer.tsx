@@ -1,15 +1,9 @@
 import Link from "next/link";
-import { Mail, MapPin, ExternalLink } from "lucide-react";
+import { Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 
-// Minimal social SVG icons (lucide-react doesn't bundle these)
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
     <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
-  </svg>
-);
-const TwitterXIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
   </svg>
 );
 const FacebookIcon = () => (
@@ -22,20 +16,21 @@ export default function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="bg-slate-950 border-t border-white/[0.06]">
-      <div className="container-wide px-4 py-16">
+    <footer style={{ background: "#0d0303", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+      <div className="container-wide px-4 py-14">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
 
           {/* Brand */}
           <div className="lg:col-span-1">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-brand-700 flex items-center justify-center">
-                <svg viewBox="0 0 40 40" className="w-6 h-6" fill="none">
-                  <path d="M8 32 L24 8" stroke="white" strokeWidth="3.5" strokeLinecap="round"/>
-                  <path d="M24 8 L30 14" stroke="white" strokeWidth="3.5" strokeLinecap="round"/>
-                  <path d="M30 14 L14 38" stroke="white" strokeWidth="3.5" strokeLinecap="round"/>
-                  <circle cx="32" cy="28" r="4" fill="#e8af05" fillOpacity="0.9"/>
-                </svg>
+              {/* Real MCC logo */}
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-brand-700/50" style={{ background: "#1a0505" }}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://www.cricketinmadrid.com/images/logo_small.png"
+                  alt="Madrid Cricket Club"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div>
                 <div className="text-white font-display font-bold text-sm">MADRID</div>
@@ -43,11 +38,23 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
-              Cricket in the heart of Spain since 2008. Affiliated to Cricket España and competing in the Liga Nacional División 2.
+              Cricket in the heart of Spain since <strong className="text-slate-300">1975</strong>.
+              All nationalities, all abilities, all welcome.
             </p>
-            <div className="flex items-center gap-2 text-slate-500 text-sm">
-              <MapPin size={14} />
-              <span>Madrid, Spain</span>
+            <div className="space-y-1.5 text-slate-500 text-xs">
+              <div className="flex items-center gap-2">
+                <MapPin size={11} className="text-brand-500" />
+                <span>Av. Complutense, Moncloa-Aravaca, Madrid</span>
+              </div>
+              <a
+                href="https://cricketinmadrid.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 hover:text-brand-400 transition-colors"
+              >
+                <ExternalLink size={11} className="text-brand-500" />
+                cricketinmadrid.com
+              </a>
             </div>
           </div>
 
@@ -57,11 +64,11 @@ export default function Footer() {
             <ul className="space-y-2.5">
               {[
                 { href: "/", label: "Home" },
-                { href: "/fixtures", label: "Fixtures" },
+                { href: "/fixtures", label: "Fixtures & Events" },
                 { href: "/results", label: "Results" },
-                { href: "/news", label: "News" },
-                { href: "/about", label: "About" },
-                { href: "/agm", label: "AGM Records" },
+                { href: "/news", label: "News & Reports" },
+                { href: "/about", label: "About the Club" },
+                { href: "/join", label: "Join the Club" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-slate-400 hover:text-white text-sm transition-colors">
@@ -77,10 +84,10 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Members</h3>
             <ul className="space-y-2.5">
               {[
-                { href: "/join", label: "Join the Club" },
                 { href: "/auth/signin", label: "Member Login" },
-                { href: "/dashboard", label: "Dashboard" },
-                { href: "/contact", label: "Contact Us" },
+                { href: "/dashboard", label: "My Dashboard" },
+                { href: "/admin", label: "Admin Panel" },
+                { href: "/contact", label: "Contact Committee" },
                 { href: "/privacy", label: "Privacy Notice" },
               ].map((l) => (
                 <li key={l.href}>
@@ -95,41 +102,52 @@ export default function Footer() {
           {/* Contact & Social */}
           <div>
             <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Get in Touch</h3>
-            <div className="space-y-3 mb-6">
+            <div className="space-y-2.5 mb-5 text-sm">
+              <div>
+                <p className="text-gold-500 text-xs font-semibold mb-0.5">President — Jon Woodward</p>
+                <a href="mailto:jonwoodward1975@gmail.com" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                  <Mail size={13} className="text-brand-500" /> jonwoodward1975@gmail.com
+                </a>
+                <a href="tel:+34655069911" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mt-0.5">
+                  <Phone size={13} className="text-brand-500" /> +34 655 069 911
+                </a>
+              </div>
+              <div>
+                <p className="text-gold-500 text-xs font-semibold mb-0.5">Vice President — Lewis Clark</p>
+                <a href="mailto:mail@lewclark.com" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
+                  <Mail size={13} className="text-brand-500" /> mail@lewclark.com
+                </a>
+              </div>
+            </div>
+            {/* Social icons */}
+            <div className="flex items-center gap-2">
               <a
-                href="mailto:secretary@madridcricketclub.es"
-                className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors"
-              >
-                <Mail size={14} />
-                secretary@madridcricketclub.es
-              </a>
-              <a
-                href="https://cricketespana.es"
+                href="https://www.instagram.com/madridcricketclub"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors"
+                aria-label="Instagram @madridcricketclub"
+                className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all"
+              >
+                <InstagramIcon />
+              </a>
+              <a
+                href="https://cricketinmadrid.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Official website"
+                className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all"
               >
                 <ExternalLink size={14} />
-                Cricket España
               </a>
-            </div>
-            <div className="flex items-center gap-3">
-              {[
-                { icon: InstagramIcon, href: "https://instagram.com/madridcc", label: "Instagram" },
-                { icon: TwitterXIcon, href: "https://twitter.com/madridcc", label: "Twitter/X" },
-                { icon: FacebookIcon, href: "https://facebook.com/madridcricketclub", label: "Facebook" },
-              ].map(({ icon: Icon, href, label }) => (
-                <a
-                  key={href}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/10 transition-all"
-                >
-                  <Icon />
-                </a>
-              ))}
+              <a
+                href="https://www.facebook.com/madridcricketclub"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Facebook"
+                className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all"
+              >
+                <FacebookIcon />
+              </a>
             </div>
           </div>
         </div>
@@ -139,7 +157,7 @@ export default function Footer() {
             © {year} Madrid Cricket Club. All rights reserved.
           </p>
           <p className="text-slate-600 text-xs">
-            Affiliated to Cricket España · Liga Nacional División 2
+            Affiliated to Cricket España · Est. 1975
           </p>
         </div>
       </div>

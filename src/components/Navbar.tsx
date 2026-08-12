@@ -32,20 +32,20 @@ export default function Navbar() {
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
         scrolled
-          ? "bg-slate-950/95 backdrop-blur-md border-b border-white/[0.06] py-3"
+          ? "bg-[#1a0505]/95 backdrop-blur-md border-b border-white/[0.06] py-3"
           : "bg-transparent py-5"
       )}
     >
       <div className="container-wide px-4 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-full bg-brand-700 flex items-center justify-center shadow-glow-green">
-            <svg viewBox="0 0 40 40" className="w-6 h-6" fill="none">
-              <path d="M8 32 L24 8" stroke="white" strokeWidth="3.5" strokeLinecap="round"/>
-              <path d="M24 8 L30 14" stroke="white" strokeWidth="3.5" strokeLinecap="round"/>
-              <path d="M30 14 L14 38" stroke="white" strokeWidth="3.5" strokeLinecap="round"/>
-              <circle cx="32" cy="28" r="4" fill="#f9cc1b" fillOpacity="0.9"/>
-            </svg>
+          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-brand-600/50 shadow-glow-red">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="https://www.cricketinmadrid.com/images/logo_small.png"
+              alt="MCC Logo"
+              className="w-full h-full object-contain bg-[#1a0505]"
+            />
           </div>
           <div>
             <div className="text-white font-display font-bold text-sm leading-tight group-hover:text-brand-300 transition-colors">
@@ -101,7 +101,7 @@ export default function Navbar() {
           mobileOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
         )}
       >
-        <div className="bg-slate-900/98 backdrop-blur-md border-t border-white/[0.06] px-4 py-6 flex flex-col gap-4">
+        <div className="bg-[#1a0505]/98 backdrop-blur-md border-t border-white/[0.06] px-4 py-6 flex flex-col gap-4">
           {NAV_LINKS.map((link) => (
             <Link
               key={link.href}
