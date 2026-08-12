@@ -556,6 +556,512 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
   );
 }
 
+// ─── Member Detail Panel ──────────────────────────────────────────────────────
+
+type DetailTab = "profile" | "membership" | "access" | "charges" | "jersey" | "auth";
+
+function MemberDetailPanel({
+  member, supabase, isSuperAdmin, onClose, onSaved,
+}: {
+  member: any; supabase: any; isSuperAdmin: boolean;
+  onClose: () => void; onSaved: (updated: any) => void;
+}) {
+  const [tab, setTab] = useState<DetailTab>("profile");
+  const [data, setData] = useState<any>(member);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [charges, setCharges] = useState<any[]>([]);
+  const [chargesLoading, setChargesLoading] = useState(false);
+  const [newCharge, setNewCharge] = useState({ description: "", amount: "", type: "match_fee" });
+  const [raisingCharge, setRaisingCharge] = useState(false);
+  const [actionMsg, setActionMsg] = useState("");
+
+  // Load charges when that tab opens
+  useEffect(() => {
+    if (tab === "charges") {
+      setChargesLoading(true);
+      supabase.from("charges").select("*").eq("member_id", member.id).order("raised_at", { ascending: false })
+        .then(({ data: cd }: any) => { setCharges(cd || []); setChargesLoading(false); });
+    }
+  }, [tab, member.id]);
+
+  const ALL_ROLES = ["member", "captain", "vice_captain", "treasurer", "secretary", "admin", "super_admin"];
+  const currentRoles: string[] = data.roles || ["member"];
+
+  function toggleRole(role: string) {
+    const has = currentRoles.includes(role);
+    const next = has ? currentRoles.filter((r: string) => r !== role) : [...currentRoles, role];
+    setData((d: any) => ({ ...d, roles: next.length ? next : ["member"] }));
+  }
+
+  async function saveProfile() {
+    setSaving(true);
+    const { data: updated } = await supabase.from("members").update({
+      preferred_name: data.preferred_name,
+      full_legal_name: data.full_legal_name,
+      email: data.email,
+      mobile: data.mobile,
+      date_of_birth: data.date_of_birth || null,
+      nationality: data.nationality,
+      bio: data.bio,
+      updated_at: new Date().toISOString(),
+    }).eq("id", member.id).select().single();
+    if (updated) { onSaved(updated); setData(updated); }
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function saveMembership() {
+    setSaving(true);
+    const { data: updated } = await supabase.from("members").update({
+      status: data.status,
+      membership_category: data.membership_category,
+      created_at: data.created_at,
+      registration_status: data.registration_status,
+      cricket_espana_id: data.cricket_espana_id,
+      notes: data.notes,
+      updated_at: new Date().toISOString(),
+    }).eq("id", member.id).select().single();
+    if (updated) { onSaved(updated); setData(updated); }
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function saveRoles() {
+    setSaving(true);
+    await supabase.from("members").update({ roles: data.roles, updated_at: new Date().toISOString() }).eq("id", member.id);
+    onSaved({ ...member, ...data });
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function raiseCharge() {
+    if (!newCharge.description || !newCharge.amount) return;
+    setRaisingCharge(true);
+    const { data: c } = await supabase.from("charges").insert({
+      member_id: member.id, description: newCharge.description,
+      amount_euros: parseFloat(newCharge.amount), type: newCharge.type,
+      status: "raised", raised_at: new Date().toISOString(),
+    }).select().single();
+    if (c) setCharges((prev: any[]) => [c, ...prev]);
+    setNewCharge({ description: "", amount: "", type: "match_fee" });
+    setRaisingCharge(false);
+  }
+
+  async function updateChargeStatus(chargeId: string, status: string) {
+    await supabase.from("charges").update({ status }).eq("id", chargeId);
+    setCharges((prev: any[]) => prev.map((c: any) => c.id === chargeId ? { ...c, status } : c));
+  }
+
+  async function saveJersey() {
+    setSaving(true);
+    const num = data.jersey_number ? parseInt(data.jersey_number) : null;
+    await supabase.from("members").update({
+      jersey_number: num,
+      jersey_number_status: num ? "reserved" : "none",
+      jersey_number_requested: null,
+    }).eq("id", member.id);
+    onSaved({ ...member, ...data, jersey_number: num });
+    setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
+  }
+
+  const statusOptions = ["active", "pending_approval", "application", "enquiry", "suspended", "inactive"];
+  const categoryOptions = ["senior", "junior", "social", "overseas"];
+  const chargeTypes = ["match_fee", "membership_fee", "tour_fee", "equipment", "fine", "other"];
+
+  const tabs: { id: DetailTab; label: string }[] = [
+    { id: "profile", label: "Profile" },
+    { id: "membership", label: "Membership" },
+    { id: "access", label: "Access & Roles" },
+    { id: "charges", label: "Charges" },
+    { id: "jersey", label: "Jersey" },
+    { id: "auth", label: "Auth" },
+  ];
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      {/* Drawer */}
+      <div className="fixed right-0 top-0 h-full w-full max-w-2xl bg-[#0f1623] border-l border-white/[0.08] z-50 flex flex-col shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-white/[0.08] flex items-start justify-between shrink-0">
+          <div>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-brand-600/30 flex items-center justify-center text-brand-300 font-bold text-lg">
+                {(data.preferred_name || data.full_legal_name || "?").charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h2 className="text-white font-display font-bold text-lg leading-tight">
+                  {data.preferred_name || data.full_legal_name}
+                </h2>
+                <p className="text-slate-400 text-xs">{data.email}</p>
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
+            <XCircle size={20} />
+          </button>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 px-6 py-3 border-b border-white/[0.06] overflow-x-auto shrink-0">
+          {tabs.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+                tab === t.id
+                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              {t.label}
+              {t.id === "charges" && charges.filter((c: any) => c.status === "raised").length > 0 && (
+                <span className="ml-1 bg-red-500/30 text-red-300 text-[9px] px-1 py-0.5 rounded-full">
+                  {charges.filter((c: any) => c.status === "raised").length}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+
+          {/* ── PROFILE ── */}
+          {tab === "profile" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label text-xs">Full Legal Name</label>
+                  <input className="input" value={data.full_legal_name || ""} onChange={(e) => setData((d: any) => ({ ...d, full_legal_name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label text-xs">Preferred / Display Name</label>
+                  <input className="input" value={data.preferred_name || ""} onChange={(e) => setData((d: any) => ({ ...d, preferred_name: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label text-xs">Email Address</label>
+                  <input type="email" className="input" value={data.email || ""} onChange={(e) => setData((d: any) => ({ ...d, email: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label text-xs">Mobile / Phone</label>
+                  <input className="input" value={data.mobile || ""} onChange={(e) => setData((d: any) => ({ ...d, mobile: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label text-xs">Date of Birth</label>
+                  <input type="date" className="input" value={data.date_of_birth || ""} onChange={(e) => setData((d: any) => ({ ...d, date_of_birth: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label text-xs">Nationality</label>
+                  <input className="input" value={data.nationality || ""} onChange={(e) => setData((d: any) => ({ ...d, nationality: e.target.value }))} />
+                </div>
+              </div>
+              <div>
+                <label className="label text-xs">Bio / Notes (internal)</label>
+                <textarea rows={3} className="input resize-none" value={data.bio || ""} onChange={(e) => setData((d: any) => ({ ...d, bio: e.target.value }))} />
+              </div>
+              <div className="flex justify-end pt-2">
+                <button onClick={saveProfile} disabled={saving} className="btn-primary flex items-center gap-2">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} /> : null}
+                  {saved ? "Saved!" : "Save Profile"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── MEMBERSHIP ── */}
+          {tab === "membership" && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label text-xs">Membership Status</label>
+                  <select className="input" value={data.status || ""} onChange={(e) => setData((d: any) => ({ ...d, status: e.target.value }))}>
+                    {statusOptions.map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label text-xs">Membership Category</label>
+                  <select className="input" value={data.membership_category || ""} onChange={(e) => setData((d: any) => ({ ...d, membership_category: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {categoryOptions.map((c) => <option key={c} value={c} className="capitalize">{c}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label text-xs">Member Since (Join Date)</label>
+                  <input type="date" className="input" value={data.created_at ? data.created_at.slice(0, 10) : ""} onChange={(e) => setData((d: any) => ({ ...d, created_at: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="label text-xs">Registration Status</label>
+                  <select className="input" value={data.registration_status || ""} onChange={(e) => setData((d: any) => ({ ...d, registration_status: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {["invited", "applied", "pending_payment", "registered", "verified"].map((s) => <option key={s} value={s}>{s.replace("_", " ")}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <label className="label text-xs">Cricket España Registration Number</label>
+                  <input className="input font-mono" value={data.cricket_espana_id || ""} onChange={(e) => setData((d: any) => ({ ...d, cricket_espana_id: e.target.value }))} placeholder="CE-XXXX" />
+                </div>
+                <div className="col-span-2">
+                  <label className="label text-xs">Internal Admin Notes</label>
+                  <textarea rows={3} className="input resize-none text-xs" value={data.notes || ""} onChange={(e) => setData((d: any) => ({ ...d, notes: e.target.value }))} placeholder="Visible to admins only" />
+                </div>
+              </div>
+              <div className="flex justify-end pt-2">
+                <button onClick={saveMembership} disabled={saving} className="btn-primary flex items-center gap-2">
+                  {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} /> : null}
+                  {saved ? "Saved!" : "Save Membership"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ── ACCESS & ROLES ── */}
+          {tab === "access" && (
+            <div className="space-y-5">
+              {!isSuperAdmin ? (
+                <div className="glass-dark p-6 text-center">
+                  <Lock size={24} className="text-slate-600 mx-auto mb-2" />
+                  <p className="text-slate-400 text-sm">Role management is restricted to Super Admins.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="glass-dark p-5">
+                    <h4 className="text-white font-semibold text-sm mb-4">Assigned Roles</h4>
+                    <div className="grid grid-cols-2 gap-3">
+                      {ALL_ROLES.map((role) => (
+                        <label key={role} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/8 cursor-pointer border border-white/[0.06]">
+                          <input
+                            type="checkbox"
+                            checked={currentRoles.includes(role)}
+                            onChange={() => toggleRole(role)}
+                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-500"
+                          />
+                          <span className="text-slate-200 text-sm capitalize">{role.replace(/_/g, " ")}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="glass-dark p-5 space-y-3">
+                    <h4 className="text-white font-semibold text-sm mb-1">Quick Status Actions</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {["active", "suspended", "pending_approval", "inactive"].map((s) => (
+                        <button
+                          key={s}
+                          onClick={async () => {
+                            await supabase.from("members").update({ status: s, updated_at: new Date().toISOString() }).eq("id", member.id);
+                            setData((d: any) => ({ ...d, status: s }));
+                            onSaved({ ...member, ...data, status: s });
+                            setActionMsg(`Status set to ${s}`);
+                            setTimeout(() => setActionMsg(""), 2000);
+                          }}
+                          className={`btn-sm text-xs capitalize ${data.status === s ? "btn-primary" : "btn-ghost border border-white/10"}`}
+                        >
+                          {s.replace("_", " ")}
+                        </button>
+                      ))}
+                    </div>
+                    {actionMsg && <p className="text-green-400 text-xs">{actionMsg}</p>}
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button onClick={saveRoles} disabled={saving} className="btn-primary flex items-center gap-2">
+                      {saving ? <Loader2 size={14} className="animate-spin" /> : saved ? <CheckCircle size={14} /> : null}
+                      {saved ? "Saved!" : "Save Roles"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* ── CHARGES ── */}
+          {tab === "charges" && (
+            <div className="space-y-5">
+              {/* Raise new charge */}
+              <div className="glass-dark p-5 space-y-3">
+                <h4 className="text-white font-semibold text-sm">Raise New Charge</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2">
+                    <label className="label text-xs">Description</label>
+                    <input className="input" value={newCharge.description} onChange={(e) => setNewCharge((c) => ({ ...c, description: e.target.value }))} placeholder="e.g. Match fee vs Seville CC" />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Amount (€)</label>
+                    <input type="number" min="0" step="0.01" className="input" value={newCharge.amount} onChange={(e) => setNewCharge((c) => ({ ...c, amount: e.target.value }))} placeholder="25.00" />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Type</label>
+                    <select className="input" value={newCharge.type} onChange={(e) => setNewCharge((c) => ({ ...c, type: e.target.value }))}>
+                      {chargeTypes.map((t) => <option key={t} value={t}>{t.replace("_", " ")}</option>)}
+                    </select>
+                  </div>
+                </div>
+                <button onClick={raiseCharge} disabled={raisingCharge || !newCharge.description || !newCharge.amount} className="btn-primary btn-sm flex items-center gap-1">
+                  {raisingCharge ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                  Raise Charge
+                </button>
+              </div>
+
+              {/* Existing charges */}
+              {chargesLoading ? (
+                <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-brand-400" /></div>
+              ) : charges.length === 0 ? (
+                <p className="text-slate-500 text-sm text-center py-6">No charges on record.</p>
+              ) : (
+                <div className="space-y-2">
+                  <p className="text-slate-400 text-xs font-medium">{charges.length} charge{charges.length !== 1 ? "s" : ""} on record</p>
+                  {charges.map((c: any) => (
+                    <div key={c.id} className="glass-dark p-4 flex items-center gap-3">
+                      <div className="flex-1">
+                        <p className="text-white text-sm font-medium">{c.description}</p>
+                        <p className="text-slate-500 text-xs capitalize">{c.type?.replace("_", " ")} · {new Date(c.raised_at).toLocaleDateString("en-GB")}</p>
+                      </div>
+                      <p className="text-white font-bold">€{parseFloat(c.amount_euros).toFixed(2)}</p>
+                      <div className="flex gap-1">
+                        {c.status === "raised" && (
+                          <button onClick={() => updateChargeStatus(c.id, "confirmed")} className="btn-ghost btn-sm text-[10px] text-green-400 hover:text-green-300">
+                            ✓ Mark Paid
+                          </button>
+                        )}
+                        {c.status === "confirmed" && (
+                          <span className="text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full">Paid</span>
+                        )}
+                        {c.status === "raised" && (
+                          <button onClick={() => updateChargeStatus(c.id, "waived")} className="btn-ghost btn-sm text-[10px] text-slate-500 hover:text-slate-300">
+                            Waive
+                          </button>
+                        )}
+                        {(c.status === "waived" || c.status === "settled") && (
+                          <span className="text-xs text-slate-500 bg-slate-700/30 border border-slate-600/20 px-2 py-0.5 rounded-full capitalize">{c.status}</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── JERSEY ── */}
+          {tab === "jersey" && (
+            <div className="space-y-5">
+              <div className="glass-dark p-6">
+                <h4 className="text-white font-semibold text-sm mb-4">Jersey Number Assignment</h4>
+                <div className="flex items-center gap-4">
+                  {data.jersey_number && (
+                    <div className="w-20 h-20 rounded-2xl bg-brand-600/20 border-2 border-brand-500/40 flex items-center justify-center shrink-0">
+                      <span className="text-3xl font-black text-brand-300">#{data.jersey_number}</span>
+                    </div>
+                  )}
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <label className="label text-xs">Jersey Number</label>
+                      <input
+                        type="number" min="1" max="999"
+                        className="input w-32 font-mono text-center"
+                        value={data.jersey_number || ""}
+                        onChange={(e) => setData((d: any) => ({ ...d, jersey_number: e.target.value }))}
+                        placeholder="#"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={saveJersey} disabled={saving} className="btn-primary btn-sm flex items-center gap-1">
+                        {saving ? <Loader2 size={12} className="animate-spin" /> : saved ? <CheckCircle size={12} /> : null}
+                        {saved ? "Saved!" : "Assign Number"}
+                      </button>
+                      {data.jersey_number && (
+                        <button onClick={() => { setData((d: any) => ({ ...d, jersey_number: "" })); }} className="btn-ghost btn-sm text-red-400 hover:text-red-300 flex items-center gap-1">
+                          <XCircle size={12} /> Clear
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                {data.jersey_number_requested && data.jersey_number_status === "requested" && (
+                  <div className="mt-4 pt-4 border-t border-white/[0.06]">
+                    <p className="text-gold-400 text-xs">⏳ Member has requested #{data.jersey_number_requested} — assign above to approve.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── AUTH ── */}
+          {tab === "auth" && (
+            <div className="space-y-4">
+              <div className="glass-dark p-5 space-y-3">
+                <h4 className="text-white font-semibold text-sm">Auth Information</h4>
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <p className="text-slate-500">Email</p>
+                    <p className="text-white font-mono text-[11px] mt-0.5">{member.email}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Auth Status</p>
+                    <p className="text-white mt-0.5 capitalize">{member.registration_status || "unknown"}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Member ID</p>
+                    <p className="text-white font-mono text-[10px] mt-0.5 truncate">{member.id}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate-500">Joined</p>
+                    <p className="text-white mt-0.5">{member.created_at ? new Date(member.created_at).toLocaleDateString("en-GB") : "—"}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="glass-dark p-5 space-y-3">
+                <h4 className="text-white font-semibold text-sm">Actions</h4>
+                <div className="space-y-2">
+                  <a
+                    href={`mailto:${member.email}?subject=Madrid+Cricket+Club+%E2%80%94+Password+Reset&body=Hi+${encodeURIComponent(data.preferred_name || data.full_legal_name || "")},+please+reset+your+password+at:+https://madridcricketclub.es/auth/signin`}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/[0.06] hover:bg-white/8 text-slate-200 text-sm transition-all"
+                  >
+                    <AlertCircle size={14} className="text-brand-400 shrink-0" />
+                    <div>
+                      <p className="font-medium">Send Password Reset Email</p>
+                      <p className="text-slate-500 text-[10px]">Opens your mail client with a pre-filled reset message</p>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-600 ml-auto" />
+                  </a>
+                  <a
+                    href={`mailto:${member.email}?subject=Welcome+to+Madrid+Cricket+Club+%E2%80%94+Verify+Your+Account&body=Hi+${encodeURIComponent(data.preferred_name || data.full_legal_name || "")},+please+sign+in+to+verify+your+account+at:+https://madridcricketclub.es/auth/signin`}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/[0.06] hover:bg-white/8 text-slate-200 text-sm transition-all"
+                  >
+                    <CheckCircle size={14} className="text-green-400 shrink-0" />
+                    <div>
+                      <p className="font-medium">Re-send Verification Email</p>
+                      <p className="text-slate-500 text-[10px]">Opens your mail client with a pre-filled welcome message</p>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-600 ml-auto" />
+                  </a>
+                </div>
+                <p className="text-slate-600 text-[10px] mt-2 pt-2 border-t border-white/[0.04]">
+                  Full auth automation (Supabase admin invite links, account disable) requires a service role key on a server route. Contact your developer to configure this.
+                </p>
+              </div>
+            </div>
+          )}
+
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-white/[0.06] flex items-center justify-between shrink-0">
+          <p className="text-slate-600 text-xs">
+            {data.status && <span className="capitalize mr-2">{data.status.replace("_", " ")}</span>}
+            {(data.roles || []).join(", ")}
+          </p>
+          <button onClick={onClose} className="btn-ghost btn-sm text-slate-400">Close</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── Payments Tab ─────────────────────────────────────────────────────────────
 
 function PaymentsTab({ supabase }: { supabase: any }) {
@@ -1765,11 +2271,29 @@ function JerseyTab({ supabase }: { supabase: any }) {
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
+    // First try with jersey columns (requires DB migration)
+    const { data, error } = await supabase
       .from("members")
       .select("id, preferred_name, full_legal_name, status, membership_category, jersey_number, jersey_number_requested, jersey_number_status")
       .in("status", ["active", "pending_approval", "application"])
       .order("full_legal_name");
+
+    if (error) {
+      // Jersey columns don't exist yet — fall back to core columns only
+      const { data: fallback } = await supabase
+        .from("members")
+        .select("id, preferred_name, full_legal_name, status, membership_category")
+        .in("status", ["active", "pending_approval", "application"])
+        .order("full_legal_name");
+      const rows = (fallback || []).map((m: any) => ({ ...m, jersey_number: null, jersey_number_requested: null, jersey_number_status: "none" }));
+      setMembers(rows);
+      const init: Record<string, string> = {};
+      rows.forEach((m: any) => { init[m.id] = ""; });
+      setDrafts(init);
+      setLoading(false);
+      return;
+    }
+
     const rows = data || [];
     setMembers(rows);
     // Initialise drafts from current values
