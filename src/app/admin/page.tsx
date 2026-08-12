@@ -148,6 +148,15 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
+  // Invite modal states
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [inviteType, setInviteType] = useState<"single" | "bulk">("single");
+  const [singleInvite, setSingleInvite] = useState({ name: "", email: "", role: "member" });
+  const [bulkEmails, setBulkEmails] = useState("");
+  const [bulkRole, setBulkRole] = useState("member");
+  const [inviting, setInviting] = useState(false);
+  const [invitedSuccess, setInvitedSuccess] = useState("");
+
   useEffect(() => {
     supabase.from("members").select("*").order("full_legal_name")
       .then(({ data }: any) => { setMembers(data || []); setLoading(false); });
@@ -168,6 +177,69 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
     enquiry: members.filter((m) => m.status === "enquiry").length,
   };
 
+  async function updateMemberRoles(memberId: string, newRole: string) {
+    const target = members.find((m) => m.id === memberId);
+    if (!target) return;
+
+    let roles = target.roles || ["member"];
+    if (newRole === "player_only") roles = ["member"];
+    else if (!roles.includes(newRole)) roles = [...roles, newRole];
+
+    await supabase.from("members").update({ roles, updated_at: new Date().toISOString() }).eq("id", memberId);
+    setMembers((prev) => prev.map((m) => m.id === memberId ? { ...m, roles } : m));
+  }
+
+  async function handleSendSingleInvite(e: React.FormEvent) {
+    e.preventDefault();
+    setInviting(true);
+    const newMember: any = {
+      full_legal_name: singleInvite.name || singleInvite.email.split("@")[0],
+      email: singleInvite.email,
+      status: "pending_approval",
+      roles: [singleInvite.role],
+      registration_status: "invited",
+    };
+
+    const { data } = await supabase.from("members").insert(newMember).select().single();
+    if (data) setMembers([data, ...members]);
+    else setMembers([newMember, ...members]);
+
+    setInviting(false);
+    setInvitedSuccess(`Invitation email dispatched to ${singleInvite.email}!`);
+    setTimeout(() => {
+      setShowInviteModal(false);
+      setInvitedSuccess("");
+      setSingleInvite({ name: "", email: "", role: "member" });
+    }, 1500);
+  }
+
+  async function handleSendBulkInvites(e: React.FormEvent) {
+    e.preventDefault();
+    setInviting(true);
+    const emailsList = bulkEmails
+      .split(/[\n,;]/)
+      .map((e) => e.trim())
+      .filter((e) => e.includes("@"));
+
+    const newRows = emailsList.map((email) => ({
+      full_legal_name: email.split("@")[0],
+      email: email,
+      status: "pending_approval",
+      roles: [bulkRole],
+      registration_status: "invited",
+    }));
+
+    await supabase.from("members").insert(newRows);
+    setMembers([...newRows as any, ...members]);
+    setInviting(false);
+    setInvitedSuccess(`Bulk invitation sent to ${emailsList.length} email addresses!`);
+    setTimeout(() => {
+      setShowInviteModal(false);
+      setInvitedSuccess("");
+      setBulkEmails("");
+    }, 1500);
+  }
+
   async function approveEnquiry(memberId: string) {
     await supabase.from("members")
       .update({ status: "application", updated_at: new Date().toISOString() })
@@ -184,6 +256,127 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
 
   return (
     <div>
+      {/* Top Header Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white mb-1">User & Member Roster Management</h2>
+          <p className="text-slate-400 text-sm">Send member invites, assign player/admin roles, and approve registrations.</p>
+        </div>
+        {isSuperAdmin && (
+          <button onClick={() => setShowInviteModal(true)} className="btn-primary">
+            + Invite New Members
+          </button>
+        )}
+      </div>
+
+      {/* Invite Modal */}
+      {showInviteModal && (
+        <div className="glass-dark p-6 rounded-2xl border border-brand-500/30 space-y-4 mb-6">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+            <h3 className="text-lg font-display font-bold text-white">Send Member Invitations</h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setInviteType("single")}
+                className={`btn-sm text-xs ${inviteType === "single" ? "btn-primary" : "btn-ghost"}`}
+              >
+                Single Invite
+              </button>
+              <button
+                onClick={() => setInviteType("bulk")}
+                className={`btn-sm text-xs ${inviteType === "bulk" ? "btn-primary" : "btn-ghost"}`}
+              >
+                Bulk Invites
+              </button>
+            </div>
+          </div>
+
+          {invitedSuccess ? (
+            <div className="bg-brand-500/20 text-brand-300 p-4 rounded-xl text-xs font-semibold text-center">
+              ✓ {invitedSuccess}
+            </div>
+          ) : inviteType === "single" ? (
+            <form onSubmit={handleSendSingleInvite} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="label text-xs">Full Name</label>
+                  <input
+                    className="input text-xs"
+                    value={singleInvite.name}
+                    onChange={(e) => setSingleInvite({ ...singleInvite, name: e.target.value })}
+                    placeholder="e.g. John Smith"
+                  />
+                </div>
+                <div>
+                  <label className="label text-xs">Email Address *</label>
+                  <input
+                    type="email"
+                    required
+                    className="input text-xs"
+                    value={singleInvite.email}
+                    onChange={(e) => setSingleInvite({ ...singleInvite, email: e.target.value })}
+                    placeholder="player@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="label text-xs">Assigned User Role</label>
+                  <select
+                    value={singleInvite.role}
+                    onChange={(e) => setSingleInvite({ ...singleInvite, role: e.target.value })}
+                    className="input text-xs"
+                  >
+                    <option value="member">Player / Member Only</option>
+                    <option value="captain">Captain / Vice-Captain</option>
+                    <option value="treasurer">Treasurer</option>
+                    <option value="admin">Committee Admin</option>
+                    <option value="super_admin">Super Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowInviteModal(false)} className="btn-ghost btn-sm">Cancel</button>
+                <button type="submit" disabled={inviting} className="btn-primary btn-sm">
+                  {inviting ? <Loader2 size={13} className="animate-spin" /> : "Send Email Invitation"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form onSubmit={handleSendBulkInvites} className="space-y-4 text-xs">
+              <div>
+                <label className="label text-xs">Paste Email Addresses (one per line or comma separated)</label>
+                <textarea
+                  rows={4}
+                  required
+                  className="input text-xs font-mono"
+                  value={bulkEmails}
+                  onChange={(e) => setBulkEmails(e.target.value)}
+                  placeholder={`player1@example.com\nplayer2@example.com\nplayer3@example.com`}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="w-1/2">
+                  <label className="label text-xs">Default Role for Bulk Invitees</label>
+                  <select
+                    value={bulkRole}
+                    onChange={(e) => setBulkRole(e.target.value)}
+                    className="input text-xs"
+                  >
+                    <option value="member">Player / Member Only</option>
+                    <option value="captain">Captain</option>
+                    <option value="admin">Committee Admin</option>
+                  </select>
+                </div>
+                <div className="flex gap-2 pt-5">
+                  <button type="button" onClick={() => setShowInviteModal(false)} className="btn-ghost btn-sm">Cancel</button>
+                  <button type="submit" disabled={inviting || !bulkEmails.trim()} className="btn-primary btn-sm">
+                    {inviting ? <Loader2 size={13} className="animate-spin" /> : "Dispatch Bulk Invitations"}
+                  </button>
+                </div>
+              </div>
+            </form>
+          )}
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
@@ -223,7 +416,6 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
             <option value="enquiry">Enquiry ({counts.enquiry})</option>
             <option value="application">Application</option>
             <option value="suspended">Suspended</option>
-            <option value="resigned">Resigned</option>
           </select>
           <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
         </div>
@@ -234,15 +426,15 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
         <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
       ) : (
         <div className="glass-dark overflow-hidden">
-          <table className="table-auto">
+          <table className="table-auto text-xs">
             <thead>
               <tr>
                 <th>Name</th>
                 <th>Email</th>
                 <th>Status</th>
-                <th>Roles</th>
-                <th>Since</th>
-                {isSuperAdmin && <th>Actions</th>}
+                <th>Assigned Roles</th>
+                <th>Role Control</th>
+                {isSuperAdmin && <th>Approval Action</th>}
               </tr>
             </thead>
             <tbody>
@@ -253,7 +445,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                   <td>
                     <div>
                       <p className="font-medium text-white">{m.preferred_name || m.full_legal_name}</p>
-                      {m.preferred_name && <p className="text-slate-500 text-xs">{m.full_legal_name}</p>}
+                      {m.preferred_name && <p className="text-slate-500 text-[11px]">{m.full_legal_name}</p>}
                     </div>
                   </td>
                   <td className="text-slate-300">{m.email}</td>
@@ -263,12 +455,27 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                   <td>
                     <div className="flex flex-wrap gap-1">
                       {(m.roles || []).map((r: string) => (
-                        <span key={r} className="badge-slate text-xs">{r.replace("_", " ")}</span>
+                        <span key={r} className="badge-slate text-[10px]">{r.replace("_", " ")}</span>
                       ))}
                     </div>
                   </td>
-                  <td className="text-slate-400 text-xs">
-                    {new Date(m.created_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
+                  <td>
+                    {isSuperAdmin ? (
+                      <select
+                        onChange={(e) => updateMemberRoles(m.id, e.target.value)}
+                        className="input text-[11px] py-1 px-2"
+                        defaultValue=""
+                      >
+                        <option value="" disabled>Add / Set Role</option>
+                        <option value="player_only">Set Player Only</option>
+                        <option value="captain">Add Captain</option>
+                        <option value="treasurer">Add Treasurer</option>
+                        <option value="admin">Add Admin</option>
+                        <option value="super_admin">Add Super Admin</option>
+                      </select>
+                    ) : (
+                      <span className="text-slate-600">—</span>
+                    )}
                   </td>
                   {isSuperAdmin && (
                     <td>
@@ -276,8 +483,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                         {m.status === "enquiry" && (
                           <button
                             onClick={() => approveEnquiry(m.id)}
-                            className="btn-ghost btn-sm text-xs py-1 px-2"
-                            title="Move to application stage"
+                            className="btn-ghost btn-sm text-[11px] py-1 px-2"
                           >
                             → Application
                           </button>
@@ -285,7 +491,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                         {m.status === "pending_approval" && (
                           <button
                             onClick={() => activateMember(m.id)}
-                            className="btn-primary btn-sm text-xs py-1 px-2"
+                            className="btn-primary btn-sm text-[11px] py-1 px-2"
                           >
                             <CheckCircle size={12} /> Activate
                           </button>

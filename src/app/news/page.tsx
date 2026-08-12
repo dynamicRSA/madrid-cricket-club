@@ -34,12 +34,12 @@ const articles = [
   },
   {
     id: "fathers-sprogs-england-2026",
-    title: "Fathers & Sprogs Tour — Two Wins in England at Blockley CC",
+    title: "Fathers & Sprogs Tour: Two Wins in England at Blockley CC",
     category: "Tour Report",
     date: "20 Jul 2026",
     image: "/images/real/mcc-ecn-lineup.jpg",
     excerpt:
-      "A successful weekend away — Madrid CC's Fathers and Sprogs side travelled to Blockley Cricket Club in England and returned with two wins. A weekend to remember.",
+      "A successful weekend away as Madrid CC's Fathers and Sprogs side travelled to Blockley Cricket Club in England and returned with two wins.",
     isPlaceholder: false,
     isReal: true,
   },
@@ -50,7 +50,7 @@ const articles = [
     date: "24 Apr 2024",
     image: "/images/real/mcc-team-alicante.jpg",
     excerpt:
-      "El Madrid Royals debutó en el primer fin de semana de la liga nacional femenina en Barcelona — a historic milestone for women's cricket at MCC. Un inicio fenomenal con una victoria ante La Manga.",
+      "El Madrid Royals debutó en el primer fin de semana de la liga nacional femenina en Barcelona: a historic milestone for women's cricket at MCC.",
     isPlaceholder: false,
     isReal: true,
   },

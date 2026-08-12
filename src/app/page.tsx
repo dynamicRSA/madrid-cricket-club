@@ -94,7 +94,7 @@ const recentResults = [
 const socialPosts = [
   {
     image: "/images/real/mcc-ecn-lineup.jpg",
-    caption: "ECS T10 Tournament coming to Madrid this October — all matches live streamed on ECN! 🏏",
+    caption: "ECS T10 Tournament coming to Madrid this October: all matches live streamed on ECN! 🏏",
     date: "12 August 2026",
     likes: 68,
   },
@@ -151,7 +151,7 @@ export default function HomePage() {
               <span className="gradient-text-gold">Cricket Club</span>
             </h1>
             <p className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto mt-4 mb-8">
-              One of Spain's oldest cricket clubs — playing, growing, and giving back since 1975.
+              One of Spain's oldest cricket clubs: playing, growing, and giving back since 1975.
               All nationalities, all abilities, all welcome.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
@@ -181,9 +181,9 @@ export default function HomePage() {
                 <Trophy size={18} className="text-gold-400" />
               </div>
               <div>
-                <p className="text-slate-400 text-xs uppercase tracking-widest">Latest Result · ECCL 40 Overs</p>
+                <p className="text-slate-400 text-xs uppercase tracking-widest">Latest Result: ECCL 40 Overs</p>
                 <p className="text-white font-bold text-sm">
-                  MCC 272/10 vs La Manga Torrevieja CC 246/9 —{" "}
+                  MCC 272/10 vs La Manga Torrevieja CC 246/9:{" "}
                   <span className="text-gold-400">Won by 26 Runs</span>
                 </p>
               </div>

@@ -27,7 +27,7 @@ export default function AboutPage() {
           </div>
           <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 1975</p>
           <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-3">Madrid Cricket Club</h1>
-          <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain — for 50 years and counting</p>
+          <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain for 50 years and counting</p>
         </div>
       </section>
 
@@ -38,7 +38,7 @@ export default function AboutPage() {
             {[
               { icon: Calendar, label: "Founded", value: "1975" },
               { icon: Users, label: "Members", value: "100+" },
-              { icon: Trophy, label: "Teams", value: "Men · Women · Juniors" },
+              { icon: Trophy, label: "Teams", value: "Men, Women & Juniors" },
               { icon: MapPin, label: "Madrid Base", value: "La Elipa" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="text-center">
@@ -64,13 +64,13 @@ export default function AboutPage() {
                   We were the only cricket club in Spain until Barcelona CC was founded in 1982.
                 </p>
                 <p>
-                  The modern chapter began around 25 years ago when Jon Woodward — a Brit who has lived in Madrid for over 30 years — placed a classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From a conversation over a beer, a club was reborn.
+                  The modern chapter began around 25 years ago when Jon Woodward, a Brit who has lived in Madrid for over 30 years, placed a classified ad in a free English-language newspaper: <em className="text-slate-200">"Se buscan jugadores de críquet."</em> Three people replied. From a conversation over a beer, a club was reborn.
                 </p>
                 <p>
-                  El País described us in August 2026 as <em className="text-slate-200">"una institución con solera pero sin sede"</em> — an institution with heritage but without a home. That headline captures a real tension: Madrid City Council subsidises us with 2 hours a week at <strong className="text-white">La Elipa</strong> and around €7,000 a year in support for youth cricket. But for league matches, we travel 460km south to the Alicante coast.
+                  El País described us in August 2026 as <em className="text-slate-200">"una institución con solera pero sin sede"</em> (an institution with heritage but without a home). That headline captures a real tension: Madrid City Council subsidises us with 2 hours a week at <strong className="text-white">La Elipa</strong> and around €7,000 a year in support for youth cricket. But for league matches, we travel 460km south to the Alicante coast.
                 </p>
                 <p>
-                  Today MCC has over <strong className="text-white">100 members</strong> from more than a dozen nationalities. There are now 200+ registered cricketers across 6 clubs in Madrid, plus around 15 informal groups. Cricket enters the <strong className="text-white">Olympics at Los Angeles 2028</strong>, and this autumn Madrid hosts its first ever <strong className="text-white">20-over city league at La Elipa</strong> — six teams, three months. The tide is turning.
+                  Today MCC has over <strong className="text-white">100 members</strong> from more than a dozen nationalities. There are now 200+ registered cricketers across 6 clubs in Madrid, plus around 15 informal groups. Cricket enters the <strong className="text-white">Olympics at Los Angeles 2028</strong>, and this autumn Madrid hosts its first ever <strong className="text-white">20-over city league at La Elipa</strong> (six teams, three months). The tide is turning.
                 </p>
                 <a
                   href="https://elpais.com/espana/madrid/2026-08-09/madrid-cricket-club-una-institucion-con-solera-pero-sin-sede-exiliado-en-la-costa-alicantina.html"

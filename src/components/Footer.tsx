@@ -105,7 +105,7 @@ export default function Footer() {
             <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Get in Touch</h3>
             <div className="space-y-2.5 mb-5 text-sm">
               <div>
-                <p className="text-gold-500 text-xs font-semibold mb-0.5">President — Jon Woodward</p>
+                <p className="text-gold-500 text-xs font-semibold mb-0.5">President: Jon Woodward</p>
                 <a href="mailto:jonwoodward1975@gmail.com" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
                   <Mail size={13} className="text-brand-500" /> jonwoodward1975@gmail.com
                 </a>
@@ -114,7 +114,7 @@ export default function Footer() {
                 </a>
               </div>
               <div>
-                <p className="text-gold-500 text-xs font-semibold mb-0.5">Vice President — Lewis Clark</p>
+                <p className="text-gold-500 text-xs font-semibold mb-0.5">Vice President: Lewis Clark</p>
                 <a href="mailto:mail@lewclark.com" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
                   <Mail size={13} className="text-brand-500" /> mail@lewclark.com
                 </a>
