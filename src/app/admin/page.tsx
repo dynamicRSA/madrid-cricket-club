@@ -110,30 +110,32 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="container-wide px-4 mt-4 flex gap-1 overflow-x-auto">
           {([
-            { id: "selection", label: "Team Selection (Captain)", icon: CheckCircle },
-            { id: "members", label: "Members Roster", icon: Users },
-            ...(isTreasurer ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
-            { id: "availability", label: "Availability Grid", icon: Calendar },
-            { id: "reports", label: "Reports", icon: BarChart3 },
-          ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
+            { id: "selection", label: "Team Selection", shortLabel: "Selection", icon: CheckCircle },
+            { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
+            ...(isTreasurer ? [{ id: "payments", label: "Payments", shortLabel: "Payments", icon: CreditCard }] : []),
+            { id: "availability", label: "Who Can Play", shortLabel: "Availability", icon: Calendar },
+            { id: "reports", label: "Reports", shortLabel: "Reports", icon: BarChart3 },
+          ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, shortLabel, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
                 tab === id
                   ? "bg-brand-500/20 text-brand-300 border border-brand-500/30"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
-              <Icon size={14} /> {label}
+              <Icon size={14} />
+              <span className="hidden sm:inline">{label}</span>
+              <span className="sm:hidden">{shortLabel}</span>
             </button>
           ))}
         </div>
       </section>
 
       {/* Tab content */}
-      <div className="flex-1" style={{ background: "#0d1420" }}>
-        <div className="container-wide px-4 py-8">
+      <div className="flex-1 pb-6" style={{ background: "#0d1420" }}>
+        <div className="container-wide px-4 py-6">
           {tab === "selection" && <CaptainSelectionTab supabase={supabase} />}
           {tab === "members" && <MembersTab supabase={supabase} isSuperAdmin={isSuperAdmin} />}
           {tab === "payments" && <PaymentsTab supabase={supabase} />}
@@ -645,6 +647,9 @@ function PaymentsTab({ supabase }: { supabase: any }) {
 }
 
 // ─── Availability Grid Tab ─────────────────────────────────────────────────────
+// Shows a matrix of members × fixtures where registration is open.
+// Each cell shows that member's self-reported availability (Available / Maybe / Not Available / no response).
+// The captain uses this at a glance to see who is free for each fixture before building the squad.
 
 function AvailabilityTab({ supabase }: { supabase: any }) {
   const [events, setEvents] = useState<any[]>([]);
@@ -654,11 +659,21 @@ function AvailabilityTab({ supabase }: { supabase: any }) {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("events").select("*").eq("status", "scheduled").order("date"),
+      supabase.from("events").select("*").order("date"),
       supabase.from("availability").select("*"),
       supabase.from("members").select("id, preferred_name, full_legal_name").eq("status", "active"),
     ]).then(([evRes, avRes, memRes]: any[]) => {
-      setEvents(evRes.data || []);
+      // Only show events where registration is open (squad_open stage)
+      const allEvents = (evRes.data || []).filter((ev: any) => {
+        const notes = ev.notes || "";
+        if (!notes.includes("TOUR_META_V1:")) return false;
+        try {
+          const json = notes.slice(notes.indexOf("TOUR_META_V1:") + "TOUR_META_V1:".length);
+          const meta = JSON.parse(json);
+          return meta.stage === "squad_open";
+        } catch { return false; }
+      });
+      setEvents(allEvents);
       setAvailability(avRes.data || []);
       setMembers(memRes.data || []);
       setLoading(false);
@@ -669,52 +684,101 @@ function AvailabilityTab({ supabase }: { supabase: any }) {
     return availability.find((a) => a.member_id === memberId && a.event_id === eventId)?.status || null;
   }
 
+  function countForEvent(eventId: string, status: string) {
+    return availability.filter((a) => a.event_id === eventId && a.status === status).length;
+  }
+
   if (loading) return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>;
 
   return (
-    <div>
-      <h2 className="text-xl font-display font-bold text-white mb-6">Availability Grid</h2>
-      <div className="overflow-x-auto">
-        <table className="table-auto text-xs min-w-[600px]">
-          <thead>
-            <tr>
-              <th className="min-w-[140px]">Member</th>
-              {events.map((e) => (
-                <th key={e.id} className="min-w-[80px] text-center">
-                  <div>{new Date(e.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
-                  <div className="font-normal text-slate-500 truncate max-w-[80px]">{e.opponent || e.title}</div>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((m) => (
-              <tr key={m.id}>
-                <td className="font-medium text-white">{m.preferred_name || m.full_legal_name}</td>
-                {events.map((e) => {
-                  const s = getAvail(m.id, e.id);
-                  return (
-                    <td key={e.id} className="text-center">
-                      {s === "available" ? <CheckCircle size={14} className="text-brand-400 mx-auto" />
-                        : s === "not_available" ? <XCircle size={14} className="text-red-400 mx-auto" />
-                        : s === "maybe" ? <Clock size={14} className="text-gold-400 mx-auto" />
-                        : <span className="text-slate-700">—</span>}
-                    </td>
-                  );
-                })}
-              </tr>
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-xl font-display font-bold text-white mb-1">Who Can Play</h2>
+        <p className="text-slate-400 text-sm">
+          A captain&apos;s overview of member self-reported availability for fixtures where registration is open.
+          Each row is a member, each column is a fixture. Use this before building your squad pool.
+        </p>
+      </div>
+
+      {events.length === 0 ? (
+        <div className="glass-dark p-10 text-center space-y-2">
+          <Calendar size={28} className="text-slate-600 mx-auto" />
+          <p className="text-white font-semibold">No fixtures open for registration</p>
+          <p className="text-slate-400 text-sm">Advance a fixture to <strong className="text-white">Registration Open</strong> stage in the Captain&apos;s Selection tab to see responses here.</p>
+        </div>
+      ) : (
+        <>
+          {/* Per-event availability summary */}
+          <div className="flex flex-wrap gap-3">
+            {events.map((ev: any) => (
+              <div key={ev.id} className="glass-dark p-3 rounded-xl border border-white/[0.06] text-xs min-w-[140px]">
+                <p className="text-white font-semibold truncate">{ev.title}</p>
+                <p className="text-slate-500 text-[11px] mb-2">{ev.date}</p>
+                <div className="flex gap-2">
+                  <span className="flex items-center gap-1 text-brand-400">
+                    <CheckCircle size={11} /> {countForEvent(ev.id, "available")}
+                  </span>
+                  <span className="flex items-center gap-1 text-gold-400">
+                    <Clock size={11} /> {countForEvent(ev.id, "maybe")}
+                  </span>
+                  <span className="flex items-center gap-1 text-red-400">
+                    <XCircle size={11} /> {countForEvent(ev.id, "not_available")}
+                  </span>
+                  <span className="flex items-center gap-1 text-slate-600">
+                    — {members.length - countForEvent(ev.id, "available") - countForEvent(ev.id, "maybe") - countForEvent(ev.id, "not_available")} no resp.
+                  </span>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="flex items-center gap-6 mt-4 text-xs text-slate-400">
-        <span className="flex items-center gap-1"><CheckCircle size={12} className="text-brand-400" /> Available</span>
-        <span className="flex items-center gap-1"><XCircle size={12} className="text-red-400" /> Not available</span>
-        <span className="flex items-center gap-1"><Clock size={12} className="text-gold-400" /> Maybe</span>
-      </div>
+          </div>
+
+          {/* Full grid */}
+          <div className="glass-dark overflow-x-auto">
+            <table className="table-auto text-xs min-w-[600px]">
+              <thead>
+                <tr>
+                  <th className="min-w-[140px] text-left">Member</th>
+                  {events.map((ev) => (
+                    <th key={ev.id} className="min-w-[80px] text-center">
+                      <div>{new Date(ev.date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}</div>
+                      <div className="font-normal text-slate-500 truncate max-w-[80px]">{ev.opponent || ev.title}</div>
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {members.map((m) => (
+                  <tr key={m.id}>
+                    <td className="font-medium text-white">{m.preferred_name || m.full_legal_name}</td>
+                    {events.map((ev) => {
+                      const s = getAvail(m.id, ev.id);
+                      return (
+                        <td key={ev.id} className="text-center">
+                          {s === "available" ? <CheckCircle size={14} className="text-brand-400 mx-auto" />
+                            : s === "not_available" ? <XCircle size={14} className="text-red-400 mx-auto" />
+                            : s === "maybe" ? <Clock size={14} className="text-gold-400 mx-auto" />
+                            : <span className="text-slate-700">—</span>}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="flex items-center gap-6 text-xs text-slate-400">
+            <span className="flex items-center gap-1"><CheckCircle size={12} className="text-brand-400" /> Available</span>
+            <span className="flex items-center gap-1"><XCircle size={12} className="text-red-400" /> Not available</span>
+            <span className="flex items-center gap-1"><Clock size={12} className="text-gold-400" /> Maybe</span>
+            <span className="flex items-center gap-1"><span className="text-slate-700 font-bold">—</span> No response yet</span>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
 
 function ReportsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [downloading, setDownloading] = useState(false);
@@ -1077,13 +1141,14 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                 <input className="input text-xs" value={newTour.title} onChange={(e) => setNewTour({ ...newTour, title: e.target.value })} placeholder="e.g. Barcelona Tour 2026" required />
               </div>
               <div>
-                <label className="label text-xs">Opponent(s)</label>
-                <input className="input text-xs" value={newTour.opponent} onChange={(e) => setNewTour({ ...newTour, opponent: e.target.value })} placeholder="e.g. Barcelona CC / Costa Blanca CC" required />
+                <label className="label text-xs">General Description <span className="text-slate-500 font-normal">(optional — opponents set per game below)</span></label>
+                <input className="input text-xs" value={newTour.opponent} onChange={(e) => setNewTour({ ...newTour, opponent: e.target.value })} placeholder="e.g. La Manga 5-Day Tournament" />
               </div>
               <div>
                 <label className="label text-xs">Number of Games</label>
                 <select className="input text-xs" value={newTour.num_games} onChange={(e) => setNumGames(Number(e.target.value))}>
-                  {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n} game{n > 1 ? "s" : ""}</option>)}
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n} game{n > 1 ? "s" : ""}</option>)}
+
                 </select>
               </div>
             </div>
@@ -1096,6 +1161,10 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                   <div>
                     <label className="label text-[11px]">Date</label>
                     <input type="date" className="input text-xs" value={game.date} onChange={(e) => updateNewGame(idx, { date: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="label text-[11px]">Opponent</label>
+                    <input className="input text-xs" value={game.opponent} onChange={(e) => updateNewGame(idx, { opponent: e.target.value })} placeholder="e.g. Barcelona CC" required />
                   </div>
                   <div>
                     <label className="label text-[11px]">Venue</label>
@@ -1114,8 +1183,10 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                     <input type="time" className="input text-xs" value={game.start_time} onChange={(e) => updateNewGame(idx, { start_time: e.target.value })} />
                   </div>
                   <div className="sm:col-span-3">
-                    <label className="label text-[11px]">Ground Meal Options (comma-separated)</label>
-                    <input className="input text-xs" value={game.catering_options.join(", ")} onChange={(e) => updateNewGame(idx, { catering_options: e.target.value.split(",").map((s: string) => s.trim()) })} placeholder="Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap" />
+                    <label className="label text-[11px]">
+                      Ground Meal Options <span className="text-slate-500 font-normal">(optional — add later once ground confirms)</span>
+                    </label>
+                    <input className="input text-xs" value={game.catering_options.join(", ")} onChange={(e) => updateNewGame(idx, { catering_options: e.target.value.split(",").map((s: string) => s.trim()) })} placeholder="Leave blank — add later when ground confirms e.g. Beef Burger, Chicken Burger, Vegetarian Paella" />
                   </div>
                 </div>
                 <div className="flex items-center gap-2 text-xs">
@@ -1187,10 +1258,10 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
             {/* Stage progression bar */}
             <div className="space-y-2">
               <div className="flex items-center gap-1 text-xs">
-                {(["draft", "squad_open", "squad_locked", "choices_open", "completed"] as EventStage[]).map((s, i, arr) => (
+                {(["draft", "published", "squad_open", "squad_locked", "choices_open", "completed"] as EventStage[]).map((s, i, arr) => (
                   <div key={s} className="flex items-center gap-1 flex-1">
                     <div className={`h-1.5 flex-1 rounded-full transition-all ${
-                      ["draft", "squad_open", "squad_locked", "choices_open", "completed"].indexOf(currentStage) >= i
+                      ["draft", "published", "squad_open", "squad_locked", "choices_open", "completed"].indexOf(currentStage) >= i
                         ? "bg-brand-500" : "bg-slate-700"
                     }`} />
                     {i < arr.length - 1 && <div className="w-1 h-1 rounded-full bg-slate-700 shrink-0" />}
@@ -1199,7 +1270,8 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
               </div>
               <div className="flex justify-between text-[10px] text-slate-500">
                 <span>Draft</span>
-                <span>Sign-Up Open</span>
+                <span>Published</span>
+                <span>Registration Open</span>
                 <span>Squad Published</span>
                 <span>Choices Open</span>
                 <span>Done</span>
@@ -1210,9 +1282,10 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
             {nextLabel && currentStage !== "completed" && currentStage !== "cancelled" && (
               <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
                 <p className="text-slate-400 text-xs">
-                  {currentStage === "draft" && "Once ready, open sign-ups so members can mark availability."}
-                  {currentStage === "squad_open" && "Select your squad pool and per-game XIs below, then publish to notify players."}
-                  {currentStage === "squad_locked" && "When ground meal options are confirmed, open choices for players."}
+                  {currentStage === "draft" && "Publish this fixture to make it visible on the public Fixtures page. Registration stays closed until you decide."}
+                  {currentStage === "published" && "The fixture is live on the Fixtures page. Open registration when you are ready for members to sign up — not too early!"}
+                  {currentStage === "squad_open" && "Registration is open. Members can mark availability. Select your squad pool and per-game XIs below, then publish."}
+                  {currentStage === "squad_locked" && "Squad published. Add ground meal options per game below when the ground confirms, then open choices for players."}
                   {currentStage === "choices_open" && "All choices collected. Mark the event as completed after the matches."}
                 </p>
                 <button
@@ -1278,6 +1351,19 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                         onBlur={(e) => {
                           if (!tourMeta) return;
                           const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, date: e.target.value } : g);
+                          saveMeta({ ...tourMeta, tour_games: games });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="label text-[11px]">Opponent</label>
+                      <input
+                        className="input text-xs"
+                        defaultValue={game.opponent}
+                        placeholder="e.g. Barcelona CC"
+                        onBlur={(e) => {
+                          if (!tourMeta) return;
+                          const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, opponent: e.target.value } : g);
                           saveMeta({ ...tourMeta, tour_games: games });
                         }}
                       />

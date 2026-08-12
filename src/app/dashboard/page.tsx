@@ -42,11 +42,13 @@ export default function DashboardPage() {
   const [selectedEvents, setSelectedEvents] = useState<any[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [savingChoice, setSavingChoice] = useState("");
+  const [registrationEvents, setRegistrationEvents] = useState<any[]>([]); // stage === squad_open
 
   useEffect(() => {
     if (!member?.id) return;
     supabase.from("events").select("*").order("date").then(({ data }: any) => {
       const all = data || [];
+      // Events where this member is in squad_pool and stage is squad_locked or choices_open
       const myEvents = all.filter((ev: any) => {
         const meta = parseTourMeta(ev.notes);
         return (
@@ -54,10 +56,17 @@ export default function DashboardPage() {
           meta.squad_pool.includes(member.id)
         );
       });
+      // Events where registration is open (squad_open) — all members can sign up
+      const openForReg = all.filter((ev: any) => {
+        const meta = parseTourMeta(ev.notes);
+        return meta.stage === "squad_open";
+      });
       setSelectedEvents(myEvents);
+      setRegistrationEvents(openForReg);
       setEventsLoading(false);
     });
   }, [member?.id]);
+
 
   async function savePlayerChoice(
     eventId: string,
@@ -145,14 +154,14 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Horizontal Navigation Menu for Logged-In Members */}
-        <div className="container-wide px-4 mt-5 flex gap-1 overflow-x-auto pb-1">
+        {/* Desktop horizontal tab nav — hidden on mobile (bottom nav used instead) */}
+        <div className="container-wide px-4 mt-5 hidden sm:flex gap-1 overflow-x-auto pb-1">
           {([
             { id: "overview", label: "Overview", icon: Bell },
-            { id: "confirmations", label: "Match Confirmations & Event Choices", icon: CheckCircle },
-            { id: "availability", label: "Availability Sign-Up", icon: Calendar },
+            { id: "confirmations", label: "My Matches", icon: CheckCircle },
+            { id: "availability", label: "Availability", icon: Calendar },
             { id: "charges", label: "Dues & Payments", icon: CreditCard },
-            { id: "profile", label: "Profile & Documents", icon: User },
+            { id: "profile", label: "Profile", icon: User },
           ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -164,41 +173,66 @@ export default function DashboardPage() {
               }`}
             >
               <Icon size={14} />
-              <span>{label}</span>
-              {id === "confirmations" && isSelectedForMatch && (
-                <span className="w-2 h-2 rounded-full bg-brand-400 animate-pulse" />
-              )}
+              {label}
             </button>
           ))}
         </div>
       </section>
 
-      {/* Content */}
-      <div className="flex-1" style={{ background: "#0d1420" }}>
-        <div className="container-wide px-4 py-8">
+      {/* Mobile bottom navigation bar */}
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex" style={{ background: "#0d1420", paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {([
+          { id: "overview", label: "Overview", icon: Bell },
+          { id: "confirmations", label: "Matches", icon: CheckCircle, badge: isSelectedForMatch },
+          { id: "availability", label: "Availability", icon: Calendar },
+          { id: "charges", label: "Dues", icon: CreditCard, badge: pendingCharges.length > 0 },
+          { id: "profile", label: "Profile", icon: User },
+        ] as { id: Tab; label: string; icon: any; badge?: boolean }[]).map(({ id, label, icon: Icon, badge }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-[10px] font-semibold transition-all relative ${
+              tab === id ? "text-brand-400" : "text-slate-500"
+            }`}
+          >
+            <span className="relative">
+              <Icon size={20} strokeWidth={tab === id ? 2.5 : 1.8} />
+              {badge && tab !== id && (
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-brand-500 border border-slate-950" />
+              )}
+            </span>
+            {label}
+          </button>
+        ))}
+      </nav>
+
+
+      {/* Content — add bottom padding on mobile to clear the fixed bottom nav */}
+      <div className="flex-1 pb-20 sm:pb-0" style={{ background: "#0d1420" }}>
+        <div className="container-wide px-4 py-6 sm:py-8">
 
           {/* OVERVIEW TAB */}
           {tab === "overview" && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Left column */}
-              <div className="lg:col-span-2 space-y-6">
+              <div className="md:col-span-2 space-y-6">
 
                 {/* Selection Notification Callout Banner */}
                 {isSelectedForMatch && (
-                  <div className="flex items-start gap-3 bg-brand-500/15 border border-brand-500/40 rounded-xl p-4 shadow-lg animate-fade-up">
+                  <div className="flex items-start gap-3 bg-brand-500/15 border border-brand-500/40 rounded-xl p-4 shadow-lg">
                     <CheckCircle size={20} className="text-brand-400 shrink-0 mt-0.5" />
                     <div className="flex-1">
                       <p className="text-white font-bold text-sm">
-                        🎉 Selection Notification: You are selected for the weekend fixture!
+                        You have been selected for an upcoming fixture
                       </p>
                       <p className="text-slate-300 text-xs mt-1">
-                        Captain Woodward has selected you for <strong className="text-white">MCC vs Barcelona International CC</strong>. Please confirm your attendance, choose your per-event meal, and set departure car-share travel.
+                        The captain has selected you. Please confirm your attendance, choose your meal, and set your travel.
                       </p>
                       <button
                         onClick={() => setTab("confirmations")}
                         className="btn-primary btn-sm text-xs mt-3 inline-flex items-center gap-1"
                       >
-                        Open Match Confirmations & Event Choices →
+                        Open My Matches &rarr;
                       </button>
                     </div>
                   </div>
@@ -333,55 +367,83 @@ export default function DashboardPage() {
 
           {/* AVAILABILITY TAB */}
           {tab === "availability" && (
-            <div>
-              <div className="mb-6">
-                <h2 className="text-2xl font-display font-bold text-white mb-1">Fixture Availability</h2>
-                <p className="text-slate-400 text-sm">Set your availability for upcoming fixtures. The captain uses this to select the team.</p>
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-display font-bold text-white mb-1">Fixture Availability Sign-Up</h2>
+                <p className="text-slate-400 text-sm">Mark your availability for fixtures where registration is open. The captain uses this to select the squad.</p>
               </div>
-              <div className="glass-dark divide-y divide-white/[0.04]">
-                {upcomingEvents.length === 0 ? (
-                  <p className="text-slate-400 p-6">No upcoming fixtures.</p>
-                ) : upcomingEvents.map((event) => {
-                  const status = getStatus(event.id);
-                  return (
-                    <div key={event.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4">
-                      <div className="flex items-center gap-4 flex-1">
-                        {/* Date */}
-                        <div className="text-center min-w-[44px] py-2 px-2 rounded-xl bg-slate-800/60">
-                          <div className="text-xs text-slate-500 uppercase tracking-wider">{new Date(event.date).toLocaleDateString("en", { month: "short" })}</div>
-                          <div className="text-white font-bold text-lg leading-none">{new Date(event.date).getDate()}</div>
-                        </div>
-                        <div>
-                          <p className="text-white font-semibold">{event.title}</p>
-                          <p className="text-slate-400 text-xs">
-                            {event.is_home ? "Home" : "Away"} · {event.venue?.name || "TBC"} · {event.format || event.type}
-                          </p>
-                        </div>
-                      </div>
 
-                      <div className="flex gap-2">
-                        {([
-                          { s: "available" as const, icon: CheckCircle, label: "Available", active: "bg-brand-500/20 border-brand-500 text-brand-300" },
-                          { s: "maybe" as const, icon: HelpCircle, label: "Maybe", active: "bg-gold-500/20 border-gold-500 text-gold-300" },
-                          { s: "not_available" as const, icon: XCircle, label: "Not available", active: "bg-red-500/20 border-red-500 text-red-300" },
-                        ]).map(({ s, icon: Icon, label, active }) => (
-                          <button
-                            key={s}
-                            onClick={() => setEventAvailability(event.id, s)}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
-                              status === s ? active : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
-                            }`}
-                          >
-                            <Icon size={13} /> {label}
-                          </button>
-                        ))}
+              {eventsLoading ? (
+                <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
+              ) : registrationEvents.length === 0 ? (
+                <div className="glass-dark p-10 text-center space-y-3">
+                  <Calendar size={32} className="text-slate-600 mx-auto" />
+                  <h3 className="text-white font-semibold">No fixtures open for registration yet</h3>
+                  <p className="text-slate-400 text-sm max-w-sm mx-auto">
+                    The captain will open registration when the time is right. Check the <strong className="text-white">Fixtures</strong> page to see upcoming events on the calendar.
+                  </p>
+                </div>
+              ) : (
+                <div className="glass-dark divide-y divide-white/[0.04]">
+                  {registrationEvents.map((ev: any) => {
+                    const meta = parseTourMeta(ev.notes);
+                    const status = getStatus(ev.id);
+                    // Show tour-level date range
+                    const dates = meta.tour_games.map((g: TourGame) => g.date).sort();
+                    const dateLabel = dates.length > 1
+                      ? `${new Date(dates[0]).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${new Date(dates[dates.length - 1]).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                      : dates[0] ? new Date(dates[0]).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" }) : ev.date;
+                    const opponents = [...new Set(meta.tour_games.map((g: TourGame) => g.opponent).filter(Boolean))];
+                    return (
+                      <div key={ev.id} className="p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="flex items-start gap-4 flex-1">
+                          <div className="text-center min-w-[48px] py-2 px-2 rounded-xl bg-slate-800/60 shrink-0">
+                            <div className="text-xs text-slate-500 uppercase tracking-wider">
+                              {new Date(dates[0] || ev.date).toLocaleDateString("en", { month: "short" })}
+                            </div>
+                            <div className="text-white font-bold text-lg leading-none">
+                              {new Date(dates[0] || ev.date).getDate()}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="text-white font-semibold">{ev.title}</p>
+                            <p className="text-slate-400 text-xs mt-0.5">
+                              {dateLabel}
+                              {opponents.length > 0 && ` · vs ${opponents.join(", ")}`}
+                              {` · ${meta.tour_games.length} game${meta.tour_games.length !== 1 ? "s" : ""}`}
+                            </p>
+                            <p className="text-slate-500 text-[11px] mt-1">
+                              Mark your availability — squad details remain hidden until the captain publishes the XI.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2 shrink-0">
+                          {([
+                            { s: "available" as const, icon: CheckCircle, label: "Available", active: "bg-brand-500/20 border-brand-500 text-brand-300" },
+                            { s: "maybe" as const, icon: HelpCircle, label: "Maybe", active: "bg-gold-500/20 border-gold-500 text-gold-300" },
+                            { s: "not_available" as const, icon: XCircle, label: "Not available", active: "bg-red-500/20 border-red-500 text-red-300" },
+                          ]).map(({ s, icon: Icon, label, active }) => (
+                            <button
+                              key={s}
+                              onClick={() => setEventAvailability(ev.id, s)}
+                              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-medium transition-all ${
+                                status === s ? active : "bg-white/5 border-white/10 text-slate-400 hover:text-white hover:bg-white/10"
+                              }`}
+                            >
+                              <Icon size={13} /> {label}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
+
+
 
           {/* MATCH CONFIRMATIONS & EVENT CHOICES TAB */}
           {tab === "confirmations" && (
@@ -468,7 +530,8 @@ export default function DashboardPage() {
                                     {game.is_streamed_ecn && <span className="badge-slate text-[10px]">ECN Live</span>}
                                   </div>
                                   <p className="text-white font-display font-bold text-base mt-1">
-                                    {ev.title} — Game {game.game_number}
+                                    MCC vs {game.opponent || ev.opponent || "TBC"} — Game {game.game_number}
+
                                   </p>
                                   <p className="text-slate-400 text-xs mt-0.5">
                                     {game.venue_name || "TBC"} · Meet {game.meet_time} / Start {game.start_time}

@@ -9,10 +9,11 @@
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
 export type EventStage =
-  | "draft"         // Captain building the tour, not yet visible to players
-  | "squad_open"    // Sign-up open: players see dates, mark availability
-  | "squad_locked"  // XI published: selected players notified, squad visible to members
-  | "choices_open"  // Players can confirm attendance + choose meals & travel
+  | "draft"         // Captain building — not visible anywhere publicly
+  | "published"     // Visible on public Fixtures page — registration NOT yet open
+  | "squad_open"    // Registration open — members mark availability
+  | "squad_locked"  // Squad confirmed & published — selected players notified
+  | "choices_open"  // Meal & travel choices open for selected players
   | "completed"     // Match played
   | "cancelled";    // Cancelled
 
@@ -23,6 +24,7 @@ export interface TourGame {
   venue_address?: string;
   meet_time: string;
   start_time: string;
+  opponent: string;          // e.g. "Barcelona CC", "Costa Blanca CC"
   format: string;
   is_streamed_ecn: boolean;
   catering_options: string[];
@@ -89,7 +91,8 @@ function defaultTourMeta(): TourMeta {
 
 export const STAGE_LABELS: Record<EventStage, string> = {
   draft: "Draft",
-  squad_open: "Sign-Up Open",
+  published: "Published (fixture live, registration closed)",
+  squad_open: "Registration Open",
   squad_locked: "Squad Published",
   choices_open: "Choices Open",
   completed: "Completed",
@@ -97,14 +100,16 @@ export const STAGE_LABELS: Record<EventStage, string> = {
 };
 
 export const STAGE_NEXT: Partial<Record<EventStage, EventStage>> = {
-  draft: "squad_open",
+  draft: "published",
+  published: "squad_open",
   squad_open: "squad_locked",
   squad_locked: "choices_open",
   choices_open: "completed",
 };
 
 export const STAGE_NEXT_LABEL: Partial<Record<EventStage, string>> = {
-  draft: "Open Sign-Ups",
+  draft: "Publish Fixture (goes live on Fixtures page)",
+  published: "Open Registration (members can sign up)",
   squad_open: "Publish Squad & Notify Players",
   squad_locked: "Open Meal & Travel Choices",
   choices_open: "Mark as Completed",
@@ -113,6 +118,7 @@ export const STAGE_NEXT_LABEL: Partial<Record<EventStage, string>> = {
 export function stageColor(stage: EventStage): string {
   switch (stage) {
     case "draft": return "badge-slate";
+    case "published": return "badge-blue";
     case "squad_open": return "badge-gold";
     case "squad_locked": return "badge-green";
     case "choices_open": return "badge-green";
@@ -126,6 +132,7 @@ export function defaultGame(gameNumber: number, tourDate?: string): TourGame {
   return {
     game_number: gameNumber,
     date: tourDate || new Date().toISOString().split("T")[0],
+    opponent: "",
     venue_name: "",
     venue_address: "",
     meet_time: "07:30",
