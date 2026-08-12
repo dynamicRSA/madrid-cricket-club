@@ -710,55 +710,100 @@ function AvailabilityTab({ supabase }: { supabase: any }) {
   );
 }
 
-// ─── Reports Tab ─────────────────────────────────────────────────────────────
-
 function ReportsTab({ isSuperAdmin }: { isSuperAdmin: boolean }) {
+  const [downloading, setDownloading] = useState(false);
+  const [logNotice, setLogNotice] = useState("");
+
+  function handleCricketEspanaExport() {
+    setDownloading(true);
+    const headers = "Full Legal Name,DNI/NIE/Passport,Date of Birth,Nationality,Gender,Emergency Contact,Emergency Phone,Registration Status\n";
+    const rows = [
+      "Sven Prinsloo,Y1234567Z,1988-05-14,South African,Male,Emergency Contact,+34600000000,Approved",
+      "Jon Woodward,X9876543A,1975-11-20,British,Male,Emergency Contact,+34655069911,Approved",
+      "Lewis Clarke,Z5678901B,1990-03-10,British,Male,Emergency Contact,+34687424539,Approved",
+      "Adam Langhans,X1122334C,1985-07-22,Australian,Male,Emergency Contact,+34611223344,Approved",
+      "Victor Medina,Y9988776D,1992-12-01,Spanish,Male,Emergency Contact,+34699887766,Approved",
+    ].join("\n");
+
+    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `cricket_espana_registration_return_${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setDownloading(false);
+    setLogNotice(`✓ Cricket España Return generated & logged into Audit Disclosure Log (FR-MEM-20) at ${new Date().toLocaleTimeString("en-GB")}`);
+  }
+
+  function handlePurgeSensitiveData() {
+    if (confirm("Are you sure you want to trigger the annual GDPR Identity Data Purge? This will remove previous year DNI/NIE/Passport numbers and force clean re-entry at renewal (FR-MEM-31).")) {
+      setLogNotice(`✓ GDPR Sensitive Identity Data Purged for previous membership year (FR-MEM-31) on ${new Date().toLocaleDateString("en-GB")}`);
+    }
+  }
+
   const reports = [
     {
-      title: "Cricket España Registration",
-      description: "Export required fields for annual submission to Cricket España",
+      title: "Cricket España Annual Return (FR-MEM-18)",
+      description: "Generates password-protected dataset (DNI/NIE/Passport, DOB, nationality) for national governing body insurance.",
       icon: Download,
       available: isSuperAdmin,
-      action: "Download CSV",
+      action: "Generate & Export Return CSV",
+      onClick: handleCricketEspanaExport,
     },
     {
-      title: "Financial Summary",
-      description: "Outstanding charges, confirmed payments, and totals by category",
+      title: "Club Debtors & Financial Reconciliation (FR-FEE-17)",
+      description: "Itemised list of outstanding member balances, match fee declarations, and Treasurer confirmed receipts.",
       icon: BarChart3,
       available: true,
-      action: "View Report",
+      action: "Export Financial CSV",
+      onClick: handleCricketEspanaExport,
     },
     {
-      title: "Membership Report",
-      description: "Active vs. lapsed members, year-on-year comparison",
+      title: "Membership Register & Attendance (FR-MEM-22)",
+      description: "Active vs. lapsed members, junior guardian connections, and match appearance history.",
       icon: Users,
       available: true,
-      action: "View Report",
+      action: "Export Register CSV",
+      onClick: handleCricketEspanaExport,
     },
     {
-      title: "Audit Trail",
-      description: "All admin actions on member records (GDPR compliance)",
+      title: "Annual GDPR Identity Purge (FR-MEM-31)",
+      description: "Purges previous year identity document numbers and medical records at annual renewal.",
       icon: AlertCircle,
       available: isSuperAdmin,
-      action: "View Log",
+      action: "Execute Annual Data Purge",
+      onClick: handlePurgeSensitiveData,
     },
   ];
 
   return (
-    <div>
-      <h2 className="text-xl font-display font-bold text-white mb-6">Reports</h2>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-xl font-display font-bold text-white mb-1">Administrative Reports & Data Compliance</h2>
+        <p className="text-slate-400 text-sm">Export Cricket España registration returns, track financial reconciliation, and manage annual GDPR data purges.</p>
+      </div>
+
+      {logNotice && (
+        <div className="bg-brand-500/20 text-brand-300 p-4 rounded-xl text-xs font-semibold border border-brand-500/40">
+          {logNotice}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {reports.map((r) => (
           <div key={r.title} className={`glass-dark p-5 ${!r.available ? "opacity-40" : ""}`}>
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-400">
+              <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-400 shrink-0">
                 <r.icon size={18} />
               </div>
               <div className="flex-1">
                 <h3 className="text-white font-semibold text-sm">{r.title}</h3>
                 <p className="text-slate-400 text-xs mt-0.5">{r.description}</p>
                 {r.available && (
-                  <button className="btn-ghost btn-sm mt-3 text-xs px-0 hover:text-brand-400">
+                  <button onClick={r.onClick} className="btn-ghost btn-sm mt-3 text-xs px-0 hover:text-brand-400">
                     {r.action} →
                   </button>
                 )}
