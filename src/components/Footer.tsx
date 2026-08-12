@@ -105,9 +105,6 @@ export default function Footer() {
                 </button>
               </li>
             </ul>
-            <p className="text-slate-600 text-xs mt-4 leading-relaxed">
-              {t("footer.member.note")}
-            </p>
           </div>
 
           {/* Contact & Social */}

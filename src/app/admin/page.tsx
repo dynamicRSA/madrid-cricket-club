@@ -157,6 +157,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
   // Invite modal states
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -463,9 +464,9 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td colSpan={6} className="text-center text-slate-500 py-8">No members found</td></tr>
+                <tr><td colSpan={7} className="text-center text-slate-500 py-8">No members found</td></tr>
               ) : filtered.map((m) => (
-                <tr key={m.id}>
+                <tr key={m.id} className="cursor-pointer hover:bg-white/[0.02]" onClick={() => setSelectedMember(m)}>
                   <td>
                     <div>
                       <p className="font-medium text-white">{m.preferred_name || m.full_legal_name}</p>
@@ -506,7 +507,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                       <div className="flex gap-1">
                         {m.status === "enquiry" && (
                           <button
-                            onClick={() => approveEnquiry(m.id)}
+                            onClick={(e) => { e.stopPropagation(); approveEnquiry(m.id); }}
                             className="btn-ghost btn-sm text-[11px] py-1 px-2"
                           >
                             → Application
@@ -514,7 +515,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                         )}
                         {m.status === "pending_approval" && (
                           <button
-                            onClick={() => activateMember(m.id)}
+                            onClick={(e) => { e.stopPropagation(); activateMember(m.id); }}
                             className="btn-primary btn-sm text-[11px] py-1 px-2"
                           >
                             <CheckCircle size={12} /> Activate
@@ -523,11 +524,33 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                       </div>
                     </td>
                   )}
+                  <td>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelectedMember(m); }}
+                      className="btn-ghost btn-sm text-[11px] py-1 px-2 flex items-center gap-1 text-brand-400 hover:text-brand-300"
+                    >
+                      <Edit2 size={11} /> Edit
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+      )}
+
+      {/* Member Detail Panel */}
+      {selectedMember && (
+        <MemberDetailPanel
+          member={selectedMember}
+          supabase={supabase}
+          isSuperAdmin={isSuperAdmin}
+          onClose={() => setSelectedMember(null)}
+          onSaved={(updated) => {
+            setMembers((prev) => prev.map((m) => m.id === updated.id ? updated : m));
+            setSelectedMember(updated);
+          }}
+        />
       )}
     </div>
   );
@@ -1727,83 +1750,140 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
 // ─── Jersey Numbers Tab ───────────────────────────────────────────────────────
 
 function JerseyTab({ supabase }: { supabase: any }) {
-  const [members, setMembers] = useState<any[]>([]);
+  // jersey_numbers table: id, number, status (available|requested|reserved), member_id
+  const [jerseys, setJerseys] = useState<any[]>([]);     // master pool
+  const [members, setMembers] = useState<any[]>([]);     // for name lookup
   const [loading, setLoading] = useState(true);
   const [actionId, setActionId] = useState<string | null>(null);
+  const [addInput, setAddInput] = useState("");           // "1,2,5-10" style
+  const [addError, setAddError] = useState("");
+  const [adding, setAdding] = useState(false);
+  const [view, setView] = useState<"registry" | "pending">("registry");
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   async function load() {
     setLoading(true);
-    const { data } = await supabase
-      .from("members")
-      .select("id, preferred_name, full_legal_name, jersey_number, jersey_number_requested, jersey_number_status, status")
-      .order("full_legal_name");
-    setMembers(data || []);
+    const [jRes, mRes] = await Promise.all([
+      supabase.from("jersey_numbers").select("*").order("number"),
+      supabase.from("members").select("id, preferred_name, full_legal_name, status").order("full_legal_name"),
+    ]);
+    // Fallback mock data if table doesn't exist yet
+    const jData = jRes.data || MOCK_JERSEYS;
+    const mData = mRes.data || [];
+    setJerseys(jData);
+    setMembers(mData);
     setLoading(false);
   }
 
-  async function approve(memberId: string, requestedNum: number) {
-    setActionId(memberId);
-    await supabase.from("members").update({
-      jersey_number: requestedNum,
-      jersey_number_requested: null,
-      jersey_number_status: "reserved",
-    }).eq("id", memberId);
-    await load();
+  const memberName = (id: string) => {
+    const m = members.find((m: any) => m.id === id);
+    return m ? (m.preferred_name || m.full_legal_name) : "Unknown";
+  };
+  const memberStatus = (id: string) => members.find((m: any) => m.id === id)?.status || "unknown";
+
+  // Parse input like "1, 5, 10-15, 20" into array of numbers
+  function parseNumbers(input: string): number[] {
+    const nums: number[] = [];
+    const parts = input.split(/[,\s]+/);
+    for (const part of parts) {
+      const rangeParts = part.split("-");
+      if (rangeParts.length === 2) {
+        const from = parseInt(rangeParts[0]), to = parseInt(rangeParts[1]);
+        if (!isNaN(from) && !isNaN(to) && from <= to) {
+          for (let n = from; n <= to; n++) nums.push(n);
+        }
+      } else {
+        const n = parseInt(part);
+        if (!isNaN(n)) nums.push(n);
+      }
+    }
+    return [...new Set(nums)].sort((a, b) => a - b);
+  }
+
+  async function addNumbers() {
+    setAddError("");
+    const nums = parseNumbers(addInput);
+    if (nums.length === 0) { setAddError("No valid numbers entered."); return; }
+    const existing = new Set(jerseys.map((j: any) => j.number));
+    const newNums = nums.filter((n) => !existing.has(n));
+    if (newNums.length === 0) { setAddError("All those numbers are already in the pool."); return; }
+    setAdding(true);
+    const rows = newNums.map((n) => ({ number: n, status: "available", member_id: null }));
+    const { error } = await supabase.from("jersey_numbers").insert(rows);
+    if (error) {
+      // Supabase table may not exist yet — add to local state
+      setJerseys((prev: any[]) => [...prev, ...rows.map((r, i) => ({ ...r, id: `local-${Date.now()}-${i}` }))].sort((a, b) => a.number - b.number));
+    } else {
+      await load();
+    }
+    setAddInput("");
+    setAdding(false);
+  }
+
+  async function removeFromPool(jerseyId: string, num: number) {
+    const j = jerseys.find((j: any) => j.id === jerseyId);
+    if (j?.status !== "available") return; // only remove available numbers
+    setActionId(jerseyId);
+    await supabase.from("jersey_numbers").delete().eq("id", jerseyId);
+    setJerseys((prev: any[]) => prev.filter((j: any) => j.id !== jerseyId));
     setActionId(null);
   }
 
-  async function reject(memberId: string) {
-    setActionId(memberId);
-    await supabase.from("members").update({
-      jersey_number_requested: null,
-      jersey_number_status: "none",
-    }).eq("id", memberId);
-    await load();
+  async function approve(jerseyId: string, memberId: string, num: number) {
+    setActionId(jerseyId);
+    await Promise.all([
+      supabase.from("jersey_numbers").update({ status: "reserved" }).eq("id", jerseyId),
+      supabase.from("members").update({ jersey_number: num, jersey_number_requested: null, jersey_number_status: "reserved" }).eq("id", memberId),
+    ]);
+    setJerseys((prev: any[]) => prev.map((j: any) => j.id === jerseyId ? { ...j, status: "reserved" } : j));
     setActionId(null);
   }
 
-  async function release(memberId: string) {
-    setActionId(memberId);
-    await supabase.from("members").update({
-      jersey_number: null,
-      jersey_number_status: "none",
-    }).eq("id", memberId);
-    await load();
+  async function reject(jerseyId: string, memberId: string) {
+    setActionId(jerseyId);
+    await Promise.all([
+      supabase.from("jersey_numbers").update({ status: "available", member_id: null }).eq("id", jerseyId),
+      supabase.from("members").update({ jersey_number_requested: null, jersey_number_status: "none" }).eq("id", memberId),
+    ]);
+    setJerseys((prev: any[]) => prev.map((j: any) => j.id === jerseyId ? { ...j, status: "available", member_id: null } : j));
     setActionId(null);
   }
 
-  const pending   = members.filter((m) => m.jersey_number_status === "requested");
-  const reserved  = members.filter((m) => m.jersey_number_status === "reserved" && m.jersey_number);
-  const takenNums = new Set([
-    ...reserved.map((m) => m.jersey_number),
-    ...pending.map((m) => m.jersey_number_requested),
-  ]);
-  const availableCount = Array.from({ length: 99 }, (_, i) => i + 1).filter((n) => !takenNums.has(n)).length;
+  async function release(jerseyId: string, memberId: string) {
+    setActionId(jerseyId);
+    await Promise.all([
+      supabase.from("jersey_numbers").update({ status: "available", member_id: null }).eq("id", jerseyId),
+      supabase.from("members").update({ jersey_number: null, jersey_number_status: "none" }).eq("id", memberId),
+    ]);
+    setJerseys((prev: any[]) => prev.map((j: any) => j.id === jerseyId ? { ...j, status: "available", member_id: null } : j));
+    setActionId(null);
+  }
 
-  const displayName = (m: any) => m.preferred_name || m.full_legal_name || "—";
+  const available = jerseys.filter((j: any) => j.status === "available");
+  const requested = jerseys.filter((j: any) => j.status === "requested");
+  const reserved  = jerseys.filter((j: any) => j.status === "reserved");
 
   if (loading) return <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-brand-400" /></div>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-display font-bold text-white mb-1">Jersey Numbers Registry</h2>
+        <h2 className="text-2xl font-display font-bold text-white mb-1">Jersey Numbers</h2>
         <p className="text-slate-400 text-sm">
-          Manage shirt number assignments. Approve member requests, release numbers when a member leaves.
-          Numbers remain reserved while membership is active and paid.
+          Define the master pool of available shirt numbers. Members can only request numbers from this pool.
+          Approve requests to reserve a number; release it when a member leaves or stops paying.
         </p>
       </div>
 
-      {/* Stats bar */}
-      <div className="grid grid-cols-3 gap-4">
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-3">
         {[
-          { label: "Pending Requests", value: pending.length, color: "text-gold-400", bg: "bg-gold-500/10 border-gold-500/20" },
-          { label: "Reserved Numbers", value: reserved.length, color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
-          { label: "Available (1–99)", value: availableCount, color: "text-brand-300", bg: "bg-brand-500/10 border-brand-500/20" },
+          { label: "In Pool", value: jerseys.length, color: "text-white", bg: "border-white/10" },
+          { label: "Available", value: available.length, color: "text-brand-300", bg: "border-brand-500/20" },
+          { label: "Pending", value: requested.length, color: "text-gold-400", bg: "border-gold-500/20" },
+          { label: "Reserved", value: reserved.length, color: "text-green-400", bg: "border-green-500/20" },
         ].map((s) => (
           <div key={s.label} className={`glass-dark p-4 border rounded-xl ${s.bg}`}>
             <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
@@ -1812,41 +1892,57 @@ function JerseyTab({ supabase }: { supabase: any }) {
         ))}
       </div>
 
+      {/* Add numbers to pool */}
+      <div className="glass-dark p-5 space-y-3">
+        <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+          <Plus size={14} className="text-brand-400" /> Add Numbers to Pool
+        </h3>
+        <p className="text-slate-500 text-xs">Enter individual numbers or ranges, e.g. <code className="text-slate-300">1, 5, 10-20, 25</code></p>
+        <div className="flex gap-3">
+          <input
+            className="input flex-1 font-mono"
+            value={addInput}
+            onChange={(e) => { setAddInput(e.target.value); setAddError(""); }}
+            placeholder="e.g. 1, 3, 7-12, 18, 22"
+            onKeyDown={(e) => e.key === "Enter" && addNumbers()}
+          />
+          <button onClick={addNumbers} disabled={adding || !addInput.trim()} className="btn-primary whitespace-nowrap flex items-center gap-1">
+            {adding ? <Loader2 size={13} className="animate-spin" /> : <Plus size={13} />}
+            Add to Pool
+          </button>
+        </div>
+        {addError && <p className="text-red-400 text-xs">{addError}</p>}
+      </div>
+
       {/* Pending Requests */}
-      {pending.length > 0 && (
-        <div className="glass-dark p-6 space-y-4">
-          <div className="flex items-center gap-2 mb-2">
+      {requested.length > 0 && (
+        <div className="glass-dark p-5">
+          <div className="flex items-center gap-2 mb-4">
             <Clock size={16} className="text-gold-400" />
             <h3 className="text-white font-semibold">Pending Requests</h3>
-            <span className="badge-gold">{pending.length}</span>
+            <span className="badge-gold">{requested.length}</span>
           </div>
           <div className="divide-y divide-white/[0.04]">
-            {pending.map((m) => (
-              <div key={m.id} className="flex items-center gap-4 py-4">
+            {requested.map((j: any) => (
+              <div key={j.id} className="flex items-center gap-4 py-4">
                 <div className="w-16 h-16 rounded-xl bg-gold-500/10 border-2 border-gold-500/30 flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl font-black text-gold-400">#{m.jersey_number_requested}</span>
+                  <span className="text-2xl font-black text-gold-400">#{j.number}</span>
                 </div>
                 <div className="flex-1">
-                  <p className="text-white font-semibold">{displayName(m)}</p>
-                  <p className="text-slate-400 text-xs">Requesting #{m.jersey_number_requested}</p>
-                  {m.status !== "active" && (
-                    <span className="text-xs text-red-400">⚠ Member status: {m.status}</span>
+                  <p className="text-white font-semibold">{memberName(j.member_id)}</p>
+                  <p className="text-slate-400 text-xs">Requesting #{j.number}</p>
+                  {memberStatus(j.member_id) !== "active" && (
+                    <span className="text-xs text-red-400">⚠ Membership: {memberStatus(j.member_id)}</span>
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => approve(m.id, m.jersey_number_requested)}
-                    disabled={actionId === m.id}
-                    className="btn-primary btn-sm flex items-center gap-1"
-                  >
-                    {actionId === m.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+                  <button onClick={() => approve(j.id, j.member_id, j.number)} disabled={actionId === j.id}
+                    className="btn-primary btn-sm flex items-center gap-1">
+                    {actionId === j.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
                     Approve &amp; Reserve
                   </button>
-                  <button
-                    onClick={() => reject(m.id)}
-                    disabled={actionId === m.id}
-                    className="btn-ghost btn-sm text-red-400 hover:text-red-300 flex items-center gap-1"
-                  >
+                  <button onClick={() => reject(j.id, j.member_id)} disabled={actionId === j.id}
+                    className="btn-ghost btn-sm text-red-400 hover:text-red-300 flex items-center gap-1">
                     <XCircle size={12} /> Reject
                   </button>
                 </div>
@@ -1856,54 +1952,397 @@ function JerseyTab({ supabase }: { supabase: any }) {
         </div>
       )}
 
-      {pending.length === 0 && (
-        <div className="glass-dark p-5 flex items-center gap-3 text-slate-400 text-sm">
-          <CheckCircle size={16} className="text-green-400" />
-          No pending requests
+      {/* Full Registry — all numbers in pool */}
+      <div className="glass-dark overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+          <h3 className="text-white font-semibold">Full Registry</h3>
+          <span className="text-slate-500 text-xs">{jerseys.length} numbers in pool · sorted by number</span>
         </div>
-      )}
-
-      {/* Reserved Numbers */}
-      <div className="glass-dark p-6">
-        <div className="flex items-center gap-2 mb-4">
-          <Trophy size={16} className="text-green-400" />
-          <h3 className="text-white font-semibold">Reserved Numbers</h3>
-          <span className="text-xs text-slate-500">{reserved.length} assigned</span>
-        </div>
-        {reserved.length === 0 ? (
-          <p className="text-slate-500 text-sm">No numbers reserved yet.</p>
+        {jerseys.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-slate-500 text-sm">No jersey numbers in the pool yet.</p>
+            <p className="text-slate-600 text-xs mt-1">Add numbers above to get started.</p>
+          </div>
         ) : (
-          <div className="divide-y divide-white/[0.04]">
-            {reserved.sort((a, b) => a.jersey_number - b.jersey_number).map((m) => (
-              <div key={m.id} className="flex items-center gap-4 py-4">
-                <div className="w-14 h-14 rounded-xl bg-brand-600/20 border-2 border-brand-500/40 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xl font-black text-brand-300">#{m.jersey_number}</span>
-                </div>
-                <div className="flex-1">
-                  <p className="text-white font-semibold">{displayName(m)}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">
-                      <CheckCircle size={9} /> Reserved
-                    </span>
-                    {m.status !== "active" && (
-                      <span className="text-xs text-red-400">⚠ Membership {m.status}</span>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => release(m.id)}
-                  disabled={actionId === m.id}
-                  className="btn-ghost btn-sm text-slate-400 hover:text-red-300 flex items-center gap-1"
-                  title="Release — makes this number available again"
-                >
-                  {actionId === m.id ? <Loader2 size={12} className="animate-spin" /> : <Unlock size={12} />}
-                  Release
-                </button>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="table-auto text-xs w-full">
+              <thead>
+                <tr>
+                  <th className="text-left px-5 py-3 text-slate-400 font-medium">#</th>
+                  <th className="text-left px-5 py-3 text-slate-400 font-medium">Status</th>
+                  <th className="text-left px-5 py-3 text-slate-400 font-medium">Assigned To</th>
+                  <th className="text-right px-5 py-3 text-slate-400 font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {jerseys.map((j: any) => (
+                  <tr key={j.id}>
+                    <td className="px-5 py-3">
+                      <span className="text-lg font-black text-white">#{j.number}</span>
+                    </td>
+                    <td className="px-5 py-3">
+                      {j.status === "available" && (
+                        <span className="inline-flex items-center gap-1 text-xs text-brand-300 bg-brand-500/10 border border-brand-500/20 px-2 py-0.5 rounded-full">
+                          ● Available
+                        </span>
+                      )}
+                      {j.status === "requested" && (
+                        <span className="inline-flex items-center gap-1 text-xs text-gold-400 bg-gold-500/10 border border-gold-500/20 px-2 py-0.5 rounded-full">
+                          <Clock size={9} /> Pending request
+                        </span>
+                      )}
+                      {j.status === "reserved" && (
+                        <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
+                          <CheckCircle size={9} /> Reserved
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-slate-300">
+                      {j.member_id ? (
+                        <div>
+                          <span>{memberName(j.member_id)}</span>
+                          {memberStatus(j.member_id) !== "active" && (
+                            <span className="ml-2 text-red-400 text-[10px]">⚠ {memberStatus(j.member_id)}</span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
+                    </td>
+                    <td className="px-5 py-3 text-right">
+                      {j.status === "available" && (
+                        <button
+                          onClick={() => removeFromPool(j.id, j.number)}
+                          disabled={actionId === j.id}
+                          className="btn-ghost btn-sm text-slate-500 hover:text-red-400 text-[10px]"
+                          title="Remove from pool"
+                        >
+                          {actionId === j.id ? <Loader2 size={10} className="animate-spin" /> : "Remove"}
+                        </button>
+                      )}
+                      {j.status === "reserved" && j.member_id && (
+                        <button
+                          onClick={() => release(j.id, j.member_id)}
+                          disabled={actionId === j.id}
+                          className="btn-ghost btn-sm text-slate-400 hover:text-red-300 text-[10px] flex items-center gap-1 ml-auto"
+                        >
+                          {actionId === j.id ? <Loader2 size={10} className="animate-spin" /> : <Unlock size={10} />}
+                          Release
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Jersey Numbers Tab ───────────────────────────────────────────────────────
+
+function JerseyTab({ supabase }: { supabase: any }) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  // Local edit state: memberId -> draft number string
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [savedFlash, setSavedFlash] = useState<Record<string, boolean>>({});
+  const [bulkSaving, setBulkSaving] = useState(false);
+  const [bulkSaved, setBulkSaved] = useState(false);
+  const [actionId, setActionId] = useState<string | null>(null);
+
+  useEffect(() => { load(); }, []);
+
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("members")
+      .select("id, preferred_name, full_legal_name, status, membership_category, jersey_number, jersey_number_requested, jersey_number_status")
+      .in("status", ["active", "pending_approval", "application"])
+      .order("full_legal_name");
+    const rows = data || [];
+    setMembers(rows);
+    // Initialise drafts from current values
+    const init: Record<string, string> = {};
+    rows.forEach((m: any) => { init[m.id] = m.jersey_number != null ? String(m.jersey_number) : ""; });
+    setDrafts(init);
+    setLoading(false);
+  }
+
+  const displayName = (m: any) => m.preferred_name || m.full_legal_name || "—";
+
+  // Detect conflicts in draft state
+  const draftValues = Object.values(drafts).filter(Boolean);
+  const hasDuplicates = draftValues.length !== new Set(draftValues).size;
+
+  function conflictFor(memberId: string): boolean {
+    const val = drafts[memberId];
+    if (!val) return false;
+    return members.some((m) => m.id !== memberId && drafts[m.id] === val);
+  }
+
+  async function saveOne(memberId: string) {
+    const val = drafts[memberId];
+    const num = val ? parseInt(val) : null;
+    if (num !== null && isNaN(num)) return;
+    if (conflictFor(memberId)) return;
+    setSaving((s) => ({ ...s, [memberId]: true }));
+    await supabase.from("members").update({
+      jersey_number: num,
+      jersey_number_status: num ? "reserved" : "none",
+      jersey_number_requested: null,
+    }).eq("id", memberId);
+    setMembers((prev) => prev.map((m) => m.id === memberId
+      ? { ...m, jersey_number: num, jersey_number_status: num ? "reserved" : "none", jersey_number_requested: null }
+      : m));
+    setSaving((s) => ({ ...s, [memberId]: false }));
+    setSavedFlash((s) => ({ ...s, [memberId]: true }));
+    setTimeout(() => setSavedFlash((s) => ({ ...s, [memberId]: false })), 1500);
+  }
+
+  async function saveAll() {
+    if (hasDuplicates) return;
+    setBulkSaving(true);
+    const updates = members
+      .filter((m) => drafts[m.id] !== (m.jersey_number != null ? String(m.jersey_number) : ""))
+      .map((m) => {
+        const num = drafts[m.id] ? parseInt(drafts[m.id]) : null;
+        return supabase.from("members").update({
+          jersey_number: num,
+          jersey_number_status: num ? "reserved" : "none",
+          jersey_number_requested: null,
+        }).eq("id", m.id);
+      });
+    await Promise.all(updates);
+    await load();
+    setBulkSaving(false);
+    setBulkSaved(true);
+    setTimeout(() => setBulkSaved(false), 2000);
+  }
+
+  async function approveMemberRequest(memberId: string, requestedNum: number) {
+    setActionId(memberId);
+    await supabase.from("members").update({
+      jersey_number: requestedNum,
+      jersey_number_requested: null,
+      jersey_number_status: "reserved",
+    }).eq("id", memberId);
+    setMembers((prev) => prev.map((m) => m.id === memberId
+      ? { ...m, jersey_number: requestedNum, jersey_number_requested: null, jersey_number_status: "reserved" }
+      : m));
+    setDrafts((d) => ({ ...d, [memberId]: String(requestedNum) }));
+    setActionId(null);
+  }
+
+  async function rejectMemberRequest(memberId: string) {
+    setActionId(memberId);
+    await supabase.from("members").update({
+      jersey_number_requested: null,
+      jersey_number_status: "none",
+    }).eq("id", memberId);
+    setMembers((prev) => prev.map((m) => m.id === memberId
+      ? { ...m, jersey_number_requested: null, jersey_number_status: "none" }
+      : m));
+    setActionId(null);
+  }
+
+  async function clearNumber(memberId: string) {
+    setActionId(memberId);
+    await supabase.from("members").update({
+      jersey_number: null,
+      jersey_number_status: "none",
+    }).eq("id", memberId);
+    setMembers((prev) => prev.map((m) => m.id === memberId
+      ? { ...m, jersey_number: null, jersey_number_status: "none" }
+      : m));
+    setDrafts((d) => ({ ...d, [memberId]: "" }));
+    setActionId(null);
+  }
+
+  const pending = members.filter((m) => m.jersey_number_status === "requested" || m.jersey_number_requested);
+  const assigned = members.filter((m) => m.jersey_number).sort((a, b) => a.jersey_number - b.jersey_number);
+  const unassigned = members.filter((m) => !m.jersey_number && !m.jersey_number_requested);
+  const changedCount = members.filter((m) => drafts[m.id] !== (m.jersey_number != null ? String(m.jersey_number) : "")).length;
+
+  if (loading) return <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-brand-400" /></div>;
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white mb-1">Jersey Numbers</h2>
+          <p className="text-slate-400 text-sm">
+            Assign and manage shirt numbers for all members. Edit inline or use Save All for bulk updates.
+            Members can also request a number from their profile — pending requests appear below.
+          </p>
+        </div>
+        <button
+          onClick={saveAll}
+          disabled={bulkSaving || changedCount === 0 || hasDuplicates}
+          className="btn-primary whitespace-nowrap flex items-center gap-2 shrink-0"
+        >
+          {bulkSaving ? <Loader2 size={14} className="animate-spin" /> : bulkSaved ? <CheckCircle size={14} /> : null}
+          {bulkSaved ? "Saved!" : `Save All${changedCount > 0 ? ` (${changedCount})` : ""}`}
+        </button>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { label: "Total Members", value: members.length, color: "text-white" },
+          { label: "Numbers Assigned", value: assigned.length, color: "text-green-400" },
+          { label: "Pending Requests", value: pending.length, color: "text-gold-400" },
+          { label: "Unassigned", value: unassigned.length, color: "text-slate-400" },
+        ].map((s) => (
+          <div key={s.label} className="glass-dark p-4 rounded-xl border border-white/[0.06]">
+            <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
+            <p className="text-slate-400 text-xs mt-1">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {hasDuplicates && (
+        <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-sm flex items-center gap-2">
+          <AlertCircle size={16} /> Duplicate numbers detected — each member must have a unique jersey number.
+        </div>
+      )}
+
+      {/* Pending member requests */}
+      {pending.length > 0 && (
+        <div className="glass-dark p-5 border border-gold-500/20 rounded-xl">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock size={15} className="text-gold-400" />
+            <h3 className="text-white font-semibold text-sm">Pending Member Requests</h3>
+            <span className="badge-gold text-[10px]">{pending.length}</span>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {pending.map((m) => (
+              <div key={m.id} className="flex items-center gap-4 py-3">
+                <div className="w-12 h-12 rounded-lg bg-gold-500/10 border border-gold-500/30 flex items-center justify-center shrink-0">
+                  <span className="text-lg font-black text-gold-400">#{m.jersey_number_requested}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium">{displayName(m)}</p>
+                  <p className="text-slate-400 text-xs">Requesting #{m.jersey_number_requested}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => approveMemberRequest(m.id, m.jersey_number_requested)}
+                    disabled={actionId === m.id}
+                    className="btn-primary btn-sm flex items-center gap-1"
+                  >
+                    {actionId === m.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />}
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => rejectMemberRequest(m.id)}
+                    disabled={actionId === m.id}
+                    className="btn-ghost btn-sm text-red-400 hover:text-red-300 flex items-center gap-1"
+                  >
+                    <XCircle size={11} /> Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Full member list — bulk assignment */}
+      <div className="glass-dark overflow-hidden rounded-xl">
+        <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+          <div>
+            <h3 className="text-white font-semibold text-sm">All Members — Jersey Assignment</h3>
+            <p className="text-slate-500 text-xs mt-0.5">Type a number next to each player and press Enter or click Save. Leave blank to clear.</p>
+          </div>
+        </div>
+        <div className="divide-y divide-white/[0.04]">
+          {members.map((m) => {
+            const draft = drafts[m.id] ?? "";
+            const conflict = conflictFor(m.id);
+            const changed = draft !== (m.jersey_number != null ? String(m.jersey_number) : "");
+            return (
+              <div key={m.id} className="flex items-center gap-4 px-5 py-3">
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full bg-brand-600/30 flex items-center justify-center text-sm font-bold text-brand-300 shrink-0">
+                  {displayName(m).charAt(0).toUpperCase()}
+                </div>
+                {/* Name + status */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-white text-sm font-medium truncate">{displayName(m)}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className={`text-[10px] ${m.status === "active" ? "text-green-400" : "text-gold-400"}`}>
+                      {m.status === "active" ? "● Active" : "○ " + m.status}
+                    </span>
+                    {m.membership_category && (
+                      <span className="text-[10px] text-slate-500 capitalize">{m.membership_category}</span>
+                    )}
+                  </div>
+                </div>
+                {/* Current number badge */}
+                {m.jersey_number && (
+                  <div className="w-10 h-10 rounded-lg bg-brand-600/20 border border-brand-500/30 flex items-center justify-center shrink-0">
+                    <span className="text-sm font-black text-brand-300">#{m.jersey_number}</span>
+                  </div>
+                )}
+                {/* Number input */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <input
+                    type="number"
+                    min="1"
+                    max="999"
+                    value={draft}
+                    onChange={(e) => setDrafts((d) => ({ ...d, [m.id]: e.target.value }))}
+                    onKeyDown={(e) => e.key === "Enter" && saveOne(m.id)}
+                    placeholder="#"
+                    className={`w-20 input text-center text-sm py-1.5 font-mono ${conflict ? "border-red-500/60 text-red-300" : changed ? "border-brand-500/40" : ""}`}
+                  />
+                  {(changed || m.jersey_number) && (
+                    <button
+                      onClick={() => saveOne(m.id)}
+                      disabled={saving[m.id] || conflict}
+                      className={`btn-sm whitespace-nowrap flex items-center gap-1 ${savedFlash[m.id] ? "text-green-400" : "btn-primary"}`}
+                    >
+                      {saving[m.id] ? <Loader2 size={11} className="animate-spin" /> : savedFlash[m.id] ? <CheckCircle size={11} /> : null}
+                      {savedFlash[m.id] ? "Saved" : "Save"}
+                    </button>
+                  )}
+                  {m.jersey_number && !changed && (
+                    <button
+                      onClick={() => clearNumber(m.id)}
+                      disabled={actionId === m.id}
+                      title="Clear number"
+                      className="btn-ghost btn-sm text-slate-500 hover:text-red-400 px-1.5"
+                    >
+                      {actionId === m.id ? <Loader2 size={11} className="animate-spin" /> : <XCircle size={12} />}
+                    </button>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Read-only sorted registry */}
+      {assigned.length > 0 && (
+        <div className="glass-dark p-5">
+          <h3 className="text-white font-semibold text-sm mb-4">Number Registry (sorted)</h3>
+          <div className="flex flex-wrap gap-2">
+            {assigned.map((m) => (
+              <div key={m.id} className="flex items-center gap-2 bg-slate-800/60 border border-white/[0.06] rounded-lg px-3 py-2">
+                <span className="text-brand-300 font-black text-sm">#{m.jersey_number}</span>
+                <span className="text-slate-300 text-xs">{displayName(m)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
