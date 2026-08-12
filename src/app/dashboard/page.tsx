@@ -10,11 +10,13 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMember } from "@/hooks/useMember";
 import { useAvailability } from "@/hooks/useAvailability";
 import { useCharges } from "@/hooks/useCharges";
+import { createClient } from "@/lib/supabase/client";
+import { parseTourMeta, serializeTourMeta, STAGE_LABELS, type TourMeta, type TourGame } from "@/lib/eventHelpers";
 import { EVENTS } from "@/lib/mock-data";
 import { formatDateShort } from "@/lib/utils";
 import {
   User, Calendar, CreditCard, LogOut, CheckCircle, XCircle, HelpCircle,
-  Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Plane, ShieldCheck
+  Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Car, ShieldCheck
 } from "lucide-react";
 
 type Tab = "overview" | "confirmations" | "availability" | "charges" | "profile";
@@ -23,6 +25,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<Tab>("overview");
+  const supabase = createClient();
 
   // Redirect if not logged in
   useEffect(() => {
@@ -35,13 +38,62 @@ export default function DashboardPage() {
   const { availability, setEventAvailability, getStatus } = useAvailability(member?.id);
   const { charges, loading: chargesLoading, declarePayment, totalOutstanding } = useCharges(member?.id);
 
+  // ── Load real events where this member is selected ────────────────────────
+  const [selectedEvents, setSelectedEvents] = useState<any[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+  const [savingChoice, setSavingChoice] = useState("");
+
+  useEffect(() => {
+    if (!member?.id) return;
+    supabase.from("events").select("*").order("date").then(({ data }: any) => {
+      const all = data || [];
+      const myEvents = all.filter((ev: any) => {
+        const meta = parseTourMeta(ev.notes);
+        return (
+          (meta.stage === "squad_locked" || meta.stage === "choices_open") &&
+          meta.squad_pool.includes(member.id)
+        );
+      });
+      setSelectedEvents(myEvents);
+      setEventsLoading(false);
+    });
+  }, [member?.id]);
+
+  async function savePlayerChoice(
+    eventId: string,
+    gameNum: number,
+    field: "meal" | "travel" | "confirmed" | "declined",
+    value: string | boolean
+  ) {
+    if (!member?.id) return;
+    setSavingChoice(`${eventId}-${gameNum}-${field}`);
+    const ev = selectedEvents.find((e: any) => e.id === eventId);
+    if (!ev) return;
+    const meta = parseTourMeta(ev.notes);
+    const existing = meta.player_responses[member.id] || { confirmed: false, declined: false, games: {} };
+    let updated: typeof existing;
+    if (field === "confirmed" || field === "declined") {
+      updated = { ...existing, [field]: value as boolean };
+    } else {
+      updated = {
+        ...existing,
+        games: { ...existing.games, [gameNum]: { ...(existing.games[gameNum] || {}), [field]: value } },
+      };
+    }
+    const newMeta = { ...meta, player_responses: { ...meta.player_responses, [member.id]: updated } };
+    const serialized = serializeTourMeta(newMeta, ev.notes);
+    await supabase.from("events").update({ notes: serialized }).eq("id", eventId);
+    setSelectedEvents((prev: any[]) => prev.map((e: any) => e.id === eventId ? { ...e, notes: serialized } : e));
+    setSavingChoice("");
+  }
+
   const upcomingEvents = EVENTS.filter((e) => e.status === "scheduled").slice(0, 6);
   const pendingCharges = charges.filter((c) =>
     ["raised", "declared_paid", "partially_paid"].includes(c.status)
   );
 
-  // Selected events notification check
-  const isSelectedForMatch = member?.status === "active" || user?.email?.toLowerCase() === "svenprinsloo@gmail.com";
+  const isSelectedForMatch = selectedEvents.length > 0;
+
 
   if (authLoading || memberLoading) {
     return (
@@ -336,117 +388,182 @@ export default function DashboardPage() {
             <div className="space-y-6">
               <div>
                 <h2 className="text-2xl font-display font-bold text-white mb-1">Match Confirmations & Event Choices</h2>
-                <p className="text-slate-400 text-sm">Confirm your selection for upcoming matches, choose your per-event ground meals, and set travel arrangements.</p>
+                <p className="text-slate-400 text-sm">Confirm your selection, choose your per-game ground meals, and set travel arrangements.</p>
               </div>
 
-              {!isSelectedForMatch ? (
+              {eventsLoading ? (
+                <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
+              ) : !isSelectedForMatch ? (
                 <div className="glass-dark p-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-gold-400 font-bold">
-                    🔒
-                  </div>
+                  <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-2xl">🔒</div>
                   <h3 className="text-white font-semibold text-lg">No Active Selection Pending</h3>
                   <p className="text-slate-400 text-sm max-w-md mx-auto">
-                    You have not been selected for an active match squad yet. Please ensure your availability is marked in the <strong className="text-white">Availability Sign-Up</strong> tab. When the captain selects you for a match, event choices (meals, car pooling & squad roster) will appear here.
+                    You have not been selected for an active match squad yet. Please ensure your availability is marked in the <strong className="text-white">Availability Sign-Up</strong> tab. When the captain selects and publishes the squad, your match cards will appear here.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {/* Event 1 Selection Card */}
-                  <div className="glass-dark p-6 space-y-5 rounded-2xl border border-brand-500/30">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="badge-green text-xs">Selected for Squad</span>
-                          <span className="text-slate-500 text-xs">Sat 5 Sep 2026</span>
+                <div className="space-y-8">
+                  {selectedEvents.map((ev: any) => {
+                    const meta = parseTourMeta(ev.notes);
+                    const myResponse = member?.id ? meta.player_responses[member.id] : null;
+                    const isConfirmed = myResponse?.confirmed;
+                    const isDeclined = myResponse?.declined;
+                    const choicesOpen = meta.stage === "choices_open";
+
+                    return (
+                      <div key={ev.id} className="space-y-4">
+                        {/* Tour header */}
+                        <div className="flex items-center gap-3">
+                          <div className={`px-3 py-1 rounded-full text-xs font-bold ${isConfirmed ? "bg-brand-500/20 text-brand-300 border border-brand-500/40" : isDeclined ? "bg-red-500/20 text-red-300 border border-red-500/40" : "bg-gold-500/20 text-gold-300 border border-gold-500/40"}`}>
+                            {isConfirmed ? "✓ Selection Confirmed" : isDeclined ? "✗ Declined" : "Awaiting Your Response"}
+                          </div>
+                          <h3 className="text-white font-display font-bold text-lg">{ev.title}</h3>
+                          <span className="text-slate-500 text-xs">{meta.tour_games.length} game{meta.tour_games.length !== 1 ? "s" : ""}</span>
                         </div>
-                        <h3 className="text-white font-display font-bold text-lg mt-1">MCC vs Barcelona International CC (Game 1 · T20)</h3>
-                        <p className="text-slate-400 text-xs">Sporting Alfaz Ground · Meet: 07:30 AM | Start: 08:30 AM · ECN Live Broadcast Streamed</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="btn-primary btn-sm text-xs">✓ Confirm Selection</button>
-                        <button className="btn-ghost btn-sm text-xs text-red-400 hover:text-red-300">Decline</button>
-                      </div>
-                    </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                      {/* Per-Event Meal Choice */}
-                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                        <p className="text-white font-semibold flex items-center gap-1.5">
-                          <Utensils size={14} className="text-brand-400" />
-                          <span>Game 1 Ground Meal Choice:</span>
-                        </p>
-                        <select className="input text-xs">
-                          <option value="beef_burger">Beef Burger & Chips (Alfaz Special)</option>
-                          <option value="chicken_burger">Chicken Burger & Chips</option>
-                          <option value="veg_paella">Vegetarian Paella</option>
-                          <option value="halal_wrap">Halal Certified Chicken Wrap</option>
-                        </select>
-                        <p className="text-slate-500 text-[11px]">Meal option submitted to Alfaz ground manager for Game 1.</p>
-                      </div>
+                        {/* Overall confirm/decline — shown once for the tour */}
+                        {!isConfirmed && !isDeclined && (
+                          <div className="glass-dark p-4 rounded-xl border border-gold-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                            <p className="text-slate-300 text-sm">The captain has selected you for this fixture. Please confirm or decline your availability.</p>
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                onClick={() => savePlayerChoice(ev.id, 0, "confirmed", true)}
+                                disabled={savingChoice.startsWith(ev.id)}
+                                className="btn-primary btn-sm text-xs"
+                              >
+                                {savingChoice === `${ev.id}-0-confirmed` ? <Loader2 size={12} className="animate-spin" /> : "✓ Confirm Selection"}
+                              </button>
+                              <button
+                                onClick={() => savePlayerChoice(ev.id, 0, "declined", true)}
+                                disabled={savingChoice.startsWith(ev.id)}
+                                className="btn-ghost btn-sm text-xs text-red-400 hover:text-red-300"
+                              >
+                                Decline
+                              </button>
+                            </div>
+                          </div>
+                        )}
 
-                      {/* Per-Event Travel Choice */}
-                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                        <p className="text-white font-semibold flex items-center gap-1.5">
-                          <Plane size={14} className="text-gold-400" />
-                          <span>Game 1 Car-Pooling & Travel:</span>
-                        </p>
-                        <select className="input text-xs">
-                          <option value="passenger_jon">Passenger in Jon Woodward's Car (Leaves 06:45 AM from Moncloa)</option>
-                          <option value="passenger_sven">Passenger in Sven Prinsloo's Car (Leaves 07:00 AM from Nuevos Ministerios)</option>
-                          <option value="driver">Driving Own Car (Offering seats)</option>
-                          <option value="independent">Independent Travel</option>
-                        </select>
-                      </div>
-                    </div>
-                  </div>
+                        {/* Per-game cards */}
+                        {meta.tour_games.map((game: TourGame) => {
+                          const gameResponse = myResponse?.games?.[game.game_number];
+                          const inXI = game.squad_xi.includes(member?.id || "");
+                          const designation = game.designations?.[member?.id || ""] || "";
 
-                  {/* Event 2 Selection Card */}
-                  <div className="glass-dark p-6 space-y-5 rounded-2xl border border-gold-500/30">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="badge-gold text-xs">Selected for Squad</span>
-                          <span className="text-slate-500 text-xs">Sun 6 Sep 2026</span>
-                        </div>
-                        <h3 className="text-white font-display font-bold text-lg mt-1">MCC vs Barcelona International CC (Game 2 · 40-Over)</h3>
-                        <p className="text-slate-400 text-xs">La Manga Club Ground 1 · Meet: 08:00 AM | Start: 09:00 AM · ECN Live Broadcast Streamed</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button className="btn-primary btn-sm text-xs">✓ Confirm Selection</button>
-                        <button className="btn-ghost btn-sm text-xs text-red-400 hover:text-red-300">Decline</button>
-                      </div>
-                    </div>
+                          return (
+                            <div
+                              key={game.game_number}
+                              className={`glass-dark p-6 space-y-5 rounded-2xl border ${inXI ? "border-brand-500/30" : "border-white/[0.06]"}`}
+                            >
+                              {/* Game header */}
+                              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-white/[0.06] pb-4">
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    {inXI ? (
+                                      <span className="badge-green text-xs">In the XI{designation ? ` (${designation})` : ""}</span>
+                                    ) : (
+                                      <span className="badge-gold text-xs">In Squad Pool</span>
+                                    )}
+                                    <span className="text-slate-500 text-xs">{game.date} · {game.format}</span>
+                                    {game.is_streamed_ecn && <span className="badge-slate text-[10px]">ECN Live</span>}
+                                  </div>
+                                  <p className="text-white font-display font-bold text-base mt-1">
+                                    {ev.title} — Game {game.game_number}
+                                  </p>
+                                  <p className="text-slate-400 text-xs mt-0.5">
+                                    {game.venue_name || "TBC"} · Meet {game.meet_time} / Start {game.start_time}
+                                  </p>
+                                </div>
+                              </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
-                      {/* Per-Event Meal Choice */}
-                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                        <p className="text-white font-semibold flex items-center gap-1.5">
-                          <Utensils size={14} className="text-brand-400" />
-                          <span>Game 2 Ground Meal Choice:</span>
-                        </p>
-                        <select className="input text-xs">
-                          <option value="bbq">Post-Match Club House BBQ</option>
-                          <option value="lasagna">Vegetarian Lasagna & Salad</option>
-                          <option value="halal_lamb">Halal Lamb Wrap & Chips</option>
-                          <option value="salad">Fresh Mediterranean Salad Bowl</option>
-                        </select>
-                        <p className="text-slate-500 text-[11px]">Meal option submitted to La Manga catering manager for Game 2.</p>
-                      </div>
+                              {/* Choices — only shown when confirmed and stage is choices_open */}
+                              {!choicesOpen && (
+                                <p className="text-slate-500 text-xs italic">
+                                  Meal and travel choices will be available once the captain opens the choices phase.
+                                </p>
+                              )}
 
-                      {/* Per-Event Travel Choice */}
-                      <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                        <p className="text-white font-semibold flex items-center gap-1.5">
-                          <Plane size={14} className="text-gold-400" />
-                          <span>Game 2 Travel Arrangement:</span>
-                        </p>
-                        <select className="input text-xs">
-                          <option value="hotel_shuttle">La Manga Team Hotel Shuttle (Leaves 07:30 AM)</option>
-                          <option value="driver">Driving Own Vehicle</option>
-                          <option value="independent">Independent Transport</option>
-                        </select>
+                              {choicesOpen && isConfirmed && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 text-xs">
+                                  {/* Meal choice */}
+                                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                                    <p className="text-white font-semibold flex items-center gap-1.5">
+                                      <Utensils size={14} className="text-brand-400" />
+                                      Game {game.game_number} Ground Meal Choice:
+                                    </p>
+                                    {game.catering_options.length === 0 ? (
+                                      <p className="text-slate-500">Captain has not yet confirmed meal options for this game.</p>
+                                    ) : (
+                                      <>
+                                        <select
+                                          className="input text-xs"
+                                          value={gameResponse?.meal || ""}
+                                          onChange={(e) => savePlayerChoice(ev.id, game.game_number, "meal", e.target.value)}
+                                        >
+                                          <option value="">Select your meal...</option>
+                                          {game.catering_options.map((opt: string) => (
+                                            <option key={opt} value={opt}>{opt}</option>
+                                          ))}
+                                        </select>
+                                        {gameResponse?.meal && (
+                                          <p className="text-brand-400 text-[11px]">✓ Saved: {gameResponse.meal}</p>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* Travel choice */}
+                                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
+                                    <p className="text-white font-semibold flex items-center gap-1.5">
+                                      <Car size={14} className="text-gold-400" />
+                                      Game {game.game_number} Travel Arrangement:
+                                    </p>
+                                    <select
+                                      className="input text-xs"
+                                      value={gameResponse?.travel || ""}
+                                      onChange={(e) => savePlayerChoice(ev.id, game.game_number, "travel", e.target.value)}
+                                    >
+                                      <option value="">Select travel arrangement...</option>
+                                      {/* Drivers from other squad members */}
+                                      {meta.squad_pool
+                                        .filter((id: string) => id !== member?.id)
+                                        .map((id: string) => {
+                                          const r = meta.player_responses[id];
+                                          if (r?.games?.[game.game_number]?.travel === "driver") {
+                                            return (
+                                              <option key={id} value={`passenger:${id}`}>
+                                                Passenger in squad member's car
+                                              </option>
+                                            );
+                                          }
+                                          return null;
+                                        })
+                                        .filter(Boolean)}
+                                      <option value="driver">Driving Own Car (offering seats to others)</option>
+                                      <option value="independent">Independent Transport (own arrangement)</option>
+                                    </select>
+                                    {gameResponse?.travel && (
+                                      <p className="text-gold-400 text-[11px]">✓ Saved: {gameResponse.travel === "driver" ? "Driving own car" : gameResponse.travel.startsWith("passenger:") ? "Passenger in squad car" : gameResponse.travel}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+
+                              {choicesOpen && !isConfirmed && !isDeclined && (
+                                <p className="text-slate-500 text-xs italic">Confirm your tour selection above to unlock meal and travel choices.</p>
+                              )}
+
+                              {isDeclined && (
+                                <div className="text-center py-4">
+                                  <p className="text-slate-500 text-sm">You have declined this selection. Please contact the captain if you change your mind.</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                    </div>
-                  </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

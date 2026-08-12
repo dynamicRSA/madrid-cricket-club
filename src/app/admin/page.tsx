@@ -12,8 +12,14 @@ import type { Database } from "@/types/supabase";
 import {
   Users, CreditCard, Calendar, BarChart3, CheckCircle, XCircle,
   Clock, AlertCircle, Loader2, Search, Download, ChevronDown,
-  LogOut, ShieldAlert, Eye
+  LogOut, ShieldAlert, Eye, Plus, ChevronRight, Utensils, Car,
+  Trophy, Edit2, ArrowRight, Lock, Unlock
 } from "lucide-react";
+import {
+  parseTourMeta, serializeTourMeta, defaultGame,
+  STAGE_LABELS, STAGE_NEXT, STAGE_NEXT_LABEL, stageColor,
+  type TourMeta, type TourGame, type EventStage
+} from "@/lib/eventHelpers";
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type ChargeRow = Database["public"]["Tables"]["charges"]["Row"];
@@ -840,328 +846,792 @@ function StatusBadge({ status }: { status: string }) {
 // ─── Captain Team Selection Tab ────────────────────────────────────────────────
 
 function CaptainSelectionTab({ supabase }: { supabase: any }) {
+  // ── Data state ──────────────────────────────────────────────────────────────
   const [events, setEvents] = useState<any[]>([]);
   const [members, setMembers] = useState<any[]>([]);
   const [availability, setAvailability] = useState<any[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
 
-  // Event creation form state
+  // ── UI state ─────────────────────────────────────────────────────────────────
+  const [selectedEventId, setSelectedEventId] = useState<string>("");
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    title: "MCC vs Barcelona International CC",
-    opponent: "Barcelona International CC",
-    date: "2026-09-05",
-    venue_name: "La Manga Club Ground 1",
-    format: "T20 (2 x Matches)",
-    meet_time: "07:30 AM",
-    start_time: "08:30 AM",
-    is_streamed_ecn: true,
-    catering_options: "Post-match Meal, Match Tea & Refreshments",
+  const [activeView, setActiveView] = useState<"events" | "squad" | "responses">("events");
+
+  // ── Tour creation form ───────────────────────────────────────────────────────
+  const [newTour, setNewTour] = useState({
+    title: "",
+    opponent: "",
+    num_games: 1,
+    games: [defaultGame(1)],
   });
-  const [creating, setCreating] = useState(false);
 
-  // Selected squad state per event
-  const [selectedPlayerIds, setSelectedPlayerIds] = useState<string[]>([]);
-  const [designations, setDesignations] = useState<Record<string, string>>({});
-  const [published, setPublished] = useState(false);
-  const [publishing, setPublishing] = useState(false);
+  // ── Squad selection state (for selected event) ──────────────────────────────
+  const [tourMeta, setTourMeta] = useState<TourMeta | null>(null);
+  const [activeGameNum, setActiveGameNum] = useState(1);
 
+  // ── Load data ────────────────────────────────────────────────────────────────
   useEffect(() => {
     Promise.all([
       supabase.from("events").select("*").order("date"),
       supabase.from("members").select("*").eq("status", "active"),
       supabase.from("availability").select("*"),
     ]).then(([evRes, memRes, avRes]: any[]) => {
+      const fetchedEvents = evRes.data || [];
       let fetchedMembers = memRes.data || [];
       if (fetchedMembers.length === 0) {
         fetchedMembers = [
-          { id: "m-sven", full_legal_name: "Sven Prinsloo", preferred_name: "Sven", playing_role: "all_rounder", status: "active" },
-          { id: "m-jon", full_legal_name: "Jon Woodward", preferred_name: "Jon", playing_role: "all_rounder", status: "active" },
-          { id: "m-lewis", full_legal_name: "Lewis Clarke", preferred_name: "Lewis", playing_role: "batsman", status: "active" },
-          { id: "m-adam", full_legal_name: "Adam Langhans", preferred_name: "Adam", playing_role: "bowler", status: "active" },
-          { id: "m-victor", full_legal_name: "Victor Medina", preferred_name: "Victor", playing_role: "wicket_keeper", status: "active" },
-          { id: "m-anand", full_legal_name: "Anand Kaul", preferred_name: "Anand", playing_role: "batsman", status: "active" },
-          { id: "m-gourav", full_legal_name: "Gourav Saha", preferred_name: "Gourav", playing_role: "all_rounder", status: "active" },
+          { id: "m-sven", full_legal_name: "Sven Prinsloo", preferred_name: "Sven", playing_role: "all_rounder", dietary_requirements: "Standard" },
+          { id: "m-jon", full_legal_name: "Jon Woodward", preferred_name: "Jon", playing_role: "all_rounder", dietary_requirements: "Standard" },
+          { id: "m-lewis", full_legal_name: "Lewis Clarke", preferred_name: "Lewis", playing_role: "batsman", dietary_requirements: "Vegetarian" },
+          { id: "m-adam", full_legal_name: "Adam Langhans", preferred_name: "Adam", playing_role: "bowler", dietary_requirements: "Standard" },
+          { id: "m-victor", full_legal_name: "Victor Medina", preferred_name: "Victor", playing_role: "wicket_keeper", dietary_requirements: "Halal" },
+          { id: "m-anand", full_legal_name: "Anand Kaul", preferred_name: "Anand", playing_role: "batsman", dietary_requirements: "Vegetarian" },
+          { id: "m-gourav", full_legal_name: "Gourav Saha", preferred_name: "Gourav", playing_role: "all_rounder", dietary_requirements: "Standard" },
         ];
       }
       setEvents(fetchedEvents);
       setMembers(fetchedMembers);
       setAvailability(avRes.data || []);
       if (fetchedEvents.length > 0) {
-        setSelectedEventId(fetchedEvents[0].id);
-      }
-      // Pre-select active members if available
-      if (fetchedMembers.length > 0) {
-        setSelectedPlayerIds(fetchedMembers.slice(0, 11).map((m: any) => m.id));
-        setDesignations({
-          [fetchedMembers[0]?.id]: "C",
-          [fetchedMembers[1]?.id]: "VC",
-          [fetchedMembers[2]?.id]: "WK",
-        });
+        const firstId = fetchedEvents[0].id;
+        setSelectedEventId(firstId);
+        setTourMeta(parseTourMeta(fetchedEvents[0].notes));
       }
       setLoading(false);
     });
   }, []);
 
-  const currentEvent = events.find((e) => e.id === selectedEventId);
-
-  // Filter members available for selected event
-  const availableMemberIds = availability
-    .filter((a) => a.event_id === selectedEventId && a.status === "available")
-    .map((a) => a.member_id);
-
-  function togglePlayerSelection(memberId: string) {
-    if (selectedPlayerIds.includes(memberId)) {
-      setSelectedPlayerIds(selectedPlayerIds.filter((id) => id !== memberId));
-    } else {
-      setSelectedPlayerIds([...selectedPlayerIds, memberId]);
+  // ── When selected event changes, re-parse tour meta ──────────────────────────
+  useEffect(() => {
+    if (!selectedEventId) return;
+    const ev = events.find((e: any) => e.id === selectedEventId);
+    if (ev) {
+      const meta = parseTourMeta(ev.notes);
+      setTourMeta(meta);
+      setActiveGameNum(meta.tour_games[0]?.game_number ?? 1);
     }
+  }, [selectedEventId, events]);
+
+  // ── Save tour meta back to DB ────────────────────────────────────────────────
+  async function saveMeta(meta: TourMeta) {
+    setSaving(true);
+    const ev = events.find((e: any) => e.id === selectedEventId);
+    const serialized = serializeTourMeta(meta, ev?.notes);
+    await supabase.from("events").update({ notes: serialized, updated_at: new Date().toISOString() }).eq("id", selectedEventId);
+    setEvents((prev: any[]) => prev.map((e: any) => e.id === selectedEventId ? { ...e, notes: serialized } : e));
+    setTourMeta(meta);
+    setSaving(false);
   }
 
-  function setPlayerRole(memberId: string, role: string) {
-    setDesignations((prev) => ({ ...prev, [memberId]: role }));
+  // ── Advance stage ─────────────────────────────────────────────────────────────
+  async function advanceStage() {
+    if (!tourMeta) return;
+    const next = STAGE_NEXT[tourMeta.stage];
+    if (!next) return;
+    const updated = { ...tourMeta, stage: next };
+    await saveMeta(updated);
+    setStatusMsg(`Stage advanced to: ${STAGE_LABELS[next]}`);
+    setTimeout(() => setStatusMsg(""), 3000);
   }
 
-  async function handleCreateEvent(e: React.FormEvent) {
+  // ── Create new tour ───────────────────────────────────────────────────────────
+  async function handleCreateTour(e: React.FormEvent) {
     e.preventDefault();
-    setCreating(true);
-    const { data, error } = await supabase.from("events").insert({
-      title: newEvent.title,
-      opponent: newEvent.opponent,
-      date: newEvent.date,
-      format: newEvent.format,
+    setSaving(true);
+    const meta: TourMeta = {
+      stage: "draft",
+      tour_games: newTour.games.slice(0, newTour.num_games),
+      squad_pool: [],
+      player_responses: {},
+    };
+    const { data } = await supabase.from("events").insert({
+      title: newTour.title,
+      opponent: newTour.opponent,
+      date: newTour.games[0]?.date || new Date().toISOString().split("T")[0],
+      format: newTour.games.map((g: TourGame) => g.format).join(" / "),
       status: "scheduled",
-      venue: { name: newEvent.venue_name },
-      notes: `Meet: ${newEvent.meet_time} | Start: ${newEvent.start_time} | ECN Stream: ${newEvent.is_streamed_ecn ? "Yes" : "No"} | Catering: ${newEvent.catering_options}`,
+      venue: { name: newTour.games[0]?.venue_name || "TBC" },
+      notes: serializeTourMeta(meta),
     }).select().single();
 
     if (data) {
-      setEvents([data, ...events]);
+      setEvents((prev: any[]) => [data, ...prev]);
       setSelectedEventId(data.id);
+      setTourMeta(meta);
     }
-    setCreating(false);
+    setSaving(false);
     setShowCreateModal(false);
+    setNewTour({ title: "", opponent: "", num_games: 1, games: [defaultGame(1)] });
+    setActiveView("squad");
+    setStatusMsg("Tour created. Now select the squad pool below.");
+    setTimeout(() => setStatusMsg(""), 4000);
   }
 
-  async function handlePublishSquad() {
-    setPublishing(true);
-    // Persist squad selection in events metadata / notes
-    await supabase.from("events").update({
-      notes: `${currentEvent?.notes || ""} | SQUAD_SELECTED: ${selectedPlayerIds.join(",")}`,
-      updated_at: new Date().toISOString(),
-    }).eq("id", selectedEventId);
+  // ── Update num_games in form, keeping/adding game slots ──────────────────────
+  function setNumGames(n: number) {
+    const games = [...newTour.games];
+    while (games.length < n) games.push(defaultGame(games.length + 1));
+    setNewTour({ ...newTour, num_games: n, games: games.slice(0, n) });
+  }
 
-    setPublishing(false);
-    setPublished(true);
+  function updateNewGame(idx: number, patch: Partial<TourGame>) {
+    const games = newTour.games.map((g: TourGame, i: number) => i === idx ? { ...g, ...patch } : g);
+    setNewTour({ ...newTour, games });
+  }
+
+  // ── Toggle squad pool member ──────────────────────────────────────────────────
+  function togglePoolMember(memberId: string) {
+    if (!tourMeta) return;
+    const pool = tourMeta.squad_pool.includes(memberId)
+      ? tourMeta.squad_pool.filter((id: string) => id !== memberId)
+      : [...tourMeta.squad_pool, memberId];
+    const updated = { ...tourMeta, squad_pool: pool };
+    setTourMeta(updated);
+  }
+
+  // ── Toggle player in game XI ──────────────────────────────────────────────────
+  function toggleGameXI(gameNum: number, memberId: string) {
+    if (!tourMeta) return;
+    const games = tourMeta.tour_games.map((g: TourGame) => {
+      if (g.game_number !== gameNum) return g;
+      const xi = g.squad_xi.includes(memberId)
+        ? g.squad_xi.filter((id: string) => id !== memberId)
+        : [...g.squad_xi, memberId];
+      return { ...g, squad_xi: xi };
+    });
+    setTourMeta({ ...tourMeta, tour_games: games });
+  }
+
+  // ── Set designation for player in game ───────────────────────────────────────
+  function setDesignation(gameNum: number, memberId: string, role: string) {
+    if (!tourMeta) return;
+    const games = tourMeta.tour_games.map((g: TourGame) => {
+      if (g.game_number !== gameNum) return g;
+      return { ...g, designations: { ...g.designations, [memberId]: role } };
+    });
+    setTourMeta({ ...tourMeta, tour_games: games });
+  }
+
+  // ── Update catering options for a game ────────────────────────────────────────
+  function updateGameCatering(gameNum: number, value: string) {
+    if (!tourMeta) return;
+    const options = value.split(",").map((s: string) => s.trim()).filter(Boolean);
+    const games = tourMeta.tour_games.map((g: TourGame) =>
+      g.game_number === gameNum ? { ...g, catering_options: options } : g
+    );
+    setTourMeta({ ...tourMeta, tour_games: games });
   }
 
   if (loading) {
     return <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>;
   }
 
+  const currentEvent = events.find((e: any) => e.id === selectedEventId);
+  const currentStage = tourMeta?.stage ?? "draft";
+  const nextStage = STAGE_NEXT[currentStage];
+  const nextLabel = STAGE_NEXT_LABEL[currentStage];
+  const activeGame = tourMeta?.tour_games.find((g: TourGame) => g.game_number === activeGameNum);
+
+  // Availability counts per event
+  const availableMemberIds = availability
+    .filter((a: any) => a.event_id === selectedEventId && a.status === "available")
+    .map((a: any) => a.member_id);
+
   return (
     <div className="space-y-6">
-      {/* Top Header */}
+
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
         <div>
           <h2 className="text-2xl font-display font-bold text-white mb-1 flex items-center gap-2">
-            <span>Captain&apos;s Match Setup & Team Selection</span>
+            Captain&apos;s Match Management
             <span className="badge-red text-xs">Captain Control</span>
           </h2>
-          <p className="text-slate-400 text-sm">Create fixtures, specify start times & meal choices, and publish official team XI.</p>
+          <p className="text-slate-400 text-sm">Create tours & fixtures, build squads, publish XIs, and manage player choices.</p>
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => setShowCreateModal(true)} className="btn-outline btn-sm">
-            + Create New Fixture / Event
-          </button>
-          <button onClick={handlePublishSquad} disabled={publishing || !selectedEventId} className="btn-primary btn-sm">
-            {publishing ? <><Loader2 size={13} className="animate-spin" /> Publishing...</> : published ? "✓ Squad Confirmed & Published" : "Publish XI & Unlock Details"}
-          </button>
-        </div>
+        <button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm shrink-0">
+          <Plus size={14} /> Create Fixture / Tour
+        </button>
       </div>
 
-      {/* Create Event Modal */}
+      {/* ── Status message ────────────────────────────────────────────────────── */}
+      {statusMsg && (
+        <div className="bg-brand-500/20 text-brand-300 border border-brand-500/40 rounded-xl px-4 py-3 text-sm font-semibold">
+          {statusMsg}
+        </div>
+      )}
+
+      {/* ── Create tour modal ─────────────────────────────────────────────────── */}
       {showCreateModal && (
-        <div className="glass-dark p-6 rounded-2xl border border-brand-500/30 space-y-4">
-          <h3 className="text-lg font-display font-bold text-white border-b border-white/[0.06] pb-2">Create New Match Fixture</h3>
-          <form onSubmit={handleCreateEvent} className="space-y-4 text-xs">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="glass-dark p-6 rounded-2xl border border-brand-500/30 space-y-5">
+          <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+            <h3 className="text-lg font-display font-bold text-white">Create New Fixture / Tour</h3>
+            <button onClick={() => setShowCreateModal(false)} className="text-slate-500 hover:text-white text-xs">✕ Cancel</button>
+          </div>
+          <form onSubmit={handleCreateTour} className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="label text-xs">Fixture Title</label>
-                <input className="input text-xs" value={newEvent.title} onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })} required />
+                <label className="label text-xs">Tour / Fixture Name</label>
+                <input className="input text-xs" value={newTour.title} onChange={(e) => setNewTour({ ...newTour, title: e.target.value })} placeholder="e.g. Barcelona Tour 2026" required />
               </div>
               <div>
-                <label className="label text-xs">Opponent Team</label>
-                <input className="input text-xs" value={newEvent.opponent} onChange={(e) => setNewEvent({ ...newEvent, opponent: e.target.value })} required />
+                <label className="label text-xs">Opponent(s)</label>
+                <input className="input text-xs" value={newTour.opponent} onChange={(e) => setNewTour({ ...newTour, opponent: e.target.value })} placeholder="e.g. Barcelona CC / Costa Blanca CC" required />
               </div>
               <div>
-                <label className="label text-xs">Match Date</label>
-                <input type="date" className="input text-xs" value={newEvent.date} onChange={(e) => setNewEvent({ ...newEvent, date: e.target.value })} required />
-              </div>
-              <div>
-                <label className="label text-xs">Format / Overs</label>
-                <input className="input text-xs" value={newEvent.format} onChange={(e) => setNewEvent({ ...newEvent, format: e.target.value })} required />
-              </div>
-              <div>
-                <label className="label text-xs">Player Meet Arrival Time</label>
-                <input className="input text-xs" value={newEvent.meet_time} onChange={(e) => setNewEvent({ ...newEvent, meet_time: e.target.value })} placeholder="e.g. 07:30 AM" />
-              </div>
-              <div>
-                <label className="label text-xs">Match Start Time</label>
-                <input className="input text-xs" value={newEvent.start_time} onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })} placeholder="e.g. 08:30 AM" />
-              </div>
-              <div>
-                <label className="label text-xs">Venue Location</label>
-                <input className="input text-xs" value={newEvent.venue_name} onChange={(e) => setNewEvent({ ...newEvent, venue_name: e.target.value })} required />
-              </div>
-              <div>
-                <label className="label text-xs">Meal & Catering Choices Offered by Ground (comma separated)</label>
-                <input
-                  className="input text-xs"
-                  value={newEvent.catering_options}
-                  onChange={(e) => setNewEvent({ ...newEvent, catering_options: e.target.value })}
-                  placeholder="e.g. Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap, Salad Bowl"
-                />
+                <label className="label text-xs">Number of Games</label>
+                <select className="input text-xs" value={newTour.num_games} onChange={(e) => setNumGames(Number(e.target.value))}>
+                  {[1, 2, 3, 4].map((n) => <option key={n} value={n}>{n} game{n > 1 ? "s" : ""}</option>)}
+                </select>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-2">
-              <input type="checkbox" id="ecn-check" checked={newEvent.is_streamed_ecn} onChange={(e) => setNewEvent({ ...newEvent, is_streamed_ecn: e.target.checked })} />
-              <label htmlFor="ecn-check" className="text-slate-300">Live Broadcasted on ECN channels (Player consent required)</label>
-            </div>
+            {/* Per-game fields */}
+            {newTour.games.slice(0, newTour.num_games).map((game: TourGame, idx: number) => (
+              <div key={idx} className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.05] space-y-3">
+                <p className="text-white font-semibold text-xs uppercase tracking-wider">Game {idx + 1}</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+                  <div>
+                    <label className="label text-[11px]">Date</label>
+                    <input type="date" className="input text-xs" value={game.date} onChange={(e) => updateNewGame(idx, { date: e.target.value })} required />
+                  </div>
+                  <div>
+                    <label className="label text-[11px]">Venue</label>
+                    <input className="input text-xs" value={game.venue_name} onChange={(e) => updateNewGame(idx, { venue_name: e.target.value })} placeholder="Sporting Alfaz" required />
+                  </div>
+                  <div>
+                    <label className="label text-[11px]">Format</label>
+                    <input className="input text-xs" value={game.format} onChange={(e) => updateNewGame(idx, { format: e.target.value })} placeholder="T20" />
+                  </div>
+                  <div>
+                    <label className="label text-[11px]">Meet Time</label>
+                    <input type="time" className="input text-xs" value={game.meet_time} onChange={(e) => updateNewGame(idx, { meet_time: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="label text-[11px]">Start Time</label>
+                    <input type="time" className="input text-xs" value={game.start_time} onChange={(e) => updateNewGame(idx, { start_time: e.target.value })} />
+                  </div>
+                  <div className="sm:col-span-3">
+                    <label className="label text-[11px]">Ground Meal Options (comma-separated)</label>
+                    <input className="input text-xs" value={game.catering_options.join(", ")} onChange={(e) => updateNewGame(idx, { catering_options: e.target.value.split(",").map((s: string) => s.trim()) })} placeholder="Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap" />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <input type="checkbox" id={`ecn-${idx}`} checked={game.is_streamed_ecn} onChange={(e) => updateNewGame(idx, { is_streamed_ecn: e.target.checked })} />
+                  <label htmlFor={`ecn-${idx}`} className="text-slate-300">ECN Live Broadcast (requires player media consent)</label>
+                </div>
+              </div>
+            ))}
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setShowCreateModal(false)} className="btn-ghost btn-sm">Cancel</button>
-              <button type="submit" disabled={creating} className="btn-primary btn-sm">
-                {creating ? <Loader2 size={13} className="animate-spin" /> : "Save Fixture & Open Sign-Ups"}
+              <button type="submit" disabled={saving} className="btn-primary btn-sm">
+                {saving ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : "Create & Open in Draft"}
               </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Target Event Selector & Edit Controls */}
-      <div className="glass-dark p-6 space-y-4 rounded-2xl border border-brand-500/20">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
-          <div className="flex-1 w-full">
-            <label className="label text-xs">Active Fixture / Tour Selection</label>
-            <select
-              value={selectedEventId}
-              onChange={(e) => setSelectedEventId(e.target.value)}
-              className="input text-sm w-full"
-            >
-              {events.map((ev) => (
-                <option key={ev.id} value={ev.id}>
-                  {ev.date} — {ev.title} ({ev.venue?.name || "TBC"})
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex gap-3 text-xs shrink-0">
-            <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
-              <span className="text-slate-400 block">Signed Up / Available</span>
-              <span className="text-brand-400 font-bold text-sm">{availableMemberIds.length > 0 ? `${availableMemberIds.length} Members` : `${members.length} Total Roster`}</span>
-            </div>
-            <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
-              <span className="text-slate-400 block">Selected Squad XI</span>
-              <span className="text-gold-400 font-bold text-sm">{selectedPlayerIds.length} Selected</span>
-            </div>
-          </div>
+      {/* ── Event selector + stage panel ──────────────────────────────────────── */}
+      {events.length === 0 ? (
+        <div className="glass-dark p-10 text-center space-y-3">
+          <Trophy size={32} className="text-slate-600 mx-auto" />
+          <p className="text-slate-400">No fixtures or tours created yet.</p>
+          <button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm">Create your first fixture</button>
         </div>
+      ) : (
+        <>
+          {/* Event selector */}
+          <div className="glass-dark p-5 rounded-2xl border border-brand-500/20 space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-end justify-between">
+              <div className="flex-1 w-full">
+                <label className="label text-xs">Active Fixture / Tour</label>
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => { setSelectedEventId(e.target.value); setActiveView("events"); }}
+                  className="input text-sm w-full"
+                >
+                  {events.map((ev: any) => {
+                    const meta = parseTourMeta(ev.notes);
+                    return (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.date} — {ev.title} [{STAGE_LABELS[meta.stage]}] ({meta.tour_games.length} game{meta.tour_games.length !== 1 ? "s" : ""})
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
 
-        {/* Fixture Details & Per-Game Catering Editor */}
-        {currentEvent && (
-          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="font-semibold text-white">Fixture Details & Per-Game Catering Settings:</span>
-              <span className="text-slate-400 font-normal">Editing: {currentEvent.title}</span>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="label text-[11px]">Match Date & Time</label>
-                <input className="input text-xs" defaultValue={currentEvent.date} />
-              </div>
-              <div>
-                <label className="label text-[11px]">Meet Arrival / Start Time</label>
-                <input className="input text-xs" defaultValue="Meet: 07:30 AM | Start: 08:30 AM" />
-              </div>
-              <div>
-                <label className="label text-[11px]">Ground Meal Options Offered for Game</label>
-                <input className="input text-xs" defaultValue="Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap" />
+              {/* Stats */}
+              <div className="flex gap-3 text-xs shrink-0">
+                <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5 text-center">
+                  <span className="text-slate-400 block">Sign-ups</span>
+                  <span className="text-brand-400 font-bold text-sm">{availableMemberIds.length} members</span>
+                </div>
+                <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5 text-center">
+                  <span className="text-slate-400 block">Squad Pool</span>
+                  <span className="text-gold-400 font-bold text-sm">{tourMeta?.squad_pool.length ?? 0} selected</span>
+                </div>
+                <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5 text-center">
+                  <span className="text-slate-400 block">Stage</span>
+                  <span className={`font-bold text-sm ${currentStage === "draft" ? "text-slate-400" : currentStage === "squad_open" ? "text-gold-400" : "text-brand-400"}`}>
+                    {STAGE_LABELS[currentStage]}
+                  </span>
+                </div>
               </div>
             </div>
-            <p className="text-slate-500 text-[11px]">Captains can return at any time to modify meal choices, shift departure times, or update the XI lineup.</p>
+
+            {/* Stage progression bar */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-1 text-xs">
+                {(["draft", "squad_open", "squad_locked", "choices_open", "completed"] as EventStage[]).map((s, i, arr) => (
+                  <div key={s} className="flex items-center gap-1 flex-1">
+                    <div className={`h-1.5 flex-1 rounded-full transition-all ${
+                      ["draft", "squad_open", "squad_locked", "choices_open", "completed"].indexOf(currentStage) >= i
+                        ? "bg-brand-500" : "bg-slate-700"
+                    }`} />
+                    {i < arr.length - 1 && <div className="w-1 h-1 rounded-full bg-slate-700 shrink-0" />}
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>Draft</span>
+                <span>Sign-Up Open</span>
+                <span>Squad Published</span>
+                <span>Choices Open</span>
+                <span>Done</span>
+              </div>
+            </div>
+
+            {/* Advance stage action */}
+            {nextLabel && currentStage !== "completed" && currentStage !== "cancelled" && (
+              <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
+                <p className="text-slate-400 text-xs">
+                  {currentStage === "draft" && "Once ready, open sign-ups so members can mark availability."}
+                  {currentStage === "squad_open" && "Select your squad pool and per-game XIs below, then publish to notify players."}
+                  {currentStage === "squad_locked" && "When ground meal options are confirmed, open choices for players."}
+                  {currentStage === "choices_open" && "All choices collected. Mark the event as completed after the matches."}
+                </p>
+                <button
+                  onClick={advanceStage}
+                  disabled={saving}
+                  className="btn-primary btn-sm shrink-0 ml-4"
+                >
+                  {saving ? <><Loader2 size={13} className="animate-spin" /></> : <ArrowRight size={13} />}
+                  {nextLabel}
+                </button>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Dynamic Member Roster Selection */}
-      <div className="glass-dark p-6 space-y-4">
-        <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
-          <h3 className="text-white font-semibold text-base">Select Players for Squad XI ({selectedPlayerIds.length} Picked)</h3>
-          <span className="text-xs text-slate-400">Click checkboxes to include in team</span>
-        </div>
+          {/* ── Sub-navigation ─────────────────────────────────────────────────── */}
+          <div className="flex gap-1">
+            {[
+              { id: "events", label: "Fixture Details", icon: Calendar },
+              { id: "squad", label: `Squad & XIs (${tourMeta?.squad_pool.length ?? 0} in pool)`, icon: Users },
+              { id: "responses", label: "Player Responses", icon: CheckCircle },
+            ].map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                onClick={() => setActiveView(id as any)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  activeView === id
+                    ? "bg-brand-500/20 text-brand-300 border border-brand-500/30"
+                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Icon size={13} /> {label}
+              </button>
+            ))}
+          </div>
 
-        <div className="overflow-x-auto">
-          <table className="table-auto text-xs min-w-[650px]">
-            <thead>
-              <tr>
-                <th>Select</th>
-                <th>Member Name</th>
-                <th>Playing Role</th>
-                <th>Availability</th>
-                <th>Designation</th>
-                <th>Dietary Requirement</th>
-              </tr>
-            </thead>
-            <tbody>
-              {members.map((m) => {
-                const isSelected = selectedPlayerIds.includes(m.id);
-                const isAvail = availableMemberIds.includes(m.id);
-                return (
-                  <tr key={m.id} className={isSelected ? "bg-brand-500/10" : ""}>
-                    <td>
+          {/* ── FIXTURE DETAILS VIEW ─────────────────────────────────────────────── */}
+          {activeView === "events" && tourMeta && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-white font-semibold">Games in this Fixture / Tour</h3>
+                <p className="text-slate-500 text-xs">{currentEvent?.title}</p>
+              </div>
+
+              {tourMeta.tour_games.length === 0 && (
+                <div className="glass-dark p-8 text-center text-slate-400 text-sm">
+                  No games configured yet. This tour has no game data — re-create with the form above.
+                </div>
+              )}
+
+              {tourMeta.tour_games.map((game: TourGame) => (
+                <div key={game.game_number} className="glass-dark p-5 space-y-4 rounded-2xl border border-white/[0.06]">
+                  <div className="flex items-center justify-between">
+                    <span className="text-white font-bold">Game {game.game_number}</span>
+                    <span className="text-slate-400 text-xs">{game.date} · {game.format}</span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div>
+                      <label className="label text-[11px]">Date</label>
                       <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => togglePlayerSelection(m.id)}
-                        className="rounded accent-brand-500 w-4 h-4 cursor-pointer"
+                        type="date"
+                        className="input text-xs"
+                        defaultValue={game.date}
+                        onBlur={(e) => {
+                          if (!tourMeta) return;
+                          const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, date: e.target.value } : g);
+                          saveMeta({ ...tourMeta, tour_games: games });
+                        }}
                       />
-                    </td>
-                    <td className="font-semibold text-white">
-                      {m.preferred_name || m.full_legal_name}
-                      {isSelected && <span className="ml-2 text-[10px] text-brand-400 font-normal">(Selected)</span>}
-                    </td>
-                    <td className="text-slate-300 capitalize">{m.playing_role?.replace("_", " ") || "All-rounder"}</td>
-                    <td>
-                      {isAvail ? <span className="badge-green text-[10px]">Available</span> : <span className="badge-slate text-[10px]">Pending Sign-up</span>}
-                    </td>
-                    <td>
-                      {isSelected ? (
-                        <select
-                          value={designations[m.id] || ""}
-                          onChange={(e) => setPlayerRole(m.id, e.target.value)}
-                          className="input text-[11px] py-1 px-2"
-                        >
-                          <option value="">Member XI</option>
-                          <option value="C">Captain (C)</option>
-                          <option value="VC">Vice-Captain (VC)</option>
-                          <option value="WK">Wicketkeeper (WK)</option>
-                          <option value="12th">12th Man</option>
-                        </select>
-                      ) : (
-                        <span className="text-slate-600">—</span>
+                    </div>
+                    <div>
+                      <label className="label text-[11px]">Venue</label>
+                      <input
+                        className="input text-xs"
+                        defaultValue={game.venue_name}
+                        onBlur={(e) => {
+                          if (!tourMeta) return;
+                          const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, venue_name: e.target.value } : g);
+                          saveMeta({ ...tourMeta, tour_games: games });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="label text-[11px]">Meet Time</label>
+                      <input
+                        type="time"
+                        className="input text-xs"
+                        defaultValue={game.meet_time}
+                        onBlur={(e) => {
+                          if (!tourMeta) return;
+                          const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, meet_time: e.target.value } : g);
+                          saveMeta({ ...tourMeta, tour_games: games });
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <label className="label text-[11px]">Start Time</label>
+                      <input
+                        type="time"
+                        className="input text-xs"
+                        defaultValue={game.start_time}
+                        onBlur={(e) => {
+                          if (!tourMeta) return;
+                          const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, start_time: e.target.value } : g);
+                          saveMeta({ ...tourMeta, tour_games: games });
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="label text-[11px]">Ground Meal Options (comma-separated) — configured by captain once ground confirms</label>
+                    <input
+                      className="input text-xs"
+                      defaultValue={game.catering_options.join(", ")}
+                      onBlur={(e) => {
+                        if (!tourMeta) return;
+                        updateGameCatering(game.game_number, e.target.value);
+                        const options = e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean);
+                        const games = tourMeta.tour_games.map((g: TourGame) => g.game_number === game.game_number ? { ...g, catering_options: options } : g);
+                        saveMeta({ ...tourMeta, tour_games: games });
+                      }}
+                      placeholder="Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-slate-400">
+                    <span>{game.squad_xi.length} players selected for this XI</span>
+                    <button
+                      onClick={() => { setActiveView("squad"); setActiveGameNum(game.game_number); }}
+                      className="text-brand-400 hover:text-brand-300 flex items-center gap-1"
+                    >
+                      Edit XI <ChevronRight size={12} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* ── SQUAD & XIs VIEW ────────────────────────────────────────────────── */}
+          {activeView === "squad" && tourMeta && (
+            <div className="space-y-5">
+              {/* Step 1: Pool selector */}
+              <div className="glass-dark p-5 space-y-4 rounded-2xl border border-brand-500/20">
+                <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                  <div>
+                    <h3 className="text-white font-semibold">Step 1 — Select Tour Squad Pool</h3>
+                    <p className="text-slate-400 text-xs mt-0.5">All members travelling to this fixture / tour. Per-game XIs are drawn from this pool.</p>
+                  </div>
+                  <button onClick={() => saveMeta(tourMeta)} disabled={saving} className="btn-primary btn-sm text-xs">
+                    {saving ? <Loader2 size={12} className="animate-spin" /> : "Save Pool"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {members.map((m: any) => {
+                    const inPool = tourMeta.squad_pool.includes(m.id);
+                    const avail = availableMemberIds.includes(m.id);
+                    return (
+                      <label
+                        key={m.id}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          inPool
+                            ? "bg-brand-500/10 border-brand-500/40 text-white"
+                            : "bg-slate-900/40 border-white/[0.05] text-slate-400 hover:border-white/20"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={inPool}
+                          onChange={() => togglePoolMember(m.id)}
+                          className="rounded accent-brand-500 w-4 h-4"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{m.preferred_name || m.full_legal_name}</p>
+                          <p className="text-xs opacity-60">{m.playing_role?.replace("_", " ") || "All-rounder"} · {m.dietary_requirements || "Standard"}</p>
+                        </div>
+                        {avail && <span className="badge-green text-[10px] shrink-0">Available</span>}
+                        {!avail && <span className="badge-slate text-[10px] shrink-0">No response</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Step 2: Per-game XI */}
+              {tourMeta.tour_games.length > 0 && (
+                <div className="glass-dark p-5 space-y-4 rounded-2xl border border-gold-500/20">
+                  <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
+                    <div>
+                      <h3 className="text-white font-semibold">Step 2 — Assign Per-Game XI from Pool</h3>
+                      <p className="text-slate-400 text-xs mt-0.5">Select exactly 11 players per game and assign C / VC / WK / 12th Man designations.</p>
+                    </div>
+                    <button onClick={() => saveMeta(tourMeta)} disabled={saving} className="btn-primary btn-sm text-xs">
+                      {saving ? <Loader2 size={12} className="animate-spin" /> : "Save XIs"}
+                    </button>
+                  </div>
+
+                  {/* Game tabs */}
+                  <div className="flex gap-1">
+                    {tourMeta.tour_games.map((g: TourGame) => (
+                      <button
+                        key={g.game_number}
+                        onClick={() => setActiveGameNum(g.game_number)}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                          activeGameNum === g.game_number
+                            ? "bg-gold-500/20 text-gold-300 border border-gold-500/30"
+                            : "text-slate-400 hover:text-white hover:bg-white/5"
+                        }`}
+                      >
+                        Game {g.game_number} ({g.squad_xi.length}/11)
+                      </button>
+                    ))}
+                  </div>
+
+                  {activeGame && (
+                    <div>
+                      <p className="text-slate-400 text-xs mb-3">
+                        {activeGame.date} · {activeGame.venue_name || "TBC"} · {activeGame.format} ·
+                        Meet {activeGame.meet_time} / Start {activeGame.start_time}
+                      </p>
+                      <div className="overflow-x-auto">
+                        <table className="table-auto text-xs min-w-[600px]">
+                          <thead>
+                            <tr>
+                              <th>In XI</th>
+                              <th>Player</th>
+                              <th>Role</th>
+                              <th>Dietary</th>
+                              <th>Designation</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {members
+                              .filter((m: any) => tourMeta.squad_pool.includes(m.id))
+                              .map((m: any) => {
+                                const inXI = activeGame.squad_xi.includes(m.id);
+                                const designation = activeGame.designations[m.id] || "";
+                                return (
+                                  <tr key={m.id} className={inXI ? "bg-gold-500/5" : ""}>
+                                    <td>
+                                      <input
+                                        type="checkbox"
+                                        checked={inXI}
+                                        onChange={() => toggleGameXI(activeGame.game_number, m.id)}
+                                        className="rounded accent-brand-500 w-4 h-4 cursor-pointer"
+                                      />
+                                    </td>
+                                    <td className="font-semibold text-white">
+                                      {m.preferred_name || m.full_legal_name}
+                                      {designation && (
+                                        <span className="ml-2 text-[10px] font-bold text-gold-400">({designation})</span>
+                                      )}
+                                    </td>
+                                    <td className="text-slate-300 capitalize">{m.playing_role?.replace("_", " ") || "All-rounder"}</td>
+                                    <td className="text-slate-400">{m.dietary_requirements || "Standard"}</td>
+                                    <td>
+                                      {inXI ? (
+                                        <select
+                                          value={designation}
+                                          onChange={(e) => setDesignation(activeGame.game_number, m.id, e.target.value)}
+                                          className="input text-[11px] py-1 px-2"
+                                        >
+                                          <option value="">Member XI</option>
+                                          <option value="C">Captain (C)</option>
+                                          <option value="VC">Vice-Captain (VC)</option>
+                                          <option value="WK">Wicketkeeper (WK)</option>
+                                          <option value="12th">12th Man</option>
+                                        </select>
+                                      ) : (
+                                        <span className="text-slate-600">—</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                );
+                              })
+                            }
+                          </tbody>
+                        </table>
+                      </div>
+                      {tourMeta.squad_pool.length === 0 && (
+                        <p className="text-slate-500 text-xs mt-3 text-center">Add players to the squad pool first (Step 1 above).</p>
                       )}
-                    </td>
-                    <td className="text-slate-400">{m.dietary_requirements || "Standard"}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── PLAYER RESPONSES VIEW ────────────────────────────────────────────── */}
+          {activeView === "responses" && tourMeta && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="text-white font-semibold">Player Responses</h3>
+                <p className="text-slate-400 text-xs mt-0.5">
+                  {currentStage === "draft" || currentStage === "squad_open"
+                    ? "Responses will appear here once the squad is published and players confirm their selection."
+                    : "Live confirmation status and meal/travel choices from selected players."}
+                </p>
+              </div>
+
+              {(currentStage === "draft" || currentStage === "squad_open") ? (
+                <div className="glass-dark p-8 text-center space-y-3">
+                  <Lock size={28} className="text-slate-600 mx-auto" />
+                  <p className="text-slate-400 text-sm">Publish the squad first to collect responses.</p>
+                  <button onClick={advanceStage} disabled={saving} className="btn-primary btn-sm">
+                    {currentStage === "draft" ? "Open Sign-Ups First" : "Publish Squad & Notify Players"}
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {tourMeta.squad_pool.length === 0 ? (
+                    <div className="glass-dark p-8 text-center text-slate-400 text-sm">No squad pool configured.</div>
+                  ) : (
+                    <>
+                      {/* Summary stats */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {(() => {
+                          const poolMembers = tourMeta.squad_pool;
+                          const confirmed = poolMembers.filter((id: string) => tourMeta.player_responses[id]?.confirmed).length;
+                          const declined = poolMembers.filter((id: string) => tourMeta.player_responses[id]?.declined).length;
+                          const pending = poolMembers.length - confirmed - declined;
+                          return [
+                            { label: "In Squad Pool", value: poolMembers.length, color: "text-brand-400" },
+                            { label: "Confirmed", value: confirmed, color: "text-brand-400" },
+                            { label: "Declined", value: declined, color: "text-red-400" },
+                            { label: "Pending", value: pending, color: "text-gold-400" },
+                          ].map(({ label, value, color }) => (
+                            <div key={label} className="glass-dark p-4 text-center">
+                              <p className={`text-2xl font-bold ${color}`}>{value}</p>
+                              <p className="text-slate-400 text-xs">{label}</p>
+                            </div>
+                          ));
+                        })()}
+                      </div>
+
+                      {/* Per-player response table */}
+                      <div className="glass-dark overflow-hidden">
+                        <table className="table-auto text-xs">
+                          <thead>
+                            <tr>
+                              <th>Player</th>
+                              <th>Tour Status</th>
+                              {tourMeta.tour_games.map((g: TourGame) => (
+                                <th key={g.game_number}>Game {g.game_number} Meal</th>
+                              ))}
+                              {tourMeta.tour_games.map((g: TourGame) => (
+                                <th key={g.game_number}>Game {g.game_number} Travel</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {tourMeta.squad_pool.map((memberId: string) => {
+                              const member = members.find((m: any) => m.id === memberId);
+                              const response = tourMeta.player_responses[memberId];
+                              return (
+                                <tr key={memberId}>
+                                  <td className="font-semibold text-white">{member?.preferred_name || member?.full_legal_name || memberId}</td>
+                                  <td>
+                                    {!response ? (
+                                      <span className="badge-gold text-[10px]">Awaiting</span>
+                                    ) : response.declined ? (
+                                      <span className="badge-red text-[10px]">Declined</span>
+                                    ) : response.confirmed ? (
+                                      <span className="badge-green text-[10px]">Confirmed</span>
+                                    ) : (
+                                      <span className="badge-gold text-[10px]">Pending</span>
+                                    )}
+                                  </td>
+                                  {tourMeta.tour_games.map((g: TourGame) => (
+                                    <td key={g.game_number} className="text-slate-400">
+                                      {response?.games?.[g.game_number]?.meal || <span className="text-slate-600">—</span>}
+                                    </td>
+                                  ))}
+                                  {tourMeta.tour_games.map((g: TourGame) => (
+                                    <td key={g.game_number} className="text-slate-400">
+                                      {response?.games?.[g.game_number]?.travel || <span className="text-slate-600">—</span>}
+                                    </td>
+                                  ))}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {/* Per-game meal breakdown */}
+                      {tourMeta.tour_games.map((game: TourGame) => {
+                        const mealCounts: Record<string, number> = {};
+                        tourMeta.squad_pool.forEach((id: string) => {
+                          const meal = tourMeta.player_responses[id]?.games?.[game.game_number]?.meal;
+                          if (meal) mealCounts[meal] = (mealCounts[meal] || 0) + 1;
+                        });
+                        return (
+                          <div key={game.game_number} className="glass-dark p-4 rounded-xl space-y-2">
+                            <p className="text-white font-semibold text-sm flex items-center gap-2">
+                              <Utensils size={14} className="text-brand-400" />
+                              Game {game.game_number} Meal Orders Summary ({game.date})
+                            </p>
+                            {Object.keys(mealCounts).length === 0 ? (
+                              <p className="text-slate-500 text-xs">No meal choices submitted yet.</p>
+                            ) : (
+                              <div className="flex flex-wrap gap-2">
+                                {Object.entries(mealCounts).map(([meal, count]) => (
+                                  <span key={meal} className="bg-slate-800 px-3 py-1 rounded-lg text-xs text-slate-300">
+                                    {meal} × {count}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
