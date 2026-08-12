@@ -39,23 +39,14 @@ export default function Navbar() {
     >
       <div className="container-wide px-4 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-brand-600/50 shadow-glow-red">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imgSrc("/images/logo_mcc.png")}
-              alt="MCC Logo"
-              className="w-full h-full object-contain bg-[#1a0505]"
-            />
-          </div>
-          <div>
-            <div className="text-white font-display font-bold text-sm leading-tight group-hover:text-brand-300 transition-colors">
-              MADRID
-            </div>
-            <div className="text-gold-400 text-xs font-semibold tracking-widest leading-tight">
-              CRICKET CLUB
-            </div>
-          </div>
+        <Link href="/" className="flex items-center group shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={imgSrc("/images/logo_mcc.png")}
+            alt="Madrid Cricket Club"
+            className="h-9 w-auto object-contain transition-opacity group-hover:opacity-80"
+            style={{ filter: "drop-shadow(0 0 6px rgba(180,0,0,0.35))" }}
+          />
         </Link>
 
         {/* Desktop nav */}

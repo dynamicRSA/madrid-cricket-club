@@ -3,7 +3,8 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { imgSrc } from "@/lib/imgSrc";
-import { Calendar, Trophy, Users, MapPin, ChevronRight, Star } from "lucide-react";
+import { Calendar, Trophy, Users, MapPin, ChevronRight, ChevronDown, Star } from "lucide-react";
+
 
 
 const InstagramIcon = () => (
@@ -129,18 +130,16 @@ export default function HomePage() {
 
         <div className="relative z-10 container-wide px-4 text-center">
           {/* Logo emblem */}
-          <div className="mb-6 flex justify-center">
-            <div className="w-24 h-24 rounded-full border-4 border-red-600/60 bg-[#1a0505]/80 backdrop-blur flex items-center justify-center shadow-glow-red">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={imgSrc("/images/logo_mcc.png")}
-                alt="Madrid Cricket Club logo"
-                width={80}
-                height={80}
-                className="object-contain w-20 h-20"
-              />
-            </div>
+          <div className="mb-8 flex justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={imgSrc("/images/logo_mcc.png")}
+              alt="Madrid Cricket Club"
+              className="h-20 sm:h-28 w-auto object-contain"
+              style={{ filter: "drop-shadow(0 0 24px rgba(180,0,0,0.5)) drop-shadow(0 2px 8px rgba(0,0,0,0.6))" }}
+            />
           </div>
+
 
           <div className="animate-fade-up">
             <p className="text-gold-400 text-sm font-semibold tracking-[0.3em] uppercase mb-3">
@@ -166,9 +165,9 @@ export default function HomePage() {
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-slate-500 text-xs animate-float">
-          <div className="w-px h-8 bg-gradient-to-b from-transparent to-red-700/50" />
-          <span>Scroll</span>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 animate-float opacity-40">
+          <div className="w-px h-6 bg-gradient-to-b from-transparent to-red-600/60" />
+          <ChevronDown size={16} className="text-red-500" />
         </div>
       </section>
 
