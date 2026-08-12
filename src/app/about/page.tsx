@@ -3,10 +3,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { COMMITTEE } from "@/lib/mock-data";
-import { MapPin, ExternalLink, Users, Trophy, Star, Mail, Phone, Calendar } from "lucide-react";
 import { imgSrc } from "@/lib/imgSrc";
+import { Calendar, Users, Trophy, MapPin, ExternalLink, Star, Mail, Phone } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function AboutPage() {
+  const { t } = useLanguage();
   return (
     <main className="min-h-screen flex flex-col">
       <Navbar />
@@ -25,9 +27,9 @@ export default function AboutPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imgSrc("/images/logo_mcc.png")} alt="Madrid Cricket Club" width={80} height={80} className="w-full h-full object-contain" />
           </div>
-          <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 2001</p>
+          <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">{t("about.tag")}</p>
           <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-3">Madrid Cricket Club</h1>
-          <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain, celebrating 25 years in 2026</p>
+          <p className="text-xl text-slate-300 max-w-2xl">{t("about.hero_sub")}</p>
         </div>
       </section>
 
@@ -36,10 +38,10 @@ export default function AboutPage() {
         <div className="container-wide px-4">
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             {[
-              { icon: Calendar, label: "Founded", value: "2001" },
-              { icon: Users, label: "Members", value: "100+" },
-              { icon: Trophy, label: "Teams", value: "Men, Women & Juniors" },
-              { icon: MapPin, label: "Madrid Base", value: "La Elipa" },
+              { icon: Calendar, label: t("about.stat.founded"),  value: "2001" },
+              { icon: Users,    label: t("about.stat.members"),   value: "100+" },
+              { icon: Trophy,   label: t("about.stat.teams"),     value: t("about.stat.teams_val") },
+              { icon: MapPin,   label: t("about.stat.base"),      value: "La Elipa" },
             ].map(({ icon: Icon, label, value }) => (
               <div key={label} className="text-center">
                 <Icon size={20} className="text-brand-400 mx-auto mb-2" />
@@ -56,8 +58,8 @@ export default function AboutPage() {
         <div className="container-content px-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">Our Story</p>
-              <h2 className="text-4xl font-display font-bold text-white mb-6">A Club With Deep Roots</h2>
+              <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">{t("about.story_tag")}</p>
+              <h2 className="text-4xl font-display font-bold text-white mb-6">{t("about.story_title")}</h2>
               <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
                 <p>
                   Madrid Cricket Club was formed in 2001 and is celebrating its 25th anniversary in 2026.
@@ -105,12 +107,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-
       {/* Grounds */}
       <section className="section px-4" style={{ background: "linear-gradient(135deg, #1a0505, #120808)" }}>
         <div className="container-content px-4">
-          <p className="text-gold-400 text-sm font-semibold uppercase tracking-widest mb-3">Where We Play</p>
-          <h2 className="text-4xl font-display font-bold text-white mb-8">Our Grounds</h2>
+          <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">{t("about.venues_tag")}</p>
+          <h2 className="text-4xl font-display font-bold text-white mb-10">{t("about.venues_title")}</h2>
           <div className="grid md:grid-cols-2 gap-6">
 
             <div className="glass-dark overflow-hidden rounded-2xl border border-white/10 flex flex-col">
@@ -122,14 +123,11 @@ export default function AboutPage() {
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="badge-red text-xs">Madrid Base</span>
-                    <span className="badge-gold text-xs">Training & Junior Cricket</span>
+                    <span className="badge-red text-xs">{t("about.base_tag")}</span>
+                    <span className="badge-gold text-xs">{t("about.training_tag")}</span>
                   </div>
-                  <h3 className="text-white font-display font-bold text-xl mb-2">Centro Deportivo Municipal La Elipa</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    Our home in Madrid. La Elipa is where we train and run junior cricket. Madrid City Council supports the club with 2 hours/week of subsidised pitch time — a vital lifeline.
-                    The new <strong className="text-white">Madrid 20-over league</strong> will also be played here from October 2026.
-                  </p>
+                  <h3 className="text-white font-display font-bold text-xl mb-3">{t("about.elipa_title")}</h3>
+                  <p className="text-slate-300 leading-relaxed text-sm">{t("about.la_elipa_desc")}</p>
                 </div>
                 <div>
                   <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
@@ -142,7 +140,7 @@ export default function AboutPage() {
                     rel="noopener noreferrer"
                     className="btn-outline btn-sm inline-flex items-center gap-1"
                   >
-                    <MapPin size={12} /> Get Directions <ExternalLink size={11} />
+                    <MapPin size={12} /> {t("about.directions")} <ExternalLink size={11} />
                   </a>
                 </div>
               </div>
@@ -157,19 +155,15 @@ export default function AboutPage() {
               <div className="p-6 flex-1 flex flex-col justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="badge-gold text-xs">40-Over League</span>
-                    <span className="badge-gold text-xs">20-Over Coastal League</span>
+                    <span className="badge-gold text-xs">{t("about.league_tag")}</span>
                   </div>
-                  <h3 className="text-white font-display font-bold text-xl mb-2">Sporting Alfaz Cricket Ground</h3>
-                  <p className="text-slate-400 text-sm leading-relaxed mb-4">
-                    Our away home for the ECCL coastal league (40-over and 20-over). Alfaz del Pi, Alicante — roughly 460km south of Madrid. The reality of cricket in Spain: we travel to compete.
-                    Also hosts the ECCL T20 league and La Manga Club fixtures.
-                  </p>
+                  <h3 className="text-white font-display font-bold text-xl mb-3">{t("about.alfaz_title")}</h3>
+                  <p className="text-slate-300 leading-relaxed text-sm">{t("about.alicante_desc")}</p>
                 </div>
                 <div>
                   <div className="flex items-start gap-2 text-slate-400 text-xs mb-4">
                     <MapPin size={12} className="mt-0.5 flex-shrink-0 text-brand-400" />
-                    Alfaz del Pi, Alicante, Spain (~4.5h from Madrid)
+                    Alfaz del Pi, Alicante, Spain
                   </div>
                   <a
                     href="https://maps.google.com/?q=Sporting+Alfaz+del+Pi+cricket"
@@ -177,7 +171,7 @@ export default function AboutPage() {
                     rel="noopener noreferrer"
                     className="btn-outline btn-sm inline-flex items-center gap-1"
                   >
-                    <MapPin size={12} /> Get Directions <ExternalLink size={11} />
+                    <MapPin size={12} /> {t("about.directions")} <ExternalLink size={11} />
                   </a>
                 </div>
               </div>
@@ -187,13 +181,12 @@ export default function AboutPage() {
         </div>
       </section>
 
-
       {/* Committee */}
       <section className="section px-4" style={{ background: "#120808" }}>
         <div className="container-wide px-4">
           <div className="text-center mb-12">
-            <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">Club Leadership</p>
-            <h2 className="text-4xl font-display font-bold text-white">Committee 2026</h2>
+            <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">{t("about.leadership_tag")}</p>
+            <h2 className="text-4xl font-display font-bold text-white">{t("about.leadership_title")}</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {COMMITTEE.map((member) => (
@@ -226,7 +219,6 @@ export default function AboutPage() {
       <section className="section px-4" style={{ background: "linear-gradient(135deg, #0d0303, #1a0505)" }}>
         <div className="container-content px-4">
           <div className="glass-dark p-8 flex flex-col md:flex-row items-center gap-8">
-            {/* Fed logo placeholder — official announcement image */}
             <div className="w-28 h-28 rounded-xl overflow-hidden flex-shrink-0 bg-[#0a1535] flex items-center justify-center">
               <div className="text-center p-2">
                 <Trophy size={32} className="text-gold-400 mx-auto mb-1" />
@@ -234,13 +226,9 @@ export default function AboutPage() {
               </div>
             </div>
             <div className="flex-1 text-center md:text-left">
-              <p className="text-brand-400 text-xs font-semibold uppercase tracking-widest mb-1">🇪🇸 Big News for Spanish Cricket</p>
-              <h3 className="text-2xl font-display font-bold text-white mb-2">Spain Now Has a National Cricket Federation</h3>
-              <p className="text-slate-300 leading-relaxed text-sm">
-                Cricket España has been formally recognised as Spain's <strong className="text-white">Federación Española de Cricket</strong> — a national federation.
-                A huge milestone for the sport. With cricket entering the <strong className="text-white">Olympics in Los Angeles 2028</strong>, the future of the game in Spain has never looked brighter.
-                <br /><em className="text-slate-400">"Unidos por la pasión. Impulsados por la excelencia."</em>
-              </p>
+              <p className="text-brand-400 text-xs font-semibold uppercase tracking-widest mb-1">{t("about.fed_tag")}</p>
+              <h3 className="text-2xl font-display font-bold text-white mb-2">{t("about.fed_title")}</h3>
+              <p className="text-slate-300 text-sm leading-relaxed">{t("about.fed_desc")}</p>
             </div>
             <a
               href="https://cricketespana.es"
@@ -257,14 +245,14 @@ export default function AboutPage() {
       {/* Join CTA */}
       <section className="section px-4 text-center" style={{ background: "#120808" }}>
         <div className="container-wide px-4">
-          <h2 className="text-3xl font-display font-bold text-white mb-4">Want to be part of it?</h2>
+          <h2 className="text-3xl font-display font-bold text-white mb-4">{t("about.join_title")}</h2>
           <p className="text-slate-400 mb-8 max-w-xl mx-auto">
-            All abilities welcome — senior, women's, and junior. To join training sessions and games, you first need to be a registered member. Apply online, pay your membership fee, and once registered with Cricket España you will receive your login and can sign up for matches and net sessions.
-
+            {t("about.getinvolved_desc")}
           </p>
-          <Link href="/join" className="btn-gold btn-lg">
-            <Users size={18} /> Join the Club
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/join"    className="btn-gold btn-lg"><Users size={18} /> {t("about.join_cta")}</Link>
+            <Link href="/contact" className="btn-outline btn-lg">{t("about.contact_cta")}</Link>
+          </div>
         </div>
       </section>
 

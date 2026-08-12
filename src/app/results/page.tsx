@@ -1,26 +1,19 @@
+"use client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { EVENTS } from "@/lib/mock-data";
-import { MapPin, ExternalLink } from "lucide-react";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Results — Madrid Cricket Club",
-  description: "Madrid Cricket Club 2026 season results — ECCL 40 Overs, ECCL T20, and tour results.",
-};
+import { MapPin } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 
 function resultClass(r: string) {
   if (r === "won") return "text-gold-400";
   if (r === "lost") return "text-red-400";
   return "text-slate-400";
 }
-function resultLabel(r: string) {
-  if (r === "won") return "WON";
-  if (r === "lost") return "LOST";
-  return "DRAW";
-}
 
 export default function ResultsPage() {
+  const { t } = useLanguage();
+
   const results = EVENTS
     .filter((e) => e.status === "completed" && e.result)
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -28,7 +21,6 @@ export default function ResultsPage() {
   const won = results.filter((e) => e.result?.result === "won").length;
   const lost = results.filter((e) => e.result?.result === "lost").length;
 
-  // Group by competition
   const byComp: Record<string, typeof results> = {};
   for (const r of results) {
     const key = r.competition || "Other";
@@ -36,27 +28,29 @@ export default function ResultsPage() {
     byComp[key].push(r);
   }
 
+  const resultLabel = (r: string) => {
+    if (r === "won") return t("results.won").toUpperCase();
+    if (r === "lost") return t("results.lost").toUpperCase();
+    return t("results.drawn").toUpperCase();
+  };
+
   return (
     <main className="min-h-screen flex flex-col">
       <Navbar />
 
       <section className="pt-28 pb-12 px-4" style={{ background: "linear-gradient(135deg, #1a0505 0%, #120808 100%)" }}>
         <div className="container-wide">
-          <p className="text-brand-400 text-xs uppercase tracking-widest mb-2">Season 2026</p>
-          <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-3">Results</h1>
-          <p className="text-slate-400 max-w-xl">
-            Official ECCL scorecards and tour results for Madrid Cricket Club 2026.
-            More results to be added as the season progresses.
-          </p>
+          <p className="text-brand-400 text-xs uppercase tracking-widest mb-2">{t("results.season")}</p>
+          <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-3">{t("results.title")}</h1>
+          <p className="text-slate-400 max-w-xl">{t("results.desc")}</p>
         </div>
       </section>
 
-      {/* Season summary pills */}
       <div className="px-4 py-5 border-b border-white/[0.06]" style={{ background: "#1a0505" }}>
         <div className="container-wide flex flex-wrap gap-3">
-          <div className="badge-slate px-4 py-2 text-sm">{results.length} Played</div>
-          <div className="badge-gold px-4 py-2 text-sm">{won} Won</div>
-          <div className="badge-red px-4 py-2 text-sm">{lost} Lost</div>
+          <div className="badge-slate px-4 py-2 text-sm">{results.length} {t("results.season").includes("2026") ? "Played" : "Jugados"}</div>
+          <div className="badge-gold px-4 py-2 text-sm">{won} {t("results.won")}</div>
+          <div className="badge-red px-4 py-2 text-sm">{lost} {t("results.lost")}</div>
         </div>
       </div>
 
@@ -71,7 +65,6 @@ export default function ResultsPage() {
               <div className="space-y-3">
                 {matches.map((event) => (
                   <div key={event.id} className="glass-dark p-5 flex flex-wrap gap-4 items-start">
-                    {/* Date */}
                     <div className="w-14 text-center flex-shrink-0">
                       <div className="text-[10px] uppercase tracking-wide text-slate-500">
                         {new Date(event.date).toLocaleString("en", { month: "short" })}
@@ -81,7 +74,6 @@ export default function ResultsPage() {
                       </div>
                     </div>
 
-                    {/* Result */}
                     <div className="w-14 text-center flex-shrink-0">
                       <div className={`text-lg font-display font-bold ${resultClass(event.result!.result)}`}>
                         {resultLabel(event.result!.result)}
@@ -91,7 +83,6 @@ export default function ResultsPage() {
                       )}
                     </div>
 
-                    {/* Scores */}
                     <div className="flex-1 min-w-[180px]">
                       <h3 className="text-white font-semibold text-sm mb-1">{event.title}</h3>
                       {event.venue && (
@@ -120,7 +111,6 @@ export default function ResultsPage() {
                       )}
                     </div>
 
-                    {/* Format badge */}
                     <div className="flex-shrink-0">
                       <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-900/30 text-brand-400 border border-brand-800/40 font-medium uppercase">
                         {event.format === "40_over" ? "40 Ov" : event.format === "t20" ? "T20" : event.format === "t10" ? "T10" : event.format}
@@ -132,11 +122,8 @@ export default function ResultsPage() {
             </div>
           ))}
 
-          {/* Add more placeholder */}
           <div className="glass-dark p-5 opacity-40 border border-dashed border-white/[0.1]">
-            <p className="text-slate-500 text-sm text-center">
-              More results will be added as the season progresses — or via the admin panel.
-            </p>
+            <p className="text-slate-500 text-sm text-center">{t("results.more_note")}</p>
           </div>
         </div>
       </section>

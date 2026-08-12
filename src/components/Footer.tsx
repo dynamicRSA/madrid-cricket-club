@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Mail, Phone, MapPin, ExternalLink } from "lucide-react";
 import { imgSrc } from "@/lib/imgSrc";
+import { useLanguage } from "@/lib/i18n";
 
 const InstagramIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
@@ -17,6 +18,7 @@ const FacebookIcon = () => (
 
 export default function Footer() {
   const year = new Date().getFullYear();
+  const { t } = useLanguage();
 
   return (
     <footer style={{ background: "#0d0303", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
@@ -35,8 +37,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
-              Cricket in the heart of Spain since <strong className="text-slate-300">2001</strong>.
-              All nationalities, all abilities, all welcome.
+              {t("footer.tagline")}
             </p>
             <div className="space-y-1.5 text-slate-500 text-xs">
               <div className="flex items-center gap-2">
@@ -57,19 +58,19 @@ export default function Footer() {
 
           {/* Navigation */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Navigation</h3>
+            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">{t("footer.nav_title")}</h3>
             <ul className="space-y-2.5">
               {[
-                { href: "/", label: "Home" },
-                { href: "/fixtures", label: "Fixtures & Events" },
-                { href: "/results", label: "Results" },
-                { href: "/news", label: "News & Reports" },
-                { href: "/about", label: "About the Club" },
-                { href: "/join", label: "Join the Club" },
+                { href: "/",         key: "nav.home" },
+                { href: "/fixtures", key: "footer.nav.fixtures" },
+                { href: "/results",  key: "footer.nav.results" },
+                { href: "/news",     key: "footer.nav.news" },
+                { href: "/about",    key: "footer.nav.about" },
+                { href: "/join",     key: "footer.nav.join" },
               ].map((l) => (
                 <li key={l.href}>
                   <Link href={l.href} className="text-slate-400 hover:text-white text-sm transition-colors">
-                    {l.label}
+                    {t(l.key)}
                   </Link>
                 </li>
               ))}
@@ -78,39 +79,43 @@ export default function Footer() {
 
           {/* Member Access */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Member Access</h3>
+            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">{t("footer.member_title")}</h3>
             <ul className="space-y-2.5">
-              {[
-                { href: "/auth/signin", label: "Member Login" },
-                { href: "/join", label: "Join the Club" },
-                { href: "/privacy", label: "Privacy & GDPR Notice" },
-              ].map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="text-slate-400 hover:text-white text-sm transition-colors">
-                    {l.label}
-                  </Link>
-                </li>
-              ))}
+              <li>
+                <Link href="/auth/signin" className="text-slate-400 hover:text-white text-sm transition-colors">
+                  {t("footer.member.login")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/join" className="text-slate-400 hover:text-white text-sm transition-colors">
+                  {t("footer.member.join")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/privacy" className="text-slate-400 hover:text-white text-sm transition-colors">
+                  {t("footer.member.privacy")}
+                </Link>
+              </li>
               <li>
                 <button
                   onClick={() => window.dispatchEvent(new CustomEvent("open-cookie-settings"))}
                   className="text-slate-400 hover:text-white text-sm transition-colors text-left"
                 >
-                  Cookie Preferences
+                  {t("footer.member.cookies")}
                 </button>
               </li>
             </ul>
             <p className="text-slate-600 text-xs mt-4 leading-relaxed">
-              The member dashboard and committee panel are only accessible to registered members after signing in.
+              {t("footer.member.note")}
             </p>
           </div>
 
           {/* Contact & Social */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Get in Touch</h3>
+            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">{t("footer.contact_title")}</h3>
             <div className="space-y-2.5 mb-5 text-sm">
               <div>
-                <p className="text-gold-500 text-xs font-semibold mb-0.5">President: Jon Woodward</p>
+                <p className="text-gold-500 text-xs font-semibold mb-0.5">{t("footer.president")}: Jon Woodward</p>
                 <a href="mailto:jonwoodward1975@gmail.com" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
                   <Mail size={13} className="text-brand-500" /> jonwoodward1975@gmail.com
                 </a>
@@ -119,39 +124,20 @@ export default function Footer() {
                 </a>
               </div>
               <div>
-                <p className="text-gold-500 text-xs font-semibold mb-0.5">Vice President: Lewis Clark</p>
+                <p className="text-gold-500 text-xs font-semibold mb-0.5">{t("footer.vice_president")}: Lewis Clark</p>
                 <a href="mailto:mail@lewclark.com" className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors">
                   <Mail size={13} className="text-brand-500" /> mail@lewclark.com
                 </a>
               </div>
             </div>
-            {/* Social icons */}
             <div className="flex items-center gap-2">
-              <a
-                href="https://www.instagram.com/madridcricketclub"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Instagram @madridcricketclub"
-                className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all"
-              >
+              <a href="https://www.instagram.com/madridcricketclub" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all">
                 <InstagramIcon />
               </a>
-              <a
-                href="https://cricketinmadrid.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Official website"
-                className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all"
-              >
+              <a href="https://cricketinmadrid.com" target="_blank" rel="noopener noreferrer" aria-label="Official website" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all">
                 <ExternalLink size={14} />
               </a>
-              <a
-                href="https://www.facebook.com/madridcricketclub"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="Facebook"
-                className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all"
-              >
+              <a href="https://www.facebook.com/madridcricketclub" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="w-9 h-9 rounded-lg border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-brand-500/50 hover:bg-brand-900/30 transition-all">
                 <FacebookIcon />
               </a>
             </div>
@@ -160,10 +146,10 @@ export default function Footer() {
 
         <div className="divider mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-slate-500 text-sm">
-            © {year} Madrid Cricket Club. All rights reserved.
+            © {year} Madrid Cricket Club. {t("footer.copyright")}
           </p>
           <p className="text-slate-600 text-xs">
-            Affiliated to Cricket España · Est. 2001 · La Elipa, Madrid
+            {t("footer.affiliated")}
           </p>
         </div>
       </div>

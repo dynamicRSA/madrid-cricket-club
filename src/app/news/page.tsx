@@ -3,6 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { Calendar, Clock, ArrowRight, Tag } from "lucide-react";
+import { useLanguage } from "@/lib/i18n";
 import { imgSrc } from "@/lib/imgSrc";
 
 // ─── Real & placeholder news items ─────────────────────────────────────────
@@ -92,6 +93,7 @@ const articles = [
 const categories = ["All", "Match Report", "Club News", "Tour Report", "Women's Cricket", "Community", "Club History"];
 
 export default function NewsPage() {
+  const { t } = useLanguage();
   const featured = articles[0];
   const rest = articles.slice(1);
 
@@ -102,11 +104,9 @@ export default function NewsPage() {
       {/* Header */}
       <section className="pt-28 pb-12 px-4" style={{ background: "linear-gradient(135deg, #1a0505 0%, #120808 100%)" }}>
         <div className="container-wide">
-          <p className="text-brand-400 text-xs uppercase tracking-widest mb-2">Latest from the Club</p>
-          <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-3">News & Reports</h1>
-          <p className="text-slate-400 max-w-xl">
-            Match reports, club news, tour stories, and community highlights from Madrid Cricket Club.
-          </p>
+          <p className="text-brand-400 text-xs uppercase tracking-widest mb-2">{t("news.tag")}</p>
+          <h1 className="text-4xl sm:text-5xl font-display font-bold text-white mb-3">{t("news.title")}</h1>
+          <p className="text-slate-400 max-w-xl">{t("news.desc")}</p>
         </div>
       </section>
 
@@ -152,7 +152,7 @@ export default function NewsPage() {
                 <h2 className="text-2xl font-display font-bold text-white mb-3">{featured.title}</h2>
                 <p className="text-slate-300 text-sm leading-relaxed mb-5">{featured.excerpt}</p>
                 <Link href={`/news/${featured.id}`} className="btn-primary self-start">
-                  Read More <ArrowRight size={14} />
+                  {t("news.read_more")} <ArrowRight size={14} />
                 </Link>
               </div>
             </div>
@@ -202,7 +202,7 @@ export default function NewsPage() {
                 <p className="text-slate-400 text-xs line-clamp-3 mb-4">{article.excerpt}</p>
                 {!article.isPlaceholder ? (
                   <Link href={`/news/${article.id}`} className="text-brand-400 text-xs font-medium hover:text-brand-300 flex items-center gap-1">
-                    Read More <ArrowRight size={12} />
+                    {t("news.read_more")} <ArrowRight size={12} />
                   </Link>
                 ) : (
                   <p className="text-slate-600 text-xs italic">Content to be added by committee</p>

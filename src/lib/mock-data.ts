@@ -407,7 +407,7 @@ export const NEWS: NewsArticle[] = [
     id: "n-elpais",
     slug: "elpais-feature-august-2026",
     title: "El País Feature: MCC — An Institution Without a Home Ground",
-    excerpt: "Spain's national newspaper El País featured Madrid Cricket Club in a detailed piece about the club's 50-year history, its exile to the Alicante coast for league cricket, and the rise of cricket in Spain.",
+    excerpt: "Spain's national newspaper El País featured Madrid Cricket Club in a detailed piece about the club's 25-year history, its exile to the Alicante coast for league cricket, and the rise of cricket in Spain.",
     content: `Madrid Cricket Club featured in El País in August 2026 in a piece titled "Una institución con solera pero sin sede, exiliado en la costa alicantina."\n\nRead the full article at elpais.com.`,
     hero_image_url: "/images/real/mcc-team-alicante.jpg",
     author_name: "El País",

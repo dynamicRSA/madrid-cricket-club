@@ -3,12 +3,14 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown } from "lucide-react";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/client";
 
 export default function JoinPage() {
+  const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
@@ -60,9 +62,9 @@ export default function JoinPage() {
 
       <section className="pt-32 pb-16 bg-gradient-to-b from-slate-900 to-slate-950">
         <div className="container-content px-4 text-center">
-          <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">Membership</p>
-          <h1 className="text-5xl font-display font-bold text-white mb-4">Join Madrid Cricket Club</h1>
-          <p className="text-slate-400 text-lg max-w-xl mx-auto">Complete your application, pay your membership fee, and get registered with Cricket España. Once confirmed, you receive your member login to sign up for games and training sessions.</p>
+          <p className="text-brand-400 text-sm font-semibold uppercase tracking-widest mb-3">{t("join.tag")}</p>
+          <h1 className="text-5xl font-display font-bold text-white mb-4">{t("join.title")}</h1>
+          <p className="text-slate-400 text-lg max-w-xl mx-auto">{t("join.hero_sub")}</p>
         </div>
       </section>
 
@@ -73,15 +75,15 @@ export default function JoinPage() {
             {/* Info sidebar */}
             <div className="space-y-6">
               <div className="glass-dark p-6">
-                <h3 className="text-white font-display font-bold text-lg mb-4">What to Expect</h3>
+                <h3 className="text-white font-display font-bold text-lg mb-4">{t("join.what_title")}</h3>
                 <ul className="space-y-3 text-slate-300 text-sm">
                   {[
-                    "Fill in the application form below",
-                    "Committee reviews your details and confirms eligibility",
-                    "Pay your membership fee (see fees below)",
-                    "Submit all details required for Cricket España registration",
-                    "Registration confirmed — you receive your member login",
-                    "Sign up for fixtures and nets sessions through your dashboard",
+                    t("join.step1"),
+                    t("join.step2"),
+                    t("join.step3"),
+                    t("join.step4"),
+                    t("join.step5"),
+                    t("join.step6"),
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <span className="w-5 h-5 rounded-full bg-brand-700/60 text-brand-300 text-xs flex items-center justify-center shrink-0 font-bold mt-0.5">
@@ -94,13 +96,13 @@ export default function JoinPage() {
               </div>
 
               <div className="glass-dark p-6">
-                <h3 className="text-white font-display font-bold mb-3">Membership Fees</h3>
+                <h3 className="text-white font-display font-bold mb-3">{t("join.form_fees")}</h3>
                 <div className="space-y-2 text-sm">
                   {[
-                    { cat: "Senior Full Year", fee: "€100" },
-                    { cat: "Senior Half Year", fee: "€60" },
-                    { cat: "Junior Full Year", fee: "€60" },
-                    { cat: "Junior Half Year", fee: "€35" },
+                    { cat: t("join.fees.senior_full"), fee: "€100" },
+                    { cat: t("join.fees.senior_half"), fee: "€60" },
+                    { cat: t("join.fees.junior_full"), fee: "€60" },
+                    { cat: t("join.fees.junior_half"), fee: "€35" },
                   ].map((row) => (
                     <div key={row.cat} className="flex justify-between text-slate-300">
                       <span>{row.cat}</span>
