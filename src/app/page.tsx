@@ -119,38 +119,28 @@ export default function HomePage() {
       <Navbar />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-[92vh] flex items-end overflow-hidden">
         {/* Background — Real MCC team photo */}
         <div
-          className="absolute inset-0 bg-cover bg-center"
+          className="absolute inset-0 bg-cover bg-center bg-top"
           style={{ backgroundImage: `url(${imgSrc("/images/real/mcc-team-alicante.jpg")})` }}
         >
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/70 via-[#120808]/60 to-[#120808]" />
+          {/* Lighter overlay at top (faces visible), heavier at bottom (text readable) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0505]/30 via-transparent to-[#120808]/95" />
         </div>
 
-        <div className="relative z-10 container-wide px-4 text-center">
-          {/* Logo emblem */}
-          <div className="mb-8 flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imgSrc("/images/logo_mcc.png")}
-              alt="Madrid Cricket Club"
-              className="h-20 sm:h-28 w-auto object-contain"
-              style={{ filter: "drop-shadow(0 0 24px rgba(180,0,0,0.5)) drop-shadow(0 2px 8px rgba(0,0,0,0.6))" }}
-            />
-          </div>
-
+        <div className="relative z-10 container-wide px-4 pb-20 text-center w-full">
 
           <div className="animate-fade-up">
             <p className="text-gold-400 text-sm font-semibold tracking-[0.3em] uppercase mb-3">
-              Est. 1975 · Cricket in the Heart of Spain
+              Est. 2001 · Cricket in the Heart of Spain
             </p>
             <h1 className="font-display text-5xl sm:text-7xl font-bold text-white mb-2 leading-tight">
               Madrid<br />
               <span className="gradient-text-gold">Cricket Club</span>
             </h1>
             <p className="text-slate-300 text-lg sm:text-xl max-w-2xl mx-auto mt-4 mb-8">
-              One of Spain's oldest cricket clubs: playing, growing, and giving back since 1975.
+              One of Spain's oldest cricket clubs: playing, growing, and giving back since 2001.
               All nationalities, all abilities, all welcome.
             </p>
             <div className="flex flex-wrap justify-center gap-3">
@@ -256,7 +246,7 @@ export default function HomePage() {
             </div>
             <h3 className="text-white font-display font-bold text-lg mb-2">50 Years of Cricket</h3>
             <p className="text-slate-400 text-sm">
-              Founded in 1975, we were Spain's only cricket club until 1982. Today one of the country's
+              Founded in 2001, MCC has grown into one of the most active cricket clubs in Spain.
               most enduring clubs with men's, women's, and junior teams.
             </p>
           </div>

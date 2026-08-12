@@ -35,7 +35,7 @@ export default function Footer() {
               />
             </div>
             <p className="text-slate-400 text-sm leading-relaxed mb-4">
-              Cricket in the heart of Spain since <strong className="text-slate-300">1975</strong>.
+              Cricket in the heart of Spain since <strong className="text-slate-300">2001</strong>.
               All nationalities, all abilities, all welcome.
             </p>
             <div className="space-y-1.5 text-slate-500 text-xs">
@@ -163,7 +163,7 @@ export default function Footer() {
             © {year} Madrid Cricket Club. All rights reserved.
           </p>
           <p className="text-slate-600 text-xs">
-            Affiliated to Cricket España · Est. 1975 · La Elipa, Madrid
+            Affiliated to Cricket España · Est. 2001 · La Elipa, Madrid
           </p>
         </div>
       </div>

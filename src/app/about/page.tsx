@@ -25,7 +25,7 @@ export default function AboutPage() {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imgSrc("/images/logo_mcc.png")} alt="Madrid Cricket Club" width={80} height={80} className="w-full h-full object-contain" />
           </div>
-          <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 1975</p>
+          <p className="text-brand-300 text-sm font-semibold uppercase tracking-widest mb-2">Est. 2001</p>
           <h1 className="text-5xl md:text-6xl font-display font-bold text-white mb-3">Madrid Cricket Club</h1>
           <p className="text-xl text-slate-300 max-w-2xl">Cricket in the heart of Spain for 50 years and counting</p>
         </div>
@@ -36,7 +36,7 @@ export default function AboutPage() {
         <div className="container-wide px-4">
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             {[
-              { icon: Calendar, label: "Founded", value: "1975" },
+              { icon: Calendar, label: "Founded", value: "2001" },
               { icon: Users, label: "Members", value: "100+" },
               { icon: Trophy, label: "Teams", value: "Men, Women & Juniors" },
               { icon: MapPin, label: "Madrid Base", value: "La Elipa" },
@@ -60,7 +60,7 @@ export default function AboutPage() {
               <h2 className="text-4xl font-display font-bold text-white mb-6">A Club With Deep Roots</h2>
               <div className="space-y-4 text-slate-300 leading-relaxed text-sm">
                 <p>
-                  Madrid Cricket Club was formed in <strong className="text-white">1975</strong>, making us one of Spain's oldest cricket clubs.
+                  Madrid Cricket Club was formed in 2001, with the club celebrating its 25th anniversary in 2026.
                   We were the only cricket club in Spain until Barcelona CC was founded in 1982.
                 </p>
                 <p>
