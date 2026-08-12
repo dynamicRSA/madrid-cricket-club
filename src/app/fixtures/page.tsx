@@ -70,17 +70,14 @@ export default function FixturesPage() {
               <span className="text-brand-300 text-xs font-semibold uppercase tracking-widest">Coming Soon</span>
             </div>
             <div className="flex-1">
-              <p className="text-white font-semibold text-sm">
-                ECS T10 Tournament in Madrid — 19 October 2026
-              </p>
-              <p className="text-slate-400 text-xs">
-                MCC + 4 other teams (TBC) · Games 08:30–17:00 · All games live-streamed on ECN channels · Players must consent to recording
-              </p>
+              <p className="text-white font-semibold text-sm">ECS T10 Tournament in Madrid — 19 October 2026</p>
+              <p className="text-slate-400 text-xs">MCC host a T10 tournament in Madrid. All games live on ECN.</p>
             </div>
             <span className="badge-gold text-xs">Live on ECN</span>
           </div>
         </div>
       </div>
+
 
       {/* Fixtures list */}
       <section className="section px-4" style={{ background: "#120808" }}>
