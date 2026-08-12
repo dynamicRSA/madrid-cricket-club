@@ -82,18 +82,24 @@ export default function Footer() {
 
           {/* Members */}
           <div>
-            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Members</h3>
-            <ul className="space-y-2.5">
+            <h3 className="text-white font-semibold text-sm mb-4 tracking-wide">Member Hub</h3>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <Link href="/auth/signin" className="text-brand-400 font-medium hover:text-brand-300 transition-colors flex items-center gap-1.5 mb-1">
+                  <span>Member Sign In</span> →
+                </Link>
+              </li>
               {[
-                { href: "/auth/signin", label: "Member Login" },
-                { href: "/dashboard", label: "My Dashboard" },
-                { href: "/admin", label: "Admin Panel" },
-                { href: "/contact", label: "Contact Committee" },
-                { href: "/privacy", label: "Privacy Notice" },
-              ].map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} className="text-slate-400 hover:text-white text-sm transition-colors">
-                    {l.label}
+                { href: "/dashboard", label: "My Dashboard & Stats" },
+                { href: "/dashboard", label: "Match Availability & Selection" },
+                { href: "/dashboard", label: "Catering & Dietary Requirements" },
+                { href: "/dashboard", label: "Away Trip Accommodation & Transport" },
+                { href: "/dashboard", label: "Membership Dues & Payment Declarations" },
+                { href: "/admin", label: "Committee Admin Panel" },
+              ].map((l, i) => (
+                <li key={i}>
+                  <Link href={l.href} className="text-slate-400 hover:text-white transition-colors">
+                    • {l.label}
                   </Link>
                 </li>
               ))}

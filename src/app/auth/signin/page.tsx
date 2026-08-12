@@ -57,17 +57,48 @@ function SignInForm() {
         <div className="w-full max-w-md px-4 py-12">
 
           {/* Logo */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imgSrc("/images/logo_mcc.png")}
               alt="MCC Logo"
               width={72}
               height={72}
-              className="rounded-full mx-auto mb-4 w-18 h-18"
+              className="rounded-full mx-auto mb-3 w-18 h-18"
             />
-            <h1 className="text-2xl font-display font-bold text-white">Member Sign In</h1>
-            <p className="text-slate-400 text-sm mt-1">Madrid Cricket Club</p>
+            <h1 className="text-2xl font-display font-bold text-white">Member Hub Sign In</h1>
+            <p className="text-slate-400 text-sm mt-1">Madrid Cricket Club Portal</p>
+          </div>
+
+          {/* Feature highlights callout */}
+          <div className="mb-6 glass-dark p-4 border border-brand-500/20 rounded-xl">
+            <p className="text-xs font-semibold uppercase tracking-wider text-brand-300 mb-2">Member Portal Unlocks:</p>
+            <div className="grid grid-cols-2 gap-2 text-xs text-slate-300">
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 shrink-0" />
+                <span>Match Availability Grid</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />
+                <span>Team Selection & Squads</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 shrink-0" />
+                <span>Catering & Dietary Options</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />
+                <span>Away Trip & Hotel Travel</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-brand-400 shrink-0" />
+                <span>Dues & Payment Declarations</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-gold-400 shrink-0" />
+                <span>Live Scorecards & Admin</span>
+              </div>
+            </div>
           </div>
 
           <div className="glass-dark p-8">
