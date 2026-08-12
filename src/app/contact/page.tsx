@@ -1,11 +1,34 @@
 "use client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Mail, Phone, MapPin, ExternalLink, Calendar } from "lucide-react";
+import { useState } from "react";
+import { Mail, Phone, MapPin, ExternalLink, Calendar, CheckCircle, Loader2 } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 
 export default function ContactPage() {
   const { t } = useLanguage();
+  const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setSending(true);
+    // mailto: fallback — opens email client with pre-filled content
+    const body = encodeURIComponent(
+      `Name: ${form.name}\nEmail: ${form.email}\n\n${form.message}`
+    );
+    const subject = encodeURIComponent(form.subject || "MCC Website Enquiry");
+    window.location.href = `mailto:jonwoodward1975@gmail.com?subject=${subject}&body=${body}`;
+    setTimeout(() => {
+      setSending(false);
+      setSent(true);
+    }, 800);
+  }
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -118,17 +141,80 @@ export default function ContactPage() {
         </div>
       </section>
 
+      {/* Contact Form */}
       <section className="pb-16 px-4" style={{ background: "#120808" }}>
         <div className="container-wide max-w-xl">
           <div className="glass-dark p-6">
-            <h3 className="text-white font-display font-bold mb-2">{t("contact.form_title")}</h3>
-            <p className="text-slate-400 text-sm mb-4">{t("contact.form.coming_desc")}</p>
-            <div className="space-y-3 opacity-50 pointer-events-none">
-              <input className="input" type="text" placeholder={t("contact.form.name")} disabled />
-              <input className="input" type="email" placeholder={t("contact.form.email")} disabled />
-              <textarea className="input resize-none h-24" placeholder={t("contact.form.message")} disabled />
-              <button className="btn-primary w-full" disabled>{t("contact.form.send")}</button>
-            </div>
+            <h3 className="text-white font-display font-bold text-xl mb-2">{t("contact.form_title")}</h3>
+            <p className="text-slate-400 text-sm mb-6">{t("contact.form.coming_desc")}</p>
+
+            {sent ? (
+              <div className="flex flex-col items-center gap-3 py-8 text-center">
+                <CheckCircle size={40} className="text-green-400" />
+                <p className="text-white font-semibold">Your email client should have opened.</p>
+                <p className="text-slate-400 text-sm">If it didn't, email us directly at{" "}
+                  <a href="mailto:jonwoodward1975@gmail.com" className="text-brand-400 hover:underline">jonwoodward1975@gmail.com</a>
+                </p>
+                <button onClick={() => { setSent(false); setForm({ name: "", email: "", subject: "", message: "" }); }} className="btn-outline btn-sm mt-2">
+                  Send another
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <input
+                      className="input w-full"
+                      type="text"
+                      name="name"
+                      value={form.name}
+                      onChange={handleChange}
+                      placeholder={t("contact.form.name")}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <input
+                      className="input w-full"
+                      type="email"
+                      name="email"
+                      value={form.email}
+                      onChange={handleChange}
+                      placeholder={t("contact.form.email")}
+                      required
+                    />
+                  </div>
+                </div>
+                <input
+                  className="input w-full"
+                  type="text"
+                  name="subject"
+                  value={form.subject}
+                  onChange={handleChange}
+                  placeholder={t("contact.form.subject")}
+                />
+                <textarea
+                  className="input w-full resize-none h-32"
+                  name="message"
+                  value={form.message}
+                  onChange={handleChange}
+                  placeholder={t("contact.form.message")}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="btn-primary w-full flex items-center justify-center gap-2"
+                >
+                  {sending ? <Loader2 size={16} className="animate-spin" /> : null}
+                  {t("contact.form.send")}
+                </button>
+                <p className="text-slate-500 text-xs text-center">
+                  {t("contact.form.note")}{" "}
+                  <a href="mailto:jonwoodward1975@gmail.com" className="text-brand-400 hover:underline">jonwoodward1975@gmail.com</a>
+                </p>
+              </form>
+            )}
           </div>
         </div>
       </section>
