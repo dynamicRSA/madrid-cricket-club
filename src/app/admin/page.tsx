@@ -996,32 +996,59 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
         </div>
       )}
 
-      {/* Target Event Selector */}
-      <div className="glass-dark p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <label className="label text-xs">Active Fixture Selection</label>
-          <select
-            value={selectedEventId}
-            onChange={(e) => setSelectedEventId(e.target.value)}
-            className="input text-sm w-full"
-          >
-            {events.map((ev) => (
-              <option key={ev.id} value={ev.id}>
-                {ev.date} — {ev.title} ({ev.venue?.name || "TBC"})
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex gap-3 text-xs">
-          <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block">Signed Up / Available</span>
-            <span className="text-brand-400 font-bold text-sm">{availableMemberIds.length > 0 ? `${availableMemberIds.length} Members` : `${members.length} Total Roster`}</span>
+      {/* Target Event Selector & Edit Controls */}
+      <div className="glass-dark p-6 space-y-4 rounded-2xl border border-brand-500/20">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-white/[0.06] pb-4">
+          <div className="flex-1 w-full">
+            <label className="label text-xs">Active Fixture / Tour Selection</label>
+            <select
+              value={selectedEventId}
+              onChange={(e) => setSelectedEventId(e.target.value)}
+              className="input text-sm w-full"
+            >
+              {events.map((ev) => (
+                <option key={ev.id} value={ev.id}>
+                  {ev.date} — {ev.title} ({ev.venue?.name || "TBC"})
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
-            <span className="text-slate-400 block">Selected Squad XI</span>
-            <span className="text-gold-400 font-bold text-sm">{selectedPlayerIds.length} Selected</span>
+          <div className="flex gap-3 text-xs shrink-0">
+            <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
+              <span className="text-slate-400 block">Signed Up / Available</span>
+              <span className="text-brand-400 font-bold text-sm">{availableMemberIds.length > 0 ? `${availableMemberIds.length} Members` : `${members.length} Total Roster`}</span>
+            </div>
+            <div className="bg-slate-900/80 px-3 py-2 rounded-lg border border-white/5">
+              <span className="text-slate-400 block">Selected Squad XI</span>
+              <span className="text-gold-400 font-bold text-sm">{selectedPlayerIds.length} Selected</span>
+            </div>
           </div>
         </div>
+
+        {/* Fixture Details & Per-Game Catering Editor */}
+        {currentEvent && (
+          <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3 text-xs">
+            <div className="flex items-center justify-between">
+              <span className="font-semibold text-white">Fixture Details & Per-Game Catering Settings:</span>
+              <span className="text-slate-400 font-normal">Editing: {currentEvent.title}</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label className="label text-[11px]">Match Date & Time</label>
+                <input className="input text-xs" defaultValue={currentEvent.date} />
+              </div>
+              <div>
+                <label className="label text-[11px]">Meet Arrival / Start Time</label>
+                <input className="input text-xs" defaultValue="Meet: 07:30 AM | Start: 08:30 AM" />
+              </div>
+              <div>
+                <label className="label text-[11px]">Ground Meal Options Offered for Game</label>
+                <input className="input text-xs" defaultValue="Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap" />
+              </div>
+            </div>
+            <p className="text-slate-500 text-[11px]">Captains can return at any time to modify meal choices, shift departure times, or update the XI lineup.</p>
+          </div>
+        )}
       </div>
 
       {/* Dynamic Member Roster Selection */}
