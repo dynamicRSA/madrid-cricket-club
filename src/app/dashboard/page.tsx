@@ -44,6 +44,16 @@ export default function DashboardPage() {
   const [savingChoice, setSavingChoice] = useState("");
   const [registrationEvents, setRegistrationEvents] = useState<any[]>([]); // stage === squad_open
 
+  // ── Jersey numbers ─────────────────────────────────────────────────────────
+  const [jerseyNumber, setJerseyNumber] = useState<number | null>(null); // confirmed reservation
+  const [jerseyRequest, setJerseyRequest] = useState<number | null>(null); // pending request
+  const [jerseyStatus, setJerseyStatus] = useState<"none" | "requested" | "reserved">("none");
+  const [reservedNumbers, setReservedNumbers] = useState<number[]>([]);
+  const [requestedNumbers, setRequestedNumbers] = useState<number[]>([]);
+  const [jerseyLoading, setJerseyLoading] = useState(true);
+  const [jerseySubmitting, setJerseySubmitting] = useState(false);
+  const [selectedJerseyRequest, setSelectedJerseyRequest] = useState<string>("");
+
   useEffect(() => {
     if (!member?.id) return;
     supabase.from("events").select("*").order("date").then(({ data }: any) => {
@@ -102,6 +112,62 @@ export default function DashboardPage() {
   );
 
   const isSelectedForMatch = selectedEvents.length > 0;
+
+  // Load jersey numbers from all active members to build the registry
+  useEffect(() => {
+    if (!member?.id) return;
+    supabase
+      .from("members")
+      .select("id, jersey_number, jersey_number_requested, jersey_number_status")
+      .then(({ data }: any) => {
+        const rows = data || [];
+        // My own record
+        const me = rows.find((r: any) => r.id === member.id);
+        if (me) {
+          setJerseyNumber(me.jersey_number ?? null);
+          setJerseyRequest(me.jersey_number_requested ?? null);
+          setJerseyStatus(me.jersey_number_status ?? "none");
+        }
+        // All reserved numbers (excluding mine own pending)
+        setReservedNumbers(rows.filter((r: any) => r.jersey_number_status === "reserved" && r.jersey_number).map((r: any) => r.jersey_number));
+        setRequestedNumbers(rows.filter((r: any) => r.jersey_number_status === "requested" && r.jersey_number_requested).map((r: any) => r.jersey_number_requested));
+        setJerseyLoading(false);
+      });
+  }, [member?.id]);
+
+  async function requestJerseyNumber() {
+    const num = parseInt(selectedJerseyRequest);
+    if (!num || !member?.id) return;
+    setJerseySubmitting(true);
+    await supabase.from("members").update({
+      jersey_number_requested: num,
+      jersey_number_status: "requested",
+    }).eq("id", member.id);
+    setJerseyRequest(num);
+    setJerseyStatus("requested");
+    setRequestedNumbers((prev) => [...prev, num]);
+    setSelectedJerseyRequest("");
+    setJerseySubmitting(false);
+  }
+
+  async function cancelJerseyRequest() {
+    if (!member?.id) return;
+    setJerseySubmitting(true);
+    await supabase.from("members").update({
+      jersey_number_requested: null,
+      jersey_number_status: "none",
+    }).eq("id", member.id);
+    setRequestedNumbers((prev) => prev.filter((n) => n !== jerseyRequest));
+    setJerseyRequest(null);
+    setJerseyStatus("none");
+    setJerseySubmitting(false);
+  }
+
+  // Numbers 1-99, excluding reserved and requested by others
+  const myRequestedNum = jerseyRequest;
+  const availableNumbers = Array.from({ length: 99 }, (_, i) => i + 1).filter(
+    (n) => !reservedNumbers.includes(n) && !requestedNumbers.includes(n)
+  );
 
 
   if (authLoading || memberLoading) {
@@ -670,7 +736,95 @@ export default function DashboardPage() {
 
           {/* PROFILE TAB */}
           {tab === "profile" && (
-            <ProfileEditor member={member} onUpdate={() => {}} />
+            <div className="space-y-6">
+              <ProfileEditor member={member} onUpdate={() => {}} />
+
+              {/* Jersey Number */}
+              <div className="glass-dark p-6 space-y-4">
+                <div className="border-b border-white/[0.06] pb-3">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                    <span className="text-2xl leading-none">👕</span>
+                    Jersey Number
+                  </h3>
+                  <p className="text-slate-400 text-xs mt-1">
+                    Each member has a unique jersey number. Request an available number — the committee will approve and reserve it for you.
+                    Your number remains yours while your membership is active.
+                  </p>
+                </div>
+
+                {jerseyLoading ? (
+                  <div className="flex items-center gap-2 py-4 text-slate-400 text-sm">
+                    <Loader2 size={16} className="animate-spin" /> Loading jersey registry…
+                  </div>
+                ) : jerseyStatus === "reserved" ? (
+                  // Has a confirmed jersey number
+                  <div className="flex items-center gap-5">
+                    <div className="w-20 h-20 rounded-2xl bg-brand-600/20 border-2 border-brand-500/40 flex items-center justify-center flex-shrink-0">
+                      <span className="text-4xl font-black text-brand-300">#{jerseyNumber}</span>
+                    </div>
+                    <div>
+                      <p className="text-white font-semibold text-lg">Your jersey number is #{jerseyNumber}</p>
+                      <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full mt-1">
+                        <CheckCircle size={10} /> Reserved
+                      </span>
+                      <p className="text-slate-400 text-xs mt-2">This number is yours while your membership is active.</p>
+                    </div>
+                  </div>
+                ) : jerseyStatus === "requested" ? (
+                  // Has a pending request
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-5">
+                      <div className="w-20 h-20 rounded-2xl bg-gold-500/10 border-2 border-gold-500/30 flex items-center justify-center flex-shrink-0">
+                        <span className="text-4xl font-black text-gold-400">#{myRequestedNum}</span>
+                      </div>
+                      <div>
+                        <p className="text-white font-semibold text-lg">Request pending — #{myRequestedNum}</p>
+                        <span className="inline-flex items-center gap-1 text-xs text-gold-400 bg-gold-400/10 border border-gold-400/20 px-2 py-0.5 rounded-full mt-1">
+                          <Clock size={10} /> Awaiting committee approval
+                        </span>
+                        <p className="text-slate-400 text-xs mt-2">The treasurer will review and confirm your number shortly.</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={cancelJerseyRequest}
+                      disabled={jerseySubmitting}
+                      className="btn-ghost text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                    >
+                      {jerseySubmitting ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+                      Cancel request
+                    </button>
+                  </div>
+                ) : (
+                  // No jersey number yet — show request form
+                  <div className="space-y-4">
+                    <p className="text-slate-400 text-sm">You don't have a jersey number yet. Select an available number below to request one.</p>
+                    <div className="flex gap-3">
+                      <select
+                        value={selectedJerseyRequest}
+                        onChange={(e) => setSelectedJerseyRequest(e.target.value)}
+                        className="input flex-1"
+                      >
+                        <option value="">— Select a number —</option>
+                        {availableNumbers.map((n) => (
+                          <option key={n} value={n}>#{n}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={requestJerseyNumber}
+                        disabled={!selectedJerseyRequest || jerseySubmitting}
+                        className="btn-primary whitespace-nowrap"
+                      >
+                        {jerseySubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                        Request Number
+                      </button>
+                    </div>
+                    <p className="text-slate-500 text-xs">
+                      {availableNumbers.length} number{availableNumbers.length !== 1 ? "s" : ""} available · Numbers 1–99
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
         </div>

@@ -23,7 +23,7 @@ import {
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type ChargeRow = Database["public"]["Tables"]["charges"]["Row"];
-type Tab = "members" | "selection" | "payments" | "availability" | "reports";
+type Tab = "members" | "selection" | "payments" | "availability" | "reports" | "jersey";
 
 // Role check — admins must have role "admin", "super_admin", or "treasurer"
 const ADMIN_ROLES = ["admin", "super_admin", "treasurer", "captain", "secretary"];
@@ -114,6 +114,7 @@ export default function AdminPage() {
             { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
             ...(isTreasurer ? [{ id: "payments", label: "Payments", shortLabel: "Payments", icon: CreditCard }] : []),
             { id: "availability", label: "Who Can Play", shortLabel: "Availability", icon: Calendar },
+            { id: "jersey", label: "Jersey Numbers", shortLabel: "Jerseys", icon: Trophy },
             { id: "reports", label: "Reports", shortLabel: "Reports", icon: BarChart3 },
           ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, shortLabel, icon: Icon }) => (
             <button
@@ -140,6 +141,7 @@ export default function AdminPage() {
           {tab === "members" && <MembersTab supabase={supabase} isSuperAdmin={isSuperAdmin} />}
           {tab === "payments" && <PaymentsTab supabase={supabase} />}
           {tab === "availability" && <AvailabilityTab supabase={supabase} />}
+          {tab === "jersey" && <JerseyTab supabase={supabase} />}
           {tab === "reports" && <ReportsTab isSuperAdmin={isSuperAdmin} />}
         </div>
       </div>
@@ -1722,3 +1724,186 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
   );
 }
 
+// ─── Jersey Numbers Tab ───────────────────────────────────────────────────────
+
+function JerseyTab({ supabase }: { supabase: any }) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [actionId, setActionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    load();
+  }, []);
+
+  async function load() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("members")
+      .select("id, preferred_name, full_legal_name, jersey_number, jersey_number_requested, jersey_number_status, status")
+      .order("full_legal_name");
+    setMembers(data || []);
+    setLoading(false);
+  }
+
+  async function approve(memberId: string, requestedNum: number) {
+    setActionId(memberId);
+    await supabase.from("members").update({
+      jersey_number: requestedNum,
+      jersey_number_requested: null,
+      jersey_number_status: "reserved",
+    }).eq("id", memberId);
+    await load();
+    setActionId(null);
+  }
+
+  async function reject(memberId: string) {
+    setActionId(memberId);
+    await supabase.from("members").update({
+      jersey_number_requested: null,
+      jersey_number_status: "none",
+    }).eq("id", memberId);
+    await load();
+    setActionId(null);
+  }
+
+  async function release(memberId: string) {
+    setActionId(memberId);
+    await supabase.from("members").update({
+      jersey_number: null,
+      jersey_number_status: "none",
+    }).eq("id", memberId);
+    await load();
+    setActionId(null);
+  }
+
+  const pending   = members.filter((m) => m.jersey_number_status === "requested");
+  const reserved  = members.filter((m) => m.jersey_number_status === "reserved" && m.jersey_number);
+  const takenNums = new Set([
+    ...reserved.map((m) => m.jersey_number),
+    ...pending.map((m) => m.jersey_number_requested),
+  ]);
+  const availableCount = Array.from({ length: 99 }, (_, i) => i + 1).filter((n) => !takenNums.has(n)).length;
+
+  const displayName = (m: any) => m.preferred_name || m.full_legal_name || "—";
+
+  if (loading) return <div className="flex justify-center py-16"><Loader2 size={28} className="animate-spin text-brand-400" /></div>;
+
+  return (
+    <div className="space-y-8">
+      <div>
+        <h2 className="text-2xl font-display font-bold text-white mb-1">Jersey Numbers Registry</h2>
+        <p className="text-slate-400 text-sm">
+          Manage shirt number assignments. Approve member requests, release numbers when a member leaves.
+          Numbers remain reserved while membership is active and paid.
+        </p>
+      </div>
+
+      {/* Stats bar */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Pending Requests", value: pending.length, color: "text-gold-400", bg: "bg-gold-500/10 border-gold-500/20" },
+          { label: "Reserved Numbers", value: reserved.length, color: "text-green-400", bg: "bg-green-500/10 border-green-500/20" },
+          { label: "Available (1–99)", value: availableCount, color: "text-brand-300", bg: "bg-brand-500/10 border-brand-500/20" },
+        ].map((s) => (
+          <div key={s.label} className={`glass-dark p-4 border rounded-xl ${s.bg}`}>
+            <p className={`text-3xl font-black ${s.color}`}>{s.value}</p>
+            <p className="text-slate-400 text-xs mt-1">{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Pending Requests */}
+      {pending.length > 0 && (
+        <div className="glass-dark p-6 space-y-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={16} className="text-gold-400" />
+            <h3 className="text-white font-semibold">Pending Requests</h3>
+            <span className="badge-gold">{pending.length}</span>
+          </div>
+          <div className="divide-y divide-white/[0.04]">
+            {pending.map((m) => (
+              <div key={m.id} className="flex items-center gap-4 py-4">
+                <div className="w-16 h-16 rounded-xl bg-gold-500/10 border-2 border-gold-500/30 flex items-center justify-center flex-shrink-0">
+                  <span className="text-2xl font-black text-gold-400">#{m.jersey_number_requested}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-semibold">{displayName(m)}</p>
+                  <p className="text-slate-400 text-xs">Requesting #{m.jersey_number_requested}</p>
+                  {m.status !== "active" && (
+                    <span className="text-xs text-red-400">⚠ Member status: {m.status}</span>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => approve(m.id, m.jersey_number_requested)}
+                    disabled={actionId === m.id}
+                    className="btn-primary btn-sm flex items-center gap-1"
+                  >
+                    {actionId === m.id ? <Loader2 size={12} className="animate-spin" /> : <CheckCircle size={12} />}
+                    Approve &amp; Reserve
+                  </button>
+                  <button
+                    onClick={() => reject(m.id)}
+                    disabled={actionId === m.id}
+                    className="btn-ghost btn-sm text-red-400 hover:text-red-300 flex items-center gap-1"
+                  >
+                    <XCircle size={12} /> Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {pending.length === 0 && (
+        <div className="glass-dark p-5 flex items-center gap-3 text-slate-400 text-sm">
+          <CheckCircle size={16} className="text-green-400" />
+          No pending requests
+        </div>
+      )}
+
+      {/* Reserved Numbers */}
+      <div className="glass-dark p-6">
+        <div className="flex items-center gap-2 mb-4">
+          <Trophy size={16} className="text-green-400" />
+          <h3 className="text-white font-semibold">Reserved Numbers</h3>
+          <span className="text-xs text-slate-500">{reserved.length} assigned</span>
+        </div>
+        {reserved.length === 0 ? (
+          <p className="text-slate-500 text-sm">No numbers reserved yet.</p>
+        ) : (
+          <div className="divide-y divide-white/[0.04]">
+            {reserved.sort((a, b) => a.jersey_number - b.jersey_number).map((m) => (
+              <div key={m.id} className="flex items-center gap-4 py-4">
+                <div className="w-14 h-14 rounded-xl bg-brand-600/20 border-2 border-brand-500/40 flex items-center justify-center flex-shrink-0">
+                  <span className="text-xl font-black text-brand-300">#{m.jersey_number}</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-white font-semibold">{displayName(m)}</p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-1.5 py-0.5 rounded-full">
+                      <CheckCircle size={9} /> Reserved
+                    </span>
+                    {m.status !== "active" && (
+                      <span className="text-xs text-red-400">⚠ Membership {m.status}</span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => release(m.id)}
+                  disabled={actionId === m.id}
+                  className="btn-ghost btn-sm text-slate-400 hover:text-red-300 flex items-center gap-1"
+                  title="Release — makes this number available again"
+                >
+                  {actionId === m.id ? <Loader2 size={12} className="animate-spin" /> : <Unlock size={12} />}
+                  Release
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
