@@ -334,12 +334,12 @@ export default function DashboardPage() {
 
                 return (
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Unlocked Catering & Match Timings */}
+                    {/* Unlocked Catering & Ground Meal Options */}
                     <div className="glass-dark p-6 space-y-4">
                       <div className="flex items-center justify-between border-b border-white/[0.06] pb-3">
                         <h3 className="text-white font-semibold flex items-center gap-2">
                           <Utensils size={16} className="text-brand-400" />
-                          <span>Match Logistics & Meal Choice</span>
+                          <span>Match Logistics & Ground Meal Choice</span>
                         </h3>
                         <span className="badge-green text-xs">Selection Confirmed</span>
                       </div>
@@ -351,19 +351,20 @@ export default function DashboardPage() {
                         </div>
 
                         <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3 mt-3">
-                          <p className="text-white font-semibold text-xs">Select Your Match Meal Option:</p>
+                          <p className="text-white font-semibold text-xs">Select Ground Meal Choice for Post-Match:</p>
                           <select className="input text-xs">
-                            <option value="standard">Standard Post-Match Refreshment</option>
-                            <option value="vegetarian">Vegetarian Meal & Tea</option>
-                            <option value="halal">Halal Certified Option</option>
-                            <option value="gluten_free">Gluten-Free Catering</option>
+                            <option value="beef_burger">Beef Burger & Chips (Ground Special)</option>
+                            <option value="chicken_burger">Chicken Burger & Chips</option>
+                            <option value="veg_paella">Vegetarian Paella</option>
+                            <option value="halal_wrap">Halal Certified Chicken Wrap</option>
+                            <option value="salad_bowl">Fresh Mediterranean Salad Bowl</option>
                           </select>
-                          <p className="text-slate-500 text-[11px]">Your selection is automatically submitted to the match catering coordinator.</p>
+                          <p className="text-slate-500 text-[11px]">Your meal choice is sent directly to the ground catering manager once selected.</p>
                         </div>
                       </div>
                     </div>
 
-                    {/* Unlocked Published XI */}
+                    {/* Unlocked Confirmed XI */}
                     <div className="glass-dark p-6 space-y-4">
                       <div className="flex justify-between items-center border-b border-white/[0.06] pb-3">
                         <h3 className="text-white font-semibold text-base">Confirmed Match XI</h3>
@@ -395,38 +396,64 @@ export default function DashboardPage() {
           {tab === "travel" && (
             <div className="space-y-6">
               <div>
-                <h2 className="text-2xl font-display font-bold text-white mb-1">Away Trip Accommodation & Transport</h2>
-                <p className="text-slate-400 text-sm">Coordinate travel, car sharing, and hotel bookings for away fixtures in Alicante and La Manga.</p>
+                <h2 className="text-2xl font-display font-bold text-white mb-1">Away Trip Car Sharing & Transport</h2>
+                <p className="text-slate-400 text-sm">Organise driver departure times, passenger seat bookings, and travel arrangements.</p>
               </div>
 
               <div className="glass-dark p-6 space-y-5">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-white/[0.06] pb-4">
                   <div>
-                    <h3 className="text-white font-semibold text-lg">ECCL Away Weekend — Sporting Alfaz & La Manga</h3>
-                    <p className="text-slate-400 text-xs mt-0.5">5 – 6 September 2026 · 2x T20s & 1x 40-Over Match</p>
+                    <h3 className="text-white font-semibold text-lg">ECCL Away Match Transport — Alicante / La Manga</h3>
+                    <p className="text-slate-400 text-xs mt-0.5">Departure times set by drivers (Meet 07:30 AM at venue)</p>
                   </div>
-                  <span className="badge-gold">Transport & Rooms Open</span>
+                  <span className="badge-gold">Car-Pooling Open</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                    <p className="text-white font-semibold">Car Sharing / Transport Preference</p>
-                    <p className="text-slate-400">Arrive by 07:30–08:00 on matchday morning. All matches live streamed on ECN.</p>
-                    <select className="input text-xs mt-2">
-                      <option value="driver">Driving own car (Can take 3 players)</option>
-                      <option value="passenger">Need passenger seat from Madrid</option>
-                      <option value="own_way">Travelling independently</option>
-                    </select>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                  {/* Transport Role Setup */}
+                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3">
+                    <p className="text-white font-semibold text-sm">Your Travel Status</p>
+                    <div>
+                      <label className="label text-xs">I am traveling as:</label>
+                      <select className="input text-xs">
+                        <option value="driver">Driver (Offering seats to team members)</option>
+                        <option value="passenger">Passenger (Booking seat in driver's car)</option>
+                        <option value="independent">Independent Travel (Train / Own arrangements)</option>
+                      </select>
+                    </div>
+
+                    <div className="pt-2 space-y-2 border-t border-white/[0.06]">
+                      <p className="text-slate-300 font-medium">Driver Departure Details (If Driving):</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <input className="input text-xs" placeholder="Departure Location (e.g. Moncloa)" />
+                        <input className="input text-xs" placeholder="Departure Time (e.g. 06:45 AM)" />
+                      </div>
+                      <input type="number" min="1" max="6" className="input text-xs" placeholder="Available passenger seats (e.g. 3)" />
+                    </div>
                   </div>
 
-                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-2">
-                    <p className="text-white font-semibold">Hotel & Room Sharing Preference</p>
-                    <p className="text-slate-400">Official team hotel near Sporting Alfaz / La Manga Club.</p>
-                    <select className="input text-xs mt-2">
-                      <option value="twin">Twin Room Share (€35/night per player)</option>
-                      <option value="single">Single Room Occupancy (€60/night)</option>
-                      <option value="no_hotel">No hotel required</option>
-                    </select>
+                  {/* Drivers List & Available Passenger Seats */}
+                  <div className="bg-slate-900/60 p-4 rounded-xl border border-white/[0.04] space-y-3">
+                    <p className="text-white font-semibold text-sm">Available Drivers & Passenger Seats</p>
+                    <div className="space-y-2">
+                      <div className="p-3 rounded-lg bg-white/5 border border-white/[0.06] space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">Jon Woodward (Driver)</span>
+                          <span className="badge-green text-[10px]">2 Seats Free</span>
+                        </div>
+                        <p className="text-slate-400 text-[11px]">Leaving Moncloa Station at 06:45 AM</p>
+                        <button className="btn-outline btn-sm text-[11px] mt-1 py-0.5">Reserve Passenger Seat</button>
+                      </div>
+
+                      <div className="p-3 rounded-lg bg-white/5 border border-white/[0.06] space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-white font-medium">Sven Prinsloo (Driver)</span>
+                          <span className="badge-green text-[10px]">3 Seats Free</span>
+                        </div>
+                        <p className="text-slate-400 text-[11px]">Leaving Nuevos Ministerios at 07:00 AM</p>
+                        <button className="btn-outline btn-sm text-[11px] mt-1 py-0.5">Reserve Passenger Seat</button>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

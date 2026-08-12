@@ -947,8 +947,13 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                 <input className="input text-xs" value={newEvent.venue_name} onChange={(e) => setNewEvent({ ...newEvent, venue_name: e.target.value })} required />
               </div>
               <div>
-                <label className="label text-xs">Meal & Catering Options Provided</label>
-                <input className="input text-xs" value={newEvent.catering_options} onChange={(e) => setNewEvent({ ...newEvent, catering_options: e.target.value })} placeholder="e.g. Post-match Paella, Halal & Veg teas" />
+                <label className="label text-xs">Meal & Catering Choices Offered by Ground (comma separated)</label>
+                <input
+                  className="input text-xs"
+                  value={newEvent.catering_options}
+                  onChange={(e) => setNewEvent({ ...newEvent, catering_options: e.target.value })}
+                  placeholder="e.g. Beef Burger & Chips, Chicken Burger, Vegetarian Paella, Halal Wrap, Salad Bowl"
+                />
               </div>
             </div>
 
