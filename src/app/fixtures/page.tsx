@@ -24,7 +24,7 @@ export default function FixturesPage() {
     "t10": "T10",
   };
 
-  const MEMBERS_ONLY_TYPES = ["nets"];
+  const MEMBERS_ONLY_TYPES = ["nets", "match", "tournament"];
 
   return (
     <main className="min-h-screen flex flex-col">
