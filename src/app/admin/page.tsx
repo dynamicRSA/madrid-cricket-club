@@ -102,7 +102,7 @@ export default function AdminPage() {
 
         <div className="container-wide px-3 sm:px-4 mt-3">
           {/* Mobile: grid of card tabs — all visible, no scroll */}
-          <div className="sm:hidden grid grid-cols-2 gap-2 pb-3">
+          <div className="lg:hidden grid grid-cols-2 gap-2 pb-3">
           {([
             { id: "applications", label: "Applications", icon: CheckCircle },
             { id: "members",      label: "Members",      icon: Users },
@@ -126,7 +126,7 @@ export default function AdminPage() {
           </div>
 
           {/* Desktop: horizontal pill tabs */}
-          <div className="hidden sm:flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide">
+          <div className="hidden lg:flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide">
           {([
             { id: "applications", label: "Applications & Renewals", shortLabel: "Review", icon: CheckCircle },
             { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },

@@ -82,7 +82,7 @@ export default function CaptainPage() {
         {/* Tab nav */}
         <div className="container-wide px-3 sm:px-4 mt-3">
           {/* Mobile: 3-column grid — all tabs visible at once */}
-          <div className="sm:hidden grid grid-cols-3 gap-2 pb-3">
+          <div className="lg:hidden grid grid-cols-3 gap-2 pb-3">
             {TABS.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
@@ -101,7 +101,7 @@ export default function CaptainPage() {
           </div>
 
           {/* Desktop: horizontal underline tabs */}
-          <div className="hidden sm:flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
+          <div className="hidden lg:flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}

@@ -157,23 +157,17 @@ export default function Navbar() {
                     </div>
 
                     <div className="py-1.5">
-                      {/* My Profile — always shown */}
-                      <button
-                        onClick={() => {
-                          if (typeof window !== "undefined") sessionStorage.setItem("dashboardTab", "profile");
-                          setUserMenuOpen(false);
-                          router.push("/dashboard");
-                        }}
-                        className={cn("w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors")}>
-                        <User size={15} />
-                        My Profile
-                      </button>
-
-                      {/* Member dashboard */}
+                      {/* My Profile */}
+                      <Link href="/profile" onClick={() => setUserMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
+                          pathname === "/profile" && "text-brand-300 bg-brand-500/10")}>
+                        <User size={15} /> My Profile
+                      </Link>
+                      {/* My Dashboard */}
                       <Link href="/dashboard" onClick={() => setUserMenuOpen(false)}
-                        className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors")}>
-                        <LayoutDashboard size={15} />
-                        My Dashboard
+                        className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
+                          pathname === "/dashboard" && "text-brand-300 bg-brand-500/10")}>
+                        <LayoutDashboard size={15} /> My Dashboard
                       </Link>
 
                       {/* Captain panel */}
@@ -267,15 +261,14 @@ export default function Navbar() {
             <div className="px-4 pt-3 pb-2 border-b border-white/[0.08] space-y-1">
               <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1 mb-1.5">My Account</p>
               {/* My Profile */}
-              <button
-                onClick={() => {
-                  if (typeof window !== "undefined") sessionStorage.setItem("dashboardTab", "profile");
-                  setMobileOpen(false);
-                  router.push("/dashboard");
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all text-white hover:bg-white/[0.06]">
+              <Link href="/profile" onClick={() => setMobileOpen(false)}
+                className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
+                  pathname === "/profile"
+                    ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
+                    : "text-white hover:bg-white/[0.06]")}>
                 <User size={18} className="shrink-0" /> My Profile
-              </button>
+              </Link>
+              {/* My Dashboard */}
               <Link href="/dashboard" onClick={() => setMobileOpen(false)}
                 className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
                   pathname === "/dashboard"

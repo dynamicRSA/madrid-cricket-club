@@ -25,10 +25,10 @@ import {
 
 type Tab = "overview" | "confirmations" | "availability" | "charges" | "profile" | "notifications";
 
-export default function DashboardPage() {
+export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {}) {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("overview");
+  const [tab, setTab] = useState<Tab>(initialTab ?? "overview");
   const supabase = createClient();
 
   // Redirect if not logged in
@@ -248,8 +248,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Desktop horizontal tab nav — hidden on mobile (bottom nav used instead) */}
-        <div className="container-wide px-4 mt-4 hidden sm:flex gap-1 overflow-x-auto pb-1 tab-pills">
+        {/* Desktop tab nav — hidden on mobile (bottom nav used instead) */}
+        <div className="container-wide px-4 mt-4 hidden lg:flex gap-1 overflow-x-auto pb-1 tab-pills">
           {([
             { id: "overview", label: "Overview", icon: Bell },
             { id: "confirmations", label: "My Matches", icon: CheckCircle },
@@ -274,7 +274,7 @@ export default function DashboardPage() {
       </section>
 
       {/* Mobile bottom navigation bar */}
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex mobile-bottom-nav" style={{ background: "rgba(8,15,24,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex mobile-bottom-nav" style={{ background: "rgba(8,15,24,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", paddingBottom: "env(safe-area-inset-bottom)" }}>
         {([
           { id: "overview", label: "Overview", icon: Bell },
           { id: "confirmations", label: "Matches", icon: CheckCircle, badge: isSelectedForMatch },
