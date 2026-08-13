@@ -157,10 +157,17 @@ export default function Navbar() {
                     </div>
 
                     <div className="py-1.5">
-                      {/* Member dashboard — always shown */}
-                      <Link href="/dashboard" onClick={() => setUserMenuOpen(false)}
+                      {/* My Profile — always shown */}
+                      <Link href="/dashboard?tab=profile" onClick={() => setUserMenuOpen(false)}
                         className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
                           pathname.startsWith("/dashboard") && "text-brand-300 bg-brand-500/10")}>
+                        <User size={15} />
+                        My Profile
+                      </Link>
+
+                      {/* Member dashboard */}
+                      <Link href="/dashboard" onClick={() => setUserMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors")}>
                         <LayoutDashboard size={15} />
                         My Dashboard
                       </Link>
@@ -255,9 +262,15 @@ export default function Navbar() {
           {loggedIn && (
             <div className="px-4 pt-3 pb-2 border-b border-white/[0.08] space-y-1">
               <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1 mb-1.5">My Account</p>
+              {/* My Profile */}
+              <Link href="/dashboard?tab=profile" onClick={() => setMobileOpen(false)}
+                className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
+                  "text-white hover:bg-white/[0.06]")}>
+                <User size={18} className="shrink-0" /> My Profile
+              </Link>
               <Link href="/dashboard" onClick={() => setMobileOpen(false)}
                 className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
-                  pathname.startsWith("/dashboard")
+                  pathname === "/dashboard"
                     ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
                     : "text-white hover:bg-white/[0.06]")}>
                 <LayoutDashboard size={18} className="shrink-0" /> My Dashboard

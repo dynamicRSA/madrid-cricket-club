@@ -80,7 +80,7 @@ export default function AdminPage() {
   const isTreasurer = !!((member as any)?.roles?.includes("treasurer")) || isSuperAdmin;
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
 
       {/* Header */}
@@ -384,14 +384,16 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
         </div>
       )}
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 overflow-x-auto border-b border-white/[0.06] pb-0">
+      {/* Filter tabs — 3-column grid, always fully visible */}
+      <div className="grid grid-cols-3 gap-2">
         {FILTER_TABS.map(({ id, label }) => (
           <button
             key={id}
             onClick={() => setFilter(id)}
-            className={`px-3 py-2 text-xs font-semibold whitespace-nowrap border-b-2 transition-all -mb-px ${
-              filter === id ? "text-brand-300 border-brand-500" : "text-slate-400 border-transparent hover:text-white"
+            className={`px-2 py-2.5 text-xs font-semibold rounded-xl text-center transition-all border ${
+              filter === id
+                ? "text-brand-300 border-brand-500/40 bg-brand-500/15"
+                : "text-slate-400 border-white/[0.06] bg-white/[0.03] hover:text-white hover:bg-white/[0.06]"
             }`}
           >
             {label}

@@ -38,6 +38,15 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
+  // Read ?tab= URL param on initial mount so /dashboard?tab=profile works
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("tab");
+    const validTabs = ["overview", "confirmations", "availability", "charges", "profile"];
+    if (t && validTabs.includes(t)) setTab(t as Tab);
+  }, []);
+
   const { member, loading: memberLoading } = useMember(user?.id);
   const { availability, setEventAvailability, getStatus } = useAvailability(member?.id);
   const { charges, loading: chargesLoading, declarePayment, totalOutstanding } = useCharges(member?.id);
@@ -209,7 +218,7 @@ export default function DashboardPage() {
   const isRenewalDue = member?.status === "renewal_due";
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
 
       {/* Header */}

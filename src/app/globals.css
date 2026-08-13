@@ -64,8 +64,8 @@
 /* ─── Base ─── */
 @layer base {
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-  html { scroll-behavior: smooth; }
-  body { background-color: #120808; color: #f1f5f9; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
+  body { background-color: #120808; color: #f1f5f9; overflow-x: hidden; max-width: 100vw; }
   h1,h2,h3,h4 { font-family: var(--font-display); }
   ::selection { background: rgba(204,0,0,0.3); color: white; }
   ::-webkit-scrollbar { width: 6px; height: 6px; }

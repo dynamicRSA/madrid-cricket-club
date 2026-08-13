@@ -61,7 +61,7 @@ export default function CaptainPage() {
   ] as { id: Tab; label: string; shortLabel: string; icon: any }[];
 
   return (
-    <main className="min-h-screen flex flex-col">
+    <main className="min-h-screen flex flex-col overflow-x-hidden">
       <Navbar />
 
       {/* Header */}
