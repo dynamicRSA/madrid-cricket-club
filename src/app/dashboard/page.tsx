@@ -1527,3 +1527,65 @@ function AvatarUploadCard({
     </div>
   );
 }
+// ─── DocumentUploader ─────────────────────────────────────────────────────────
+// Referenced in ProfileEditor ID section but never defined — added here.
+function DocumentUploader({ memberId }: { memberId?: string }) {
+  const supabase = createClient();
+  const [uploading, setUploading] = useState(false);
+  const [uploaded, setUploaded] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [fileName, setFileName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !memberId) return;
+    setUploadError("");
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop() ?? "pdf";
+      const path = `${memberId}/id-document.${ext}`;
+      const { error: uploadErr } = await supabase.storage
+        .from("documents")
+        .upload(path, file, { upsert: true, contentType: file.type });
+      if (uploadErr) throw uploadErr;
+      setFileName(file.name);
+      setUploaded(true);
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="glass-dark p-5 rounded-2xl border border-white/[0.06] space-y-2">
+      <p className="text-white font-semibold text-sm">ID Document</p>
+      <p className="text-slate-500 text-xs">Upload a scan or photo of your DNI, NIE, or Passport (PDF, JPEG or PNG).</p>
+      {uploaded && (
+        <p className="text-green-400 text-xs flex items-center gap-1.5">
+          <CheckCircle size={12} /> {fileName} uploaded successfully
+        </p>
+      )}
+      {uploadError && <p className="text-red-400 text-xs">{uploadError}</p>}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="application/pdf,image/jpeg,image/png,image/webp"
+        className="hidden"
+        onChange={handleFile}
+      />
+      <button
+        type="button"
+        disabled={uploading || !memberId}
+        onClick={() => fileInputRef.current?.click()}
+        className="btn-outline btn-sm text-xs"
+      >
+        {uploading
+          ? <><Loader2 size={12} className="animate-spin" /> Uploading…</>
+          : uploaded ? "Replace Document" : "Upload Document"}
+      </button>
+    </div>
+  );
+}
