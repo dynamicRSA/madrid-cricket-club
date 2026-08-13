@@ -754,7 +754,7 @@ export default function DashboardPage() {
           {/* PROFILE TAB */}
           {tab === "profile" && (
             <div className="space-y-6">
-              <ProfileEditor member={member} onUpdate={() => {}} />
+              <ProfileEditor member={member} onUpdate={() => {}} supabase={supabase} />
 
               {/* Jersey Number */}
               <div className="glass-dark p-6 space-y-4">
@@ -1024,7 +1024,7 @@ function ChargeCard({ charge, onDeclare }: {
   );
 }
 
-function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void }) {
+function ProfileEditor({ member, onUpdate, supabase: supabaseProp }: { member: any; onUpdate: () => void; supabase: any }) {
   const { updateMember } = useMember(member?.user_id);
   const [profileSection, setProfileSection] = useState<"details" | "security">("details");
   const [form, setForm] = useState({
@@ -1260,67 +1260,72 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
               </div>
             </div>
           </div>
-          <ChangePasswordCard />
+          <ChangePasswordCard supabase={supabaseProp} />
         </div>
       )}
     </div>
   );
 }
 
-function ChangePasswordCard() {
+function ChangePasswordCard({ supabase }: { supabase: any }) {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [saving, setSaving] = useState(false);
   const [done, setDone] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState<string>("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
     setDone(false);
+
     if (newPw.length < 8) { setErr("Password must be at least 8 characters."); return; }
     if (newPw !== confirmPw) { setErr("Passwords do not match."); return; }
+
     setSaving(true);
+
     try {
-      // Create a fresh client so we always have the current session from cookies
-      const sb = createClient();
-      const { data: sessionData } = await sb.auth.getSession();
-      if (!sessionData?.session) {
-        setErr("You must be signed in to change your password. Please refresh and try again.");
-        setSaving(false);
-        return;
+      // Use the authenticated supabase instance passed from DashboardPage
+      const { error } = await supabase.auth.updateUser({ password: newPw });
+
+      if (error) {
+        console.error("[ChangePassword] updateUser error:", error);
+        setErr(error.message || "Password update failed — please try again.");
+      } else {
+        console.log("[ChangePassword] Password updated successfully.");
+        setDone(true);
+        setNewPw("");
+        setConfirmPw("");
       }
-      const { error } = await sb.auth.updateUser({ password: newPw });
-      if (error) { setErr(error.message); }
-      else { setDone(true); setNewPw(""); setConfirmPw(""); }
     } catch (ex: any) {
-      setErr(ex?.message || "Something went wrong.");
+      console.error("[ChangePassword] exception:", ex);
+      setErr(ex?.message || "An unexpected error occurred. Please try again.");
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   }
 
   return (
-    <div className="glass-dark p-5 sm:p-6 space-y-4">
+    <div className="glass-dark p-5 sm:p-6 space-y-5">
       <div>
-        <h3 className="text-white font-semibold flex items-center gap-2">
+        <h3 className="text-white font-semibold text-base flex items-center gap-2">
           <span>🔑</span> Change Password
         </h3>
-        <p className="text-slate-400 text-xs mt-1">
-          Set or update your sign-in password. Must be at least 8 characters.<br />
-          After saving, use your new password next time you sign in.
+        <p className="text-slate-400 text-sm mt-1">
+          Set a new sign-in password. After saving, use your new password next time you sign in.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3 max-w-sm">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-sm">
         <div>
-          <label className="label" htmlFor="profile-newpw">New password</label>
+          <label className="label" htmlFor="sec-newpw">New password</label>
           <div className="relative">
             <input
-              id="profile-newpw"
+              id="sec-newpw"
               type={showPw ? "text" : "password"}
               value={newPw}
-              onChange={(e) => { setNewPw(e.target.value); setDone(false); }}
+              onChange={(e) => { setNewPw(e.target.value); setDone(false); setErr(""); }}
               className="input pr-10"
               placeholder="At least 8 characters"
               autoComplete="new-password"
@@ -1333,281 +1338,68 @@ function ChangePasswordCard() {
         </div>
 
         <div>
-          <label className="label" htmlFor="profile-confirmpw">Confirm new password</label>
+          <label className="label" htmlFor="sec-confirmpw">Confirm new password</label>
           <input
-            id="profile-confirmpw"
+            id="sec-confirmpw"
             type={showPw ? "text" : "password"}
             value={confirmPw}
-            onChange={(e) => { setConfirmPw(e.target.value); setDone(false); }}
+            onChange={(e) => { setConfirmPw(e.target.value); setDone(false); setErr(""); }}
             className="input"
-            placeholder="Repeat your password"
+            placeholder="Repeat your new password"
             autoComplete="new-password"
           />
         </div>
 
-        {/* Strength bar */}
+        {/* Strength indicator */}
         {newPw.length > 0 && (
           <div className="space-y-1">
             <div className="flex gap-1">
               {[8, 10, 12, 14].map((min) => (
-                <div key={min} className={`h-1 flex-1 rounded-full transition-all ${newPw.length >= min ? "bg-brand-500" : "bg-white/10"}`} />
+                <div key={min} className={`h-1.5 flex-1 rounded-full transition-all ${newPw.length >= min ? "bg-brand-500" : "bg-white/10"}`} />
               ))}
             </div>
             <p className="text-slate-500 text-xs">
-              {newPw.length < 8 ? "Too short" : newPw.length < 10 ? "Acceptable" : newPw.length < 12 ? "Good" : "Strong"}
+              {newPw.length < 8 ? "Too short (min 8 chars)" : newPw.length < 10 ? "Acceptable" : newPw.length < 12 ? "Good" : "Strong ✓"}
             </p>
           </div>
         )}
 
+        {/* ERROR — large and prominent */}
         {err && (
-          <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 text-red-300 text-xs p-3 rounded-xl">
-            <span className="shrink-0 mt-0.5">⚠️</span> {err}
-          </div>
-        )}
-        {done && (
-          <div className="flex items-center gap-2 text-green-400 text-xs bg-green-400/10 border border-green-400/20 p-3 rounded-xl">
-            <CheckCircle size={14} /> Password updated! Use your new password next time you sign in.
+          <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/40 text-red-300 p-4 rounded-xl">
+            <span className="text-xl shrink-0">⚠️</span>
+            <div>
+              <p className="font-semibold text-sm text-red-200">Password not changed</p>
+              <p className="text-sm mt-0.5">{err}</p>
+            </div>
           </div>
         )}
 
-        <button type="submit" disabled={saving || !newPw || !confirmPw} className="btn-primary">
-          {saving ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : "Update Password"}
+        {/* SUCCESS — large and prominent */}
+        {done && (
+          <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/40 text-green-200 p-4 rounded-xl">
+            <span className="text-xl shrink-0">✅</span>
+            <div>
+              <p className="font-semibold text-sm">Password updated successfully!</p>
+              <p className="text-sm text-green-300 mt-0.5">
+                Your new password is now active. Use it next time you sign in.
+              </p>
+            </div>
+          </div>
+        )}
+
+        <button
+          type="submit"
+          disabled={saving || newPw.length < 8 || !confirmPw}
+          className="btn-primary w-full justify-center"
+        >
+          {saving ? (
+            <><Loader2 size={16} className="animate-spin" /> Updating Password...</>
+          ) : (
+            "Update Password"
+          )}
         </button>
       </form>
-    </div>
-  );
-}
-
-
-function DocumentUploader({ memberId }: { memberId?: string }) {
-  const [docs, setDocs] = useState([
-    { id: "1", type: "ID / Passport Copy", name: "passport_scan_2026.pdf", date: "2026-08-01", status: "Verified by Committee" },
-    { id: "2", type: "Cricket España Registration Form", name: "ce_player_registration.pdf", date: "2026-08-05", status: "Pending Review" }
-  ]);
-  const [uploading, setUploading] = useState(false);
-  const [docType, setDocType] = useState("ID / NIE / Passport Scan");
-
-  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setTimeout(() => {
-      setDocs((prev) => [
-        {
-          id: String(Date.now()),
-          type: docType,
-          name: file.name,
-          date: new Date().toISOString().split("T")[0],
-          status: "Pending Review"
-        },
-        ...prev
-      ]);
-      setUploading(false);
-    }, 1000);
-  }
-
-  return (
-    <div className="space-y-4 pt-2 border-t border-white/[0.04]">
-      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
-        <div className="relative flex-1">
-          <label className="label text-xs">Document Type to Upload</label>
-          <select
-            value={docType}
-            onChange={(e) => setDocType(e.target.value)}
-            className="input text-xs"
-          >
-            <option value="ID / NIE / Passport Scan">ID / NIE / Passport Scan</option>
-            <option value="Cricket España Registration Form">Cricket España Registration Form</option>
-            <option value="Medical Certificate / Waiver">Medical Certificate / Waiver</option>
-            <option value="Proof of Residency / Address">Proof of Residency / Address</option>
-            <option value="Other Official Document">Other Official Document</option>
-          </select>
-        </div>
-        <div className="sm:pt-5 w-full sm:w-auto">
-          <label className="btn-outline btn-sm cursor-pointer inline-flex items-center justify-center gap-2 w-full sm:w-auto">
-            {uploading ? <Loader2 size={13} className="animate-spin text-brand-400" /> : <Clock size={13} />}
-            <span>{uploading ? "Uploading..." : "Upload Document"}</span>
-            <input type="file" onChange={handleFileSelect} className="hidden" accept=".pdf,.png,.jpg,.jpeg" />
-          </label>
-        </div>
-      </div>
-
-      {/* Documents List */}
-      <div className="space-y-2">
-        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Uploaded Documents ({docs.length})</p>
-        <div className="space-y-2">
-          {docs.map((doc) => (
-            <div key={doc.id} className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06] text-xs">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-brand-500/10 border border-brand-500/20 flex items-center justify-center text-brand-400 font-bold">
-                  📄
-                </div>
-                <div>
-                  <p className="text-white font-medium">{doc.name}</p>
-                  <p className="text-slate-500 text-[11px]">{doc.type} · Uploaded {doc.date}</p>
-                </div>
-              </div>
-              <div>
-                <span className={doc.status.includes("Verified") ? "badge-green" : "badge-gold"}>
-                  {doc.status}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-
-// ─────────────────────────────────────────────────────────────────────────────
-// AvatarUploadCard — profile photo upload with Supabase Storage
-// ─────────────────────────────────────────────────────────────────────────────
-function AvatarUploadCard({
-  member,
-  onAvatarChange,
-}: {
-  member: any;
-  onAvatarChange: (url: string | null) => void;
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | null>(member?.avatar_url || null);
-  const [err, setErr] = useState("");
-  const fileRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
-
-  const initials = (() => {
-    const name = member?.preferred_name || member?.full_legal_name || "?";
-    return name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
-  })();
-
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setErr("");
-
-    // Validate
-    if (!file.type.startsWith("image/")) { setErr("Please choose an image file."); return; }
-    if (file.size > 5 * 1024 * 1024) { setErr("Image must be under 5 MB."); return; }
-
-    setUploading(true);
-
-    try {
-      // Resize to 400×400 via canvas to keep storage small
-      const resized = await resizeImage(file, 400);
-
-      const ext = file.type === "image/png" ? "png" : "jpg";
-      const path = `${member.id}/avatar.${ext}`;
-
-      const { error: upErr } = await supabase.storage
-        .from("avatars")
-        .upload(path, resized, { upsert: true, contentType: resized.type });
-
-      if (upErr) { setErr(upErr.message); setUploading(false); return; }
-
-      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-      // Bust cache so the new image loads immediately
-      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
-
-      setPreview(publicUrl);
-      onAvatarChange(publicUrl);
-    } catch (ex: any) {
-      setErr(ex?.message || "Upload failed.");
-    }
-    setUploading(false);
-    // Reset input so same file can be re-selected
-    if (fileRef.current) fileRef.current.value = "";
-  }
-
-  async function handleRemove() {
-    if (!member?.id) return;
-    setUploading(true);
-    // Delete both jpg and png variants (we don't know which was uploaded)
-    await supabase.storage.from("avatars").remove([`${member.id}/avatar.jpg`, `${member.id}/avatar.png`]);
-    setPreview(null);
-    onAvatarChange(null);
-    setUploading(false);
-  }
-
-  return (
-    <div className="glass-dark p-5 sm:p-6">
-      <h3 className="text-white font-semibold mb-4">Profile Photo</h3>
-      <div className="flex items-center gap-5 flex-wrap">
-        {/* Avatar display */}
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="relative group shrink-0 focus:outline-none"
-          title="Click to upload a photo"
-        >
-          {preview ? (
-            <img
-              src={preview}
-              alt="Profile photo"
-              className="w-24 h-24 rounded-full object-cover border-2 border-brand-500/40 transition-all group-hover:opacity-80"
-            />
-          ) : (
-            <div className="w-24 h-24 rounded-full bg-brand-700/40 border-2 border-brand-500/30 border-dashed flex items-center justify-center text-3xl font-black text-brand-300 transition-all group-hover:bg-brand-700/60">
-              {initials}
-            </div>
-          )}
-          {/* Camera overlay */}
-          <span className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            {uploading ? (
-              <Loader2 size={22} className="text-white animate-spin" />
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-7 h-7">
-                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                <circle cx="12" cy="13" r="4"/>
-              </svg>
-            )}
-          </span>
-        </button>
-
-        {/* Text instructions and actions */}
-        <div className="space-y-2 min-w-0">
-          <p className="text-white font-medium text-sm">
-            {preview ? "Change your photo" : "Add a profile photo"}
-          </p>
-          <p className="text-slate-400 text-xs leading-relaxed">
-            JPG or PNG, max 5 MB.<br />
-            Your photo appears in the team selector and articles.
-          </p>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="btn-outline btn-sm text-xs"
-            >
-              {uploading ? <><Loader2 size={12} className="animate-spin" /> Uploading...</> : preview ? "Change Photo" : "Upload Photo"}
-            </button>
-            {preview && (
-              <button
-                type="button"
-                onClick={handleRemove}
-                disabled={uploading}
-                className="btn-ghost btn-sm text-xs text-slate-400 hover:text-red-400"
-              >
-                Remove
-              </button>
-            )}
-          </div>
-          {err && <p className="text-red-400 text-xs">{err}</p>}
-        </div>
-      </div>
-
-      {/* Hidden file input */}
-      <input
-        ref={fileRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/gif"
-        onChange={handleFile}
-        className="hidden"
-        aria-label="Upload profile photo"
-      />
     </div>
   );
 }
