@@ -22,15 +22,15 @@ export const metadata: Metadata = {
     template: "%s | Madrid Cricket Club",
   },
   description:
-    "Madrid Cricket Club — competing in the Liga Nacional División 2 since 2008. Join our community of cricket players in the heart of Spain.",
-  keywords: ["cricket", "madrid", "spain", "liga nacional", "cricket españa", "cricket club madrid"],
+    "Madrid Cricket Club — cricket in the heart of Spain since 2001. Join our welcoming community of players from all nationalities.",
+  keywords: ["cricket", "madrid", "spain", "cricket españa", "cricket club madrid", "madrid cricket"],
   openGraph: {
     type: "website",
     locale: "en_GB",
     url: "https://dynamicrsa.github.io/madrid-cricket-club",
     siteName: "Madrid Cricket Club",
     title: "Madrid Cricket Club",
-    description: "Cricket in the heart of Spain — Liga Nacional División 2",
+    description: "Cricket in the heart of Spain since 2001. All nationalities welcome.",
     images: [{ url: "/images/og-image.jpg", width: 1200, height: 630, alt: "Madrid Cricket Club" }],
   },
   twitter: {
