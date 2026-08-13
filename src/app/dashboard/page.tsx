@@ -1367,7 +1367,7 @@ function ChangePasswordCard({ supabase }: { supabase: any }) {
         {/* ERROR — large and prominent */}
         {err && (
           <div className="flex items-start gap-3 bg-red-500/10 border border-red-500/40 text-red-300 p-4 rounded-xl">
-            <span className="text-xl shrink-0">⚠️</span>
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm text-red-200">Password not changed</p>
               <p className="text-sm mt-0.5">{err}</p>
