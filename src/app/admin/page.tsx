@@ -206,6 +206,28 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
     setActionLoading(null);
   }
 
+  // inviteLinks: { [memberId]: { link, loading, error } }
+  const [inviteLinks, setInviteLinks] = useState<Record<string, { link?: string; loading?: boolean; error?: string }>>({});
+
+  async function resendInvite(memberId: string, email: string, name: string) {
+    setInviteLinks((prev) => ({ ...prev, [memberId]: { loading: true } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-member", {
+        body: { email, name, memberId },
+      });
+      if (error || data?.error) {
+        setInviteLinks((prev) => ({ ...prev, [memberId]: { error: error?.message || data?.error || "Failed" } }));
+      } else {
+        const link = data?.action_link || null;
+        setInviteLinks((prev) => ({ ...prev, [memberId]: { link } }));
+        // Update registration_status timestamp
+        await supabase.from("members").update({ updated_at: new Date().toISOString() }).eq("id", memberId);
+      }
+    } catch (e: any) {
+      setInviteLinks((prev) => ({ ...prev, [memberId]: { error: String(e) } }));
+    }
+  }
+
   async function approveMember(memberId: string, name: string) {
     setActionLoading(memberId + "_approve");
     await supabase.from("members").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", memberId);
@@ -425,17 +447,61 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 pt-1 border-t border-white/[0.04]">
                 {m.registration_status === "invited" ? (
-                  /* Invited (not yet applied) — only allow cancel or approve */
-                  <>
-                    <button
-                      onClick={() => cancelInvitation(m.id)}
-                      disabled={!!actionLoading}
-                      className="btn-ghost btn-sm text-xs text-slate-400 border border-white/10 hover:text-red-400 hover:border-red-500/30"
-                    >
-                      {actionLoading === m.id + "_cancel" ? <Loader2 size={12} className="animate-spin" /> : "✕"} Remove Invitation
-                    </button>
-                    <span className="text-slate-600 text-xs self-center">· Remove to re-invite with a different email or try again</span>
-                  </>
+                  /* Invited (not yet applied) — resend / copy link / remove */
+                  <div className="w-full space-y-2">
+                    {/* Action row */}
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => resendInvite(m.id, m.email, m.full_legal_name)}
+                        disabled={!!actionLoading || !!inviteLinks[m.id]?.loading}
+                        className="btn-primary btn-sm text-xs"
+                      >
+                        {inviteLinks[m.id]?.loading ? <Loader2 size={12} className="animate-spin" /> : "📨"} Resend Invite
+                      </button>
+                      <button
+                        onClick={() => cancelInvitation(m.id)}
+                        disabled={!!actionLoading}
+                        className="btn-ghost btn-sm text-xs text-slate-400 border border-white/10 hover:text-red-400 hover:border-red-500/30"
+                      >
+                        {actionLoading === m.id + "_cancel" ? <Loader2 size={12} className="animate-spin" /> : "✕"} Remove
+                      </button>
+                    </div>
+
+                    {/* Invite link display */}
+                    {inviteLinks[m.id]?.link && (
+                      <div className="bg-slate-900/60 rounded-lg p-3 space-y-1.5 border border-white/[0.06]">
+                        <p className="text-slate-400 text-[11px] font-medium">✓ Invite link generated — share this directly with {m.full_legal_name}:</p>
+                        <div className="flex items-center gap-2">
+                          <input
+                            readOnly
+                            value={inviteLinks[m.id]!.link!}
+                            className="input text-[11px] font-mono text-brand-300 flex-1 bg-slate-800/80 py-1.5"
+                            onClick={(e) => (e.target as HTMLInputElement).select()}
+                          />
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(inviteLinks[m.id]!.link!);
+                              setInviteLinks((prev) => ({ ...prev, [m.id]: { ...prev[m.id], link: prev[m.id]!.link + " ✓" } }));
+                              setTimeout(() => setInviteLinks((prev) => {
+                                const l = prev[m.id]?.link?.replace(" ✓", "") || "";
+                                return { ...prev, [m.id]: { ...prev[m.id], link: l } };
+                              }), 1800);
+                            }}
+                            className="btn-primary btn-sm text-xs whitespace-nowrap shrink-0"
+                          >
+                            📋 Copy Link
+                          </button>
+                        </div>
+                        <p className="text-slate-600 text-[10px]">This link grants direct access — valid for 24 hours. Share via WhatsApp, email, or any channel.</p>
+                      </div>
+                    )}
+                    {inviteLinks[m.id]?.error && (
+                      <p className="text-red-400 text-xs">{inviteLinks[m.id]!.error}</p>
+                    )}
+                    {!inviteLinks[m.id] && (
+                      <p className="text-slate-600 text-[11px]">Email not received? Resend or copy the link to share directly.</p>
+                    )}
+                  </div>
                 ) : (
                   /* Applied / pending — full review actions */
                   <>
@@ -522,7 +588,6 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                 className="input text-sm"
                 value={infoMessage}
                 onChange={(e) => setInfoMessage(e.target.value)}
-                placeholder="e.g. Please upload a clear copy of your ID document..."
               />
             </div>
             <div className="flex gap-2 justify-end">
@@ -534,6 +599,64 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Resend Invite Button (inline, self-contained) ───────────────────────────
+function ResendInviteButton({ supabase, member }: { supabase: any; member: any }) {
+  const [state, setState] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [link, setLink]   = useState("");
+  const [copied, setCopied] = useState(false);
+
+  async function resend() {
+    setState("loading");
+    try {
+      const { data, error } = await supabase.functions.invoke("invite-member", {
+        body: { email: member.email, name: member.full_legal_name, memberId: member.id },
+      });
+      if (error || data?.error) { setState("error"); return; }
+      setLink(data?.action_link || "");
+      setState("done");
+    } catch { setState("error"); }
+  }
+
+  function copyLink() {
+    navigator.clipboard.writeText(link);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  if (state === "idle") {
+    return (
+      <button
+        onClick={(e) => { e.stopPropagation(); resend(); }}
+        className="btn-ghost btn-sm text-[11px] py-1 px-2 flex items-center gap-1 text-amber-400 hover:text-amber-300 border border-amber-500/20 hover:border-amber-500/40"
+      >
+        📨 Resend
+      </button>
+    );
+  }
+
+  if (state === "loading") {
+    return <span className="text-[11px] text-slate-500 px-2 flex items-center gap-1"><Loader2 size={10} className="animate-spin" /> Sending…</span>;
+  }
+
+  if (state === "error") {
+    return <span className="text-[11px] text-red-400 px-1">Failed — try again</span>;
+  }
+
+  // done — show copy button
+  return (
+    <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+      <button
+        onClick={copyLink}
+        className="btn-sm text-[11px] py-1 px-2 flex items-center gap-1 bg-brand-500/15 text-brand-300 border border-brand-500/30 hover:bg-brand-500/25 rounded-lg"
+        title={link}
+      >
+        {copied ? "✓ Copied!" : "📋 Copy Link"}
+      </button>
+      <button onClick={resend} className="text-[10px] text-slate-500 hover:text-slate-300 px-1">↺</button>
     </div>
   );
 }
@@ -973,13 +1096,19 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                     </td>
                   )}
                   <td>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSelectedMember(m); }}
-                      className="btn-ghost btn-sm text-[11px] py-1 px-2 flex items-center gap-1 text-brand-400 hover:text-brand-300"
-                    >
-                      <Edit2 size={11} /> Edit
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setSelectedMember(m); }}
+                        className="btn-ghost btn-sm text-[11px] py-1 px-2 flex items-center gap-1 text-brand-400 hover:text-brand-300"
+                      >
+                        <Edit2 size={11} /> Edit
+                      </button>
+                      {(m.registration_status === "invited" || (m.status === "pending_approval" && !m.user_id)) && (
+                        <ResendInviteButton supabase={supabase} member={m} />
+                      )}
+                    </div>
                   </td>
+
                 </tr>
               ))}
             </tbody>
