@@ -269,3 +269,188 @@
 @media print {
   .no-print { display: none !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE OPTIMIZATIONS — All logged-in areas
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── Touch-friendly tap targets ─── */
+@media (max-width: 1024px) {
+  /* Larger tap targets for all buttons on mobile */
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* All interactive buttons min 44px tall on mobile */
+  .btn-sm {
+    padding: 0.6rem 0.9rem !important;
+    min-height: 40px;
+  }
+
+  /* Inputs — full width and taller on mobile */
+  .input {
+    font-size: 16px !important; /* Prevent iOS zoom */
+    padding: 0.75rem 1rem;
+  }
+
+  /* Glass cards — less padding on mobile */
+  .glass-dark {
+    border-radius: 1rem;
+  }
+
+  /* Table horizontal scroll wrapper */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* ─── Dashboard mobile bottom nav ─── */
+/* Already uses fixed bottom nav — this refines it */
+@media (max-width: 640px) {
+  /* Push main content above fixed bottom nav */
+  main { padding-bottom: 72px; }
+
+  /* Bottom nav refinements */
+  nav.mobile-bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}
+
+/* ─── Admin / Captain panel mobile ─── */
+@media (max-width: 640px) {
+  /* Horizontal tab nav — slim on mobile */
+  .panel-tab-nav {
+    gap: 2px;
+    padding: 0 0 0;
+  }
+  .panel-tab-nav button {
+    padding: 0.5rem 0.65rem;
+    font-size: 11px;
+    border-radius: 8px;
+  }
+
+  /* Member cards — full width, compact */
+  .member-card {
+    border-radius: 12px;
+    padding: 14px;
+  }
+
+  /* Action button rows — wrap neatly */
+  .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .action-row button {
+    flex: 1;
+    min-width: 120px;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* ─── Modals — full screen on mobile ─── */
+@media (max-width: 640px) {
+  .modal-overlay {
+    align-items: flex-end !important;
+  }
+  .modal-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 1.5rem 1.5rem 0 0 !important;
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)) !important;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+}
+
+/* ─── Notification dropdown — full width on mobile ─── */
+@media (max-width: 480px) {
+  [data-notification-dropdown] {
+    position: fixed !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    top: 64px !important;
+  }
+}
+
+/* ─── Scrollable tab pills (horizontal) ─── */
+.tab-pills {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+.tab-pills::-webkit-scrollbar { display: none; }
+.tab-pills button {
+  flex-shrink: 0;
+}
+
+/* ─── Safe area padding for fixed elements ─── */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+/* ─── Better mobile cards with swipe feel ─── */
+@media (max-width: 640px) {
+  .card-mobile {
+    margin: 0 -4px;
+    border-radius: 14px;
+  }
+
+  /* Compact grid for mobile */
+  .grid-mobile-1 {
+    grid-template-columns: 1fr !important;
+  }
+  .grid-mobile-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Hide desktop-only elements */
+  .desktop-only {
+    display: none !important;
+  }
+}
+
+/* ─── Typography improvements for mobile ─── */
+@media (max-width: 640px) {
+  h1.text-4xl, h1.text-5xl { font-size: 1.75rem !important; }
+  h2.text-3xl { font-size: 1.5rem !important; }
+  h2.text-2xl { font-size: 1.35rem !important; }
+  p.text-lg   { font-size: 0.95rem !important; }
+}
+
+/* ─── Availability table — horizontally scrollable on mobile ─── */
+.availability-table-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 12px;
+}
+
+/* ─── Selection cards — compact on mobile ─── */
+@media (max-width: 640px) {
+  .selection-player-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 10px 12px;
+  }
+}
+
+/* ─── Loading spinner centering ─── */
+.full-screen-loader {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d1420;
+}
+

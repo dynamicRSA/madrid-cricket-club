@@ -23,15 +23,15 @@ import {
 
 type MemberRow = Database["public"]["Tables"]["members"]["Row"];
 type ChargeRow = Database["public"]["Tables"]["charges"]["Row"];
-type Tab = "members" | "selection" | "payments" | "availability" | "reports" | "jersey";
+type Tab = "applications" | "members" | "payments" | "jersey" | "reports";
 
 // Role check — admins must have role "admin", "super_admin", or "treasurer"
-const ADMIN_ROLES = ["admin", "super_admin", "treasurer", "captain", "secretary"];
+const ADMIN_ROLES = ["admin", "super_admin", "treasurer", "secretary"];
 
 export default function AdminPage() {
   const { user, loading: authLoading, signOut } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>("selection");
+  const [tab, setTab] = useState<Tab>("applications");
 
   // Auth & role check
   const [member, setMember] = useState<MemberRow | null>(null);
@@ -91,39 +91,43 @@ export default function AdminPage() {
               <ShieldAlert size={18} className="text-brand-400" />
             </div>
             <div>
-              <h1 className="text-xl font-display font-bold text-white">Admin & Captaincy Panel</h1>
+              <h1 className="text-xl font-display font-bold text-white">Club Administration</h1>
               <p className="text-slate-500 text-xs">
                 {member?.roles?.map((r: string) => r.replace("_", " ")).join(", ")}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/dashboard" className="btn-ghost btn-sm">
+            {isCaptain && (
+              <Link href="/captain" className="btn-outline btn-sm border-brand-500/40 text-brand-300 text-xs">
+                🏏 Captain Panel
+              </Link>
+            )}
+            <Link href="/dashboard" className="btn-ghost btn-sm text-xs">
               <Eye size={14} /> Member View
             </Link>
-            <button onClick={signOut} className="btn-outline btn-sm">
+            <button onClick={signOut} className="btn-outline btn-sm text-xs hidden sm:flex">
               <LogOut size={14} /> Sign Out
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="container-wide px-4 mt-4 flex gap-1 overflow-x-auto">
+        <div className="container-wide px-4 mt-3 tab-pills">
           {([
-            { id: "selection", label: "Team Selection", shortLabel: "Selection", icon: CheckCircle },
+            { id: "applications", label: "Applications & Renewals", shortLabel: "Review", icon: CheckCircle },
             { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
             ...(isTreasurer ? [{ id: "payments", label: "Payments", shortLabel: "Payments", icon: CreditCard }] : []),
-            { id: "availability", label: "Who Can Play", shortLabel: "Availability", icon: Calendar },
             { id: "jersey", label: "Jersey Numbers", shortLabel: "Jerseys", icon: Trophy },
             { id: "reports", label: "Reports", shortLabel: "Reports", icon: BarChart3 },
           ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, shortLabel, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                 tab === id
-                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/30"
-                  : "text-slate-400 hover:text-white hover:bg-white/5"
+                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/30 shadow-sm"
+                  : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
               }`}
             >
               <Icon size={14} />
@@ -137,16 +141,367 @@ export default function AdminPage() {
       {/* Tab content */}
       <div className="flex-1 pb-6" style={{ background: "#0d1420" }}>
         <div className="container-wide px-4 py-6">
-          {tab === "selection" && <CaptainSelectionTab supabase={supabase} />}
+          {tab === "applications" && <ApplicationsTab supabase={supabase} currentMember={member} />}
           {tab === "members" && <MembersTab supabase={supabase} isSuperAdmin={isSuperAdmin} />}
           {tab === "payments" && <PaymentsTab supabase={supabase} />}
-          {tab === "availability" && <AvailabilityTab supabase={supabase} />}
           {tab === "jersey" && <JerseyTab supabase={supabase} />}
           {tab === "reports" && <ReportsTab isSuperAdmin={isSuperAdmin} />}
         </div>
       </div>
       <Footer />
     </main>
+  );
+}
+
+
+// ─── Applications & Renewals Tab ─────────────────────────────────────────────
+
+function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMember: any }) {
+  const [members, setMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"pending" | "renewal_due" | "recent">("pending");
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [declineModal, setDeclineModal] = useState<{ memberId: string; name: string } | null>(null);
+  const [declineReason, setDeclineReason] = useState("");
+  const [bulkRenewalSending, setBulkRenewalSending] = useState(false);
+  const [bulkRenewalDone, setBulkRenewalDone] = useState(false);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [infoModal, setInfoModal] = useState<{ memberId: string; name: string } | null>(null);
+  const [infoMessage, setInfoMessage] = useState("");
+
+  useEffect(() => {
+    load();
+  }, [filter]);
+
+  async function load() {
+    setLoading(true);
+    let query = supabase.from("members").select("*").order("created_at", { ascending: false });
+    if (filter === "pending") query = query.in("status", ["pending_approval", "invited"]);
+    else if (filter === "renewal_due") query = query.eq("status", "renewal_due");
+    else query = query.in("status", ["active", "inactive"]).gte("updated_at", new Date(Date.now() - 30 * 86400000).toISOString());
+
+    const { data } = await query;
+    setMembers(data || []);
+
+    // Load recent reviews
+    const { data: rv } = await supabase.from("membership_reviews").select("*, decided_by(full_legal_name)").order("created_at", { ascending: false }).limit(20);
+    setReviews(rv || []);
+    setLoading(false);
+  }
+
+  async function logReview(memberId: string, action: string, reason?: string) {
+    await supabase.from("membership_reviews").insert({
+      member_id: memberId,
+      action,
+      reason: reason || null,
+      decided_by: currentMember?.id || null,
+    });
+  }
+
+  async function approveMember(memberId: string, name: string) {
+    setActionLoading(memberId + "_approve");
+    await supabase.from("members").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", memberId);
+    await logReview(memberId, "approved");
+    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+    setActionLoading(null);
+  }
+
+  async function declineMember() {
+    if (!declineModal) return;
+    setActionLoading(declineModal.memberId + "_decline");
+    await supabase.from("members").update({ status: "inactive", updated_at: new Date().toISOString() }).eq("id", declineModal.memberId);
+    await logReview(declineModal.memberId, "declined", declineReason);
+    setMembers((prev) => prev.filter((m) => m.id !== declineModal.memberId));
+    setDeclineModal(null);
+    setDeclineReason("");
+    setActionLoading(null);
+  }
+
+  async function requestMoreInfo() {
+    if (!infoModal) return;
+    setActionLoading(infoModal.memberId + "_info");
+    await logReview(infoModal.memberId, "info_requested", infoMessage);
+    // Create an in-app notification
+    const { data: m } = await supabase.from("members").select("id").eq("id", infoModal.memberId).single();
+    if (m) {
+      await supabase.from("notifications").insert({
+        member_id: m.id,
+        type: "status_change",
+        title: "Additional information required",
+        body: infoMessage || "The committee requires additional information to process your membership application. Please review your profile and update any missing details.",
+      });
+    }
+    setInfoModal(null);
+    setInfoMessage("");
+    setActionLoading(null);
+  }
+
+  async function suspendMember(memberId: string) {
+    setActionLoading(memberId + "_suspend");
+    await supabase.from("members").update({ status: "suspended", updated_at: new Date().toISOString() }).eq("id", memberId);
+    await logReview(memberId, "suspended");
+    setMembers((prev) => prev.filter((m) => m.id !== memberId));
+    setActionLoading(null);
+  }
+
+  async function sendBulkRenewal() {
+    setBulkRenewalSending(true);
+    // Get all active members
+    const { data: active } = await supabase.from("members").select("id, email, full_legal_name").eq("status", "active");
+    if (active) {
+      // Set all to renewal_due
+      const ids = active.map((m: any) => m.id);
+      await supabase.from("members").update({ status: "renewal_due", updated_at: new Date().toISOString() }).in("id", ids);
+      // Create notifications for each
+      const notifs = active.map((m: any) => ({
+        member_id: m.id,
+        type: "status_change",
+        title: "Annual membership renewal required",
+        body: "Your annual membership renewal is due. Please log in to confirm your details and resubmit your membership application.",
+      }));
+      if (notifs.length > 0) await supabase.from("notifications").insert(notifs);
+      // Log it
+      await Promise.all(ids.map((id: string) => logReview(id, "renewal_sent")));
+    }
+    setBulkRenewalSending(false);
+    setBulkRenewalDone(true);
+    load();
+  }
+
+  const FILTER_TABS = [
+    { id: "pending", label: "Pending Applications", count: null },
+    { id: "renewal_due", label: "Renewal Due", count: null },
+    { id: "recent", label: "Recently Decided", count: null },
+  ] as { id: typeof filter; label: string; count: number | null }[];
+
+  const statusColor: Record<string, string> = {
+    pending_approval: "badge-gold",
+    invited: "badge-gold",
+    renewal_due: "badge-gold",
+    active: "badge-green",
+    inactive: "badge-red",
+    suspended: "badge-red",
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-display font-bold text-white mb-1">Applications & Renewals</h2>
+          <p className="text-slate-400 text-sm">Review membership applications, renewals, and manage member status.</p>
+        </div>
+        <button
+          onClick={sendBulkRenewal}
+          disabled={bulkRenewalSending || bulkRenewalDone}
+          className="btn-outline btn-sm text-xs whitespace-nowrap"
+        >
+          {bulkRenewalSending ? <><Loader2 size={12} className="animate-spin" /> Sending...</> : bulkRenewalDone ? "✓ Renewals Sent" : "📨 Send Renewal Notices"}
+        </button>
+      </div>
+
+      {bulkRenewalDone && (
+        <div className="bg-brand-500/20 border border-brand-500/30 text-brand-300 p-3 rounded-xl text-sm">
+          ✓ Renewal notices sent to all active members. They will see a renewal prompt in their dashboard.
+        </div>
+      )}
+
+      {/* Filter tabs */}
+      <div className="flex gap-1 overflow-x-auto border-b border-white/[0.06] pb-0">
+        {FILTER_TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            onClick={() => setFilter(id)}
+            className={`px-3 py-2 text-xs font-semibold whitespace-nowrap border-b-2 transition-all -mb-px ${
+              filter === id ? "text-brand-300 border-brand-500" : "text-slate-400 border-transparent hover:text-white"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {loading ? (
+        <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
+      ) : filter === "recent" ? (
+        /* Recent decisions audit trail */
+        <div className="space-y-3">
+          {reviews.length === 0 ? (
+            <div className="glass-dark p-8 text-center text-slate-500 text-sm">No decisions recorded yet.</div>
+          ) : reviews.map((rv) => (
+            <div key={rv.id} className="glass-dark p-4 flex items-start gap-4 text-sm">
+              <div className={`px-2 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider ${
+                rv.action === "approved" ? "bg-brand-500/20 text-brand-300" :
+                rv.action === "declined" ? "bg-red-500/20 text-red-300" :
+                rv.action === "suspended" ? "bg-red-500/20 text-red-300" :
+                rv.action === "renewal_sent" ? "bg-blue-500/20 text-blue-300" :
+                "bg-slate-500/20 text-slate-300"
+              }`}>
+                {rv.action.replace(/_/g, " ")}
+              </div>
+              <div className="flex-1">
+                <p className="text-white text-xs font-medium">{rv.member_id}</p>
+                {rv.reason && <p className="text-slate-400 text-xs mt-0.5">Reason: {rv.reason}</p>}
+                <p className="text-slate-600 text-[11px] mt-1">
+                  {rv.decided_by?.full_legal_name || "Committee"} · {new Date(rv.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : members.length === 0 ? (
+        <div className="glass-dark p-12 text-center">
+          <div className="text-4xl mb-3">✅</div>
+          <p className="text-white font-semibold mb-1">All clear</p>
+          <p className="text-slate-400 text-sm">{filter === "pending" ? "No pending applications at the moment." : "No members with renewal due."}</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {members.map((m) => (
+            <div key={m.id} className="glass-dark p-5 space-y-4">
+              {/* Member info row */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-brand-700/30 flex items-center justify-center text-white font-bold text-sm">
+                    {(m.preferred_name || m.full_legal_name || "?").slice(0,2).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold text-sm">{m.full_legal_name}</p>
+                    <p className="text-slate-400 text-xs">{m.email}</p>
+                  </div>
+                </div>
+                <span className={`text-xs font-semibold px-2 py-1 rounded-lg ${statusColor[m.status] || "badge-slate"}`}>
+                  {(m.status || "").replace(/_/g, " ")}
+                </span>
+              </div>
+
+              {/* Member details grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                {[
+                  { label: "Nationality", value: m.nationality || "—" },
+                  { label: "Playing Role", value: m.playing_role || "—" },
+                  { label: "Date of Birth", value: m.date_of_birth ? new Date(m.date_of_birth).toLocaleDateString("en-GB") : "—" },
+                  { label: "Mobile", value: m.mobile || "—" },
+                  { label: "Joined", value: m.created_at ? new Date(m.created_at).toLocaleDateString("en-GB") : "—" },
+                  { label: "Last Updated", value: m.updated_at ? new Date(m.updated_at).toLocaleDateString("en-GB") : "—" },
+                  { label: "Dietary", value: m.dietary_requirements || "None stated" },
+                  { label: "Kit Size", value: m.kit_size || "—" },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <p className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">{label}</p>
+                    <p className="text-slate-200 mt-0.5">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Documents */}
+              {m.id_type && (
+                <div className="flex items-center gap-2 text-xs bg-slate-900/60 rounded-lg px-3 py-2">
+                  <span className="text-slate-400">📄 ID Document:</span>
+                  <span className="text-slate-200 font-medium">{m.id_type}</span>
+                  {m.id_number && <span className="text-slate-400">· {m.id_number}</span>}
+                  <span className="ml-auto badge-gold text-[10px]">Needs verification</span>
+                </div>
+              )}
+
+              {/* Emergency contact */}
+              {m.emergency_name && (
+                <div className="text-xs text-slate-500 bg-slate-900/40 rounded-lg px-3 py-2">
+                  Emergency: <span className="text-slate-300">{m.emergency_name}</span>
+                  {m.emergency_relationship && <span className="text-slate-500"> ({m.emergency_relationship})</span>}
+                  {m.emergency_phone && <span className="text-slate-300"> · {m.emergency_phone}</span>}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex flex-wrap gap-2 pt-1 border-t border-white/[0.04]">
+                <button
+                  onClick={() => approveMember(m.id, m.full_legal_name)}
+                  disabled={!!actionLoading}
+                  className="btn-primary btn-sm text-xs"
+                >
+                  {actionLoading === m.id + "_approve" ? <Loader2 size={12} className="animate-spin" /> : "✓"} Approve & Activate
+                </button>
+                <button
+                  onClick={() => setDeclineModal({ memberId: m.id, name: m.full_legal_name })}
+                  disabled={!!actionLoading}
+                  className="btn-outline btn-sm text-xs text-red-400 border-red-500/30 hover:border-red-500/60"
+                >
+                  ✕ Decline
+                </button>
+                <button
+                  onClick={() => setInfoModal({ memberId: m.id, name: m.full_legal_name })}
+                  disabled={!!actionLoading}
+                  className="btn-ghost btn-sm text-xs"
+                >
+                  📩 Request Info
+                </button>
+                <button
+                  onClick={() => suspendMember(m.id)}
+                  disabled={!!actionLoading}
+                  className="btn-ghost btn-sm text-xs text-red-400"
+                >
+                  🚫 Suspend
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Decline Modal */}
+      {declineModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="glass-dark p-6 rounded-2xl w-full max-w-md space-y-4">
+            <h3 className="text-white font-bold text-lg">Decline Application</h3>
+            <p className="text-slate-400 text-sm">Declining <strong className="text-white">{declineModal.name}</strong>. Their status will be set to <span className="text-red-400">inactive</span> and they will receive a notification.</p>
+            <div>
+              <label className="label text-xs">Reason for declining (optional — sent to member)</label>
+              <textarea
+                rows={3}
+                className="input text-sm"
+                value={declineReason}
+                onChange={(e) => setDeclineReason(e.target.value)}
+                placeholder="e.g. Incomplete documentation, membership quota reached..."
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setDeclineModal(null); setDeclineReason(""); }} className="btn-ghost btn-sm">Cancel</button>
+              <button onClick={declineMember} disabled={!!actionLoading} className="btn-sm text-xs bg-red-600 text-white rounded-lg px-4 hover:bg-red-500 transition-colors">
+                {actionLoading ? <Loader2 size={12} className="animate-spin" /> : "Confirm Decline"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Request Info Modal */}
+      {infoModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="glass-dark p-6 rounded-2xl w-full max-w-md space-y-4">
+            <h3 className="text-white font-bold text-lg">Request Additional Information</h3>
+            <p className="text-slate-400 text-sm">Send a notification to <strong className="text-white">{infoModal.name}</strong> asking them to provide more information.</p>
+            <div>
+              <label className="label text-xs">Message to member</label>
+              <textarea
+                rows={3}
+                className="input text-sm"
+                value={infoMessage}
+                onChange={(e) => setInfoMessage(e.target.value)}
+                placeholder="e.g. Please upload a clear copy of your ID document..."
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button onClick={() => { setInfoModal(null); setInfoMessage(""); }} className="btn-ghost btn-sm">Cancel</button>
+              <button onClick={requestMoreInfo} disabled={!!actionLoading} className="btn-primary btn-sm text-xs">
+                {actionLoading ? <Loader2 size={12} className="animate-spin" /> : "Send Request"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -217,25 +572,43 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
   async function handleSendSingleInvite(e: React.FormEvent) {
     e.preventDefault();
     setInviting(true);
+    const email = singleInvite.email.trim();
+    const name = singleInvite.name.trim() || email.split("@")[0];
+
+    // 1. Create (or upsert) the member record
     const newMember: any = {
-      full_legal_name: singleInvite.name || singleInvite.email.split("@")[0],
-      email: singleInvite.email,
+      full_legal_name: name,
+      email,
       status: "pending_approval",
       roles: [singleInvite.role],
       registration_status: "invited",
     };
+    const { data: memberData } = await supabase.from("members").insert(newMember).select().single();
+    if (memberData) setMembers([memberData, ...members]);
+    else setMembers([{ id: crypto.randomUUID(), ...newMember }, ...members]);
 
-    const { data } = await supabase.from("members").insert(newMember).select().single();
-    if (data) setMembers([data, ...members]);
-    else setMembers([newMember, ...members]);
+    // 2. Send magic link via Supabase Auth (creates account if not exists)
+    const redirectTo = `${window.location.origin}${window.location.pathname.includes("/madrid-cricket-club") ? "/madrid-cricket-club" : ""}/auth/callback`;
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        shouldCreateUser: true,
+        emailRedirectTo: redirectTo,
+        data: { full_name: name, invited_by: "admin" },
+      },
+    });
 
     setInviting(false);
-    setInvitedSuccess(`Invitation email dispatched to ${singleInvite.email}!`);
+    if (otpError) {
+      setInvitedSuccess(`Member record created. Email delivery failed: ${otpError.message}. Share this link manually: ${redirectTo}?email=${encodeURIComponent(email)}`);
+    } else {
+      setInvitedSuccess(`✓ Magic link invitation sent to ${email}! They can click it to sign in and complete their profile.`);
+    }
     setTimeout(() => {
       setShowInviteModal(false);
       setInvitedSuccess("");
       setSingleInvite({ name: "", email: "", role: "member" });
-    }, 1500);
+    }, 3500);
   }
 
   async function handleSendBulkInvites(e: React.FormEvent) {
@@ -248,21 +621,33 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
 
     const newRows = emailsList.map((email) => ({
       full_legal_name: email.split("@")[0],
-      email: email,
+      email,
       status: "pending_approval",
       roles: [bulkRole],
       registration_status: "invited",
     }));
 
     await supabase.from("members").insert(newRows);
-    setMembers([...newRows as any, ...members]);
+    setMembers([...(newRows as any), ...members]);
+
+    // Send magic links to all in parallel
+    const redirectTo = `${window.location.origin}${window.location.pathname.includes("/madrid-cricket-club") ? "/madrid-cricket-club" : ""}/auth/callback`;
+    await Promise.allSettled(
+      emailsList.map((email) =>
+        supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
+        })
+      )
+    );
+
     setInviting(false);
-    setInvitedSuccess(`Bulk invitation sent to ${emailsList.length} email addresses!`);
+    setInvitedSuccess(`✓ Magic link invitations sent to ${emailsList.length} addresses!`);
     setTimeout(() => {
       setShowInviteModal(false);
       setInvitedSuccess("");
       setBulkEmails("");
-    }, 1500);
+    }, 2500);
   }
 
   async function approveEnquiry(memberId: string) {
