@@ -100,27 +100,51 @@ export default function AdminPage() {
         </div>
 
 
-        <div className="container-wide px-2 sm:px-4 mt-3">
-          <div className="flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
+        <div className="container-wide px-3 sm:px-4 mt-3">
+          {/* Mobile: grid of card tabs — all visible, no scroll */}
+          <div className="sm:hidden grid grid-cols-2 gap-2 pb-3">
+          {([
+            { id: "applications", label: "Applications", icon: CheckCircle },
+            { id: "members",      label: "Members",      icon: Users },
+            ...(isTreasurer ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
+            { id: "jersey",  label: "Jerseys",  icon: Trophy },
+            { id: "reports", label: "Reports",  icon: BarChart3 },
+          ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setTab(id)}
+              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-left ${
+                tab === id
+                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/40 shadow-sm"
+                  : "bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.07] border border-white/[0.06]"
+              }`}
+            >
+              <Icon size={16} className="shrink-0" />
+              {label}
+            </button>
+          ))}
+          </div>
+
+          {/* Desktop: horizontal pill tabs */}
+          <div className="hidden sm:flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide">
           {([
             { id: "applications", label: "Applications & Renewals", shortLabel: "Review", icon: CheckCircle },
             { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
             ...(isTreasurer ? [{ id: "payments", label: "Payments", shortLabel: "Payments", icon: CreditCard }] : []),
             { id: "jersey", label: "Jersey Numbers", shortLabel: "Jerseys", icon: Trophy },
             { id: "reports", label: "Reports", shortLabel: "Reports", icon: BarChart3 },
-          ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, shortLabel, icon: Icon }) => (
+          ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-t-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 border-b-2 -mb-px ${
                 tab === id
-                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/30 shadow-sm"
-                  : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
+                  ? "bg-brand-500/[0.08] text-brand-300 border-brand-500"
+                  : "text-slate-400 hover:text-white hover:bg-white/5 border-transparent"
               }`}
             >
               <Icon size={14} />
-              <span className="hidden sm:inline">{label}</span>
-              <span className="sm:hidden">{shortLabel}</span>
+              {label}
             </button>
           ))}
           </div>

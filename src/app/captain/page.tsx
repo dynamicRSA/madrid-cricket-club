@@ -80,11 +80,32 @@ export default function CaptainPage() {
 
 
         {/* Tab nav */}
-        <div className="container-wide px-2 sm:px-4 mt-3">
-          <div className="flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
-          {TABS.map(({ id, label, shortLabel, icon: Icon }) => (
+        <div className="container-wide px-3 sm:px-4 mt-3">
+          {/* Mobile: 3-column grid — all tabs visible at once */}
+          <div className="sm:hidden grid grid-cols-3 gap-2 pb-3">
+            {TABS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setTab(id)}
+                className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl text-xs font-semibold transition-all ${
+                  tab === id
+                    ? "bg-brand-500/20 text-brand-300 border border-brand-500/40"
+                    : "bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.07] border border-white/[0.06]"
+                }`}
+              >
+                <Icon size={18} className="shrink-0" />
+                <span className="text-center leading-tight">{label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Desktop: horizontal underline tabs */}
+          <div className="hidden sm:flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
+          {TABS.map(({ id, label, icon: Icon }) => (
             <button
               key={id}
+              type="button"
               onClick={() => setTab(id)}
               className={`flex items-center gap-1.5 px-3 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all border-b-2 shrink-0 ${
                 tab === id
@@ -93,8 +114,7 @@ export default function CaptainPage() {
               }`}
             >
               <Icon size={14} />
-              <span className="hidden sm:inline">{label}</span>
-              <span className="sm:hidden">{shortLabel}</span>
+              {label}
             </button>
           ))}
           </div>
