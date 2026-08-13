@@ -8,18 +8,18 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SUPABASE_URL   = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY    = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-const FROM_EMAIL     = "Madrid Cricket Club <no-reply@madridcricketclub.es>";
+const FROM_EMAIL     = "Madrid Cricket Club <onboarding@resend.dev>";
 const SITE_URL       = "https://dynamicrsa.github.io/madrid-cricket-club";
 
 const TYPE_SUBJECT: Record<string, string> = {
-  fixture_created:       "🏏 New fixture added — Madrid Cricket Club",
-  selected_for_team:     "✅ You've been selected!",
-  selection_published:   "📋 Team sheet published",
-  availability_reminder: "⏰ Availability deadline approaching",
-  match_reminder:        "🔔 Match reminder",
-  status_change:         "👤 Your membership status has changed",
-  charge_raised:         "💳 New charge on your account",
-  jersey_assigned:       "👕 Jersey number assigned!",
+  fixture_created:       "New fixture added — Madrid Cricket Club",
+  selected_for_team:     "You've been selected for the squad!",
+  selection_published:   "Team sheet published — Madrid Cricket Club",
+  availability_reminder: "Availability deadline approaching",
+  match_reminder:        "Match reminder — tomorrow",
+  status_change:         "Your membership status has changed",
+  charge_raised:         "New charge on your account",
+  jersey_assigned:       "Your jersey number has been assigned",
 };
 
 const PREF_COLUMN: Record<string, string> = {
