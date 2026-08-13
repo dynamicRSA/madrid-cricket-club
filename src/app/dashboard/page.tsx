@@ -232,21 +232,8 @@ export default function DashboardPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap justify-end">
-            {isCaptain && (
-              <Link href="/captain" className="btn-ghost btn-sm text-xs border border-white/10">
-                🏏 <span className="hidden sm:inline">Captain</span>
-              </Link>
-            )}
-            {isAdmin && (
-              <Link href="/admin" className="btn-outline btn-sm text-xs border-brand-500/40 text-brand-300">
-                <ShieldCheck size={13} /> <span className="hidden sm:inline">Admin</span>
-              </Link>
-            )}
+          <div className="flex items-center gap-2">
             {member?.id && <NotificationBell memberId={member.id} />}
-            <button onClick={signOut} className="btn-outline btn-sm text-xs">
-              <LogOut size={13} /> <span className="hidden sm:inline">Sign Out</span>
-            </button>
           </div>
         </div>
 

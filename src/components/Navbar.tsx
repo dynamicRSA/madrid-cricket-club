@@ -3,8 +3,11 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
-import { Menu, X, Globe, ChevronDown, Check, ShieldCheck, LogOut, User } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import {
+  Menu, X, Globe, ChevronDown, Check, ShieldCheck,
+  LogOut, User, LayoutDashboard, Swords
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { imgSrc } from "@/lib/imgSrc";
 import { useLanguage, type Language } from "@/lib/i18n";
@@ -20,18 +23,19 @@ const NAV_LINKS = [
   { href: "/contact",  key: "nav.contact" },
 ];
 
-const ADMIN_ROLES = ["admin", "super_admin", "treasurer", "secretary"];
+const ADMIN_ROLES   = ["admin", "super_admin", "treasurer", "secretary"];
 const CAPTAIN_ROLES = ["captain", "vice_captain"];
 
 export default function Navbar() {
-  const pathname  = usePathname();
-  const router    = useRouter();
+  const pathname    = usePathname();
+  const router      = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled,   setScrolled]   = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
   const supabase = createClient();
 
-  // Auth state
   const [user,   setUser]   = useState<any>(null);
   const [member, setMember] = useState<any>(null);
 
@@ -39,6 +43,17 @@ export default function Navbar() {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
+  }, []);
+
+  // Close user menu on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
   useEffect(() => {
@@ -66,16 +81,16 @@ export default function Navbar() {
 
   async function handleSignOut() {
     await supabase.auth.signOut();
-    setUser(null); setMember(null);
+    setUser(null); setMember(null); setUserMenuOpen(false); setMobileOpen(false);
     router.push("/");
   }
 
-  // Role checks
-  const roles: string[] = member?.roles || [];
-  const isAdmin   = roles.some(r => ADMIN_ROLES.includes(r));
-  const isCaptain = roles.some(r => CAPTAIN_ROLES.includes(r));
-  const loggedIn  = !!user;
-  const displayName = member?.preferred_name || member?.full_legal_name || user?.email?.split("@")[0];
+  const roles: string[]  = member?.roles || [];
+  const isAdmin          = roles.some(r => ADMIN_ROLES.includes(r));
+  const isCaptain        = roles.some(r => CAPTAIN_ROLES.includes(r));
+  const loggedIn         = !!user;
+  const displayName      = member?.preferred_name || member?.full_legal_name || user?.email?.split("@")[0];
+  const initials         = displayName ? displayName.split(" ").map((n: string) => n[0]).join("").slice(0,2).toUpperCase() : "?";
 
   return (
     <>
@@ -84,6 +99,7 @@ export default function Navbar() {
         scrolled ? "bg-slate-950/95 backdrop-blur-md border-b border-white/[0.06] py-2" : "bg-transparent py-4"
       )}>
         <div className="container-wide px-4 flex items-center justify-between gap-4">
+
           {/* Logo */}
           <Link href="/" className="flex items-center group shrink-0" onClick={() => setMobileOpen(false)}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -109,28 +125,73 @@ export default function Navbar() {
           <div className="hidden lg:flex items-center gap-2">
             <LocaleSwitcher />
             {loggedIn ? (
-              <>
-                {isCaptain && (
-                  <Link href="/captain" className="btn-ghost btn-sm text-xs gap-1.5">
-                    🏏 Captain
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link href="/admin" className="btn-ghost btn-sm text-xs gap-1.5">
-                    <ShieldCheck size={13} /> Admin
-                  </Link>
-                )}
-                <Link href="/dashboard" className="btn-outline btn-sm text-xs">
-                  <User size={13} /> {displayName || "Dashboard"}
-                </Link>
-                <button onClick={handleSignOut} className="btn-ghost btn-sm text-xs text-slate-400">
-                  <LogOut size={13} />
+              /* ── Single user dropdown pill ── */
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setUserMenuOpen((v) => !v)}
+                  className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/[0.06] border border-white/10 hover:bg-white/10 transition-colors text-sm"
+                >
+                  {/* Avatar circle */}
+                  <span className="w-7 h-7 rounded-full bg-brand-700/60 border border-brand-500/30 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                    {initials}
+                  </span>
+                  <span className="text-white font-medium max-w-[100px] truncate">{displayName || "Account"}</span>
+                  <ChevronDown size={13} className={cn("text-slate-400 transition-transform", userMenuOpen && "rotate-180")} />
                 </button>
-              </>
+
+                {/* Dropdown */}
+                {userMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-52 glass-dark rounded-2xl overflow-hidden shadow-2xl z-50 border border-white/[0.08]">
+                    {/* User info */}
+                    <div className="px-4 py-3 border-b border-white/[0.06]">
+                      <p className="text-white text-sm font-semibold truncate">{displayName}</p>
+                      <p className="text-slate-500 text-xs truncate">{user?.email}</p>
+                    </div>
+
+                    <div className="py-1.5">
+                      {/* Member dashboard — always shown */}
+                      <Link href="/dashboard" onClick={() => setUserMenuOpen(false)}
+                        className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
+                          pathname.startsWith("/dashboard") && "text-brand-300 bg-brand-500/10")}>
+                        <LayoutDashboard size={15} />
+                        My Dashboard
+                      </Link>
+
+                      {/* Captain panel */}
+                      {isCaptain && (
+                        <Link href="/captain" onClick={() => setUserMenuOpen(false)}
+                          className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
+                            pathname.startsWith("/captain") && "text-brand-300 bg-brand-500/10")}>
+                          <span className="text-base leading-none">🏏</span>
+                          Captain Panel
+                        </Link>
+                      )}
+
+                      {/* Admin panel */}
+                      {isAdmin && (
+                        <Link href="/admin" onClick={() => setUserMenuOpen(false)}
+                          className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
+                            pathname.startsWith("/admin") && "text-brand-300 bg-brand-500/10")}>
+                          <ShieldCheck size={15} className="text-brand-400" />
+                          Club Admin
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="border-t border-white/[0.06] py-1.5">
+                      <button onClick={handleSignOut}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-400 hover:text-red-400 hover:bg-red-500/[0.06] transition-colors">
+                        <LogOut size={15} />
+                        Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <Link href="/auth/signin" className="btn-outline btn-sm text-sm">{t("nav.signin")}</Link>
-                <Link href="/join" className="btn-primary btn-sm text-sm">{t("nav.join_cta")}</Link>
+                <Link href="/join"        className="btn-primary btn-sm text-sm">{t("nav.join_cta")}</Link>
               </>
             )}
           </div>
@@ -146,25 +207,35 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Mobile menu — full-screen overlay */}
+      {/* ── Mobile menu ── */}
       {mobileOpen && (
         <div className="lg:hidden fixed inset-0 z-40 flex flex-col" style={{ background: "#080f18" }}>
-          {/* Top bar with close */}
+          {/* Top bar */}
           <div className="flex items-center justify-between px-4 pt-4 pb-4 border-b border-white/[0.06]">
             <Link href="/" onClick={() => setMobileOpen(false)}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={imgSrc("/images/logo_mcc.png")} alt="MCC" className="h-9 w-auto" />
             </Link>
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="p-2 rounded-xl bg-white/[0.06] text-slate-300 hover:text-white"
-            >
+            <button onClick={() => setMobileOpen(false)} className="p-2 rounded-xl bg-white/[0.06] text-slate-300 hover:text-white">
               <X size={20} />
             </button>
           </div>
 
+          {/* If logged in, show user identity strip */}
+          {loggedIn && (
+            <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-3 bg-white/[0.02]">
+              <span className="w-9 h-9 rounded-full bg-brand-700/60 border border-brand-500/30 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                {initials}
+              </span>
+              <div className="min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{displayName || "Member"}</p>
+                <p className="text-slate-500 text-xs truncate">{user?.email}</p>
+              </div>
+            </div>
+          )}
+
           {/* Nav links */}
-          <div className="flex-1 overflow-y-auto px-4 py-6 flex flex-col gap-1">
+          <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1">
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -181,19 +252,26 @@ export default function Navbar() {
               </Link>
             ))}
 
-            {/* Panel links */}
-            {(isAdmin || isCaptain) && (
-              <div className="mt-4 pt-4 border-t border-white/[0.06] space-y-1">
-                <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider px-4 mb-2">Committee</p>
+            {/* Member/Captain/Admin panel links */}
+            {loggedIn && (
+              <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-1">
+                <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider px-4 mb-2">My Account</p>
+                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+                  className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all",
+                    pathname.startsWith("/dashboard") ? "bg-brand-500/15 text-brand-300 border border-brand-500/20" : "text-slate-300 hover:text-white hover:bg-white/[0.06]")}>
+                  <LayoutDashboard size={18} /> My Dashboard
+                </Link>
                 {isCaptain && (
                   <Link href="/captain" onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition-all">
-                    🏏 Captain's Panel
+                    className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all",
+                      pathname.startsWith("/captain") ? "bg-brand-500/15 text-brand-300 border border-brand-500/20" : "text-slate-300 hover:text-white hover:bg-white/[0.06]")}>
+                    <span className="text-xl">🏏</span> Captain Panel
                   </Link>
                 )}
                 {isAdmin && (
                   <Link href="/admin" onClick={() => setMobileOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium text-slate-300 hover:text-white hover:bg-white/[0.06] transition-all">
+                    className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all",
+                      pathname.startsWith("/admin") ? "bg-brand-500/15 text-brand-300 border border-brand-500/20" : "text-slate-300 hover:text-white hover:bg-white/[0.06]")}>
                     <ShieldCheck size={18} className="text-brand-400" /> Club Admin
                   </Link>
                 )}
@@ -205,22 +283,14 @@ export default function Navbar() {
           <div className="px-4 pb-8 pt-4 border-t border-white/[0.06] space-y-3" style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}>
             <LocaleSwitcher />
             {loggedIn ? (
-              <>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
-                  className="btn-outline w-full justify-center text-sm">
-                  <User size={15} /> {displayName || "My Dashboard"}
-                </Link>
-                <button onClick={() => { handleSignOut(); setMobileOpen(false); }}
-                  className="btn-ghost w-full justify-center text-sm text-slate-400">
-                  <LogOut size={15} /> Sign Out
-                </button>
-              </>
+              <button onClick={handleSignOut}
+                className="btn-ghost w-full justify-center text-sm text-slate-400 border border-white/10">
+                <LogOut size={15} /> Sign Out
+              </button>
             ) : (
               <div className="flex gap-2">
-                <Link href="/auth/signin" onClick={() => setMobileOpen(false)}
-                  className="btn-outline flex-1 justify-center text-sm">{t("nav.signin")}</Link>
-                <Link href="/join" onClick={() => setMobileOpen(false)}
-                  className="btn-primary flex-1 justify-center text-sm">{t("nav.join_cta")}</Link>
+                <Link href="/auth/signin" onClick={() => setMobileOpen(false)} className="btn-outline flex-1 justify-center text-sm">{t("nav.signin")}</Link>
+                <Link href="/join"        onClick={() => setMobileOpen(false)} className="btn-primary flex-1 justify-center text-sm">{t("nav.join_cta")}</Link>
               </div>
             )}
           </div>

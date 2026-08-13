@@ -17,7 +17,7 @@ export default function JoinPage() {
   const [form, setForm] = useState({
     name: "",
     email: "",
-    phone: "",
+    mobile: "",
     age_group: "senior",
     experience: "",
     hear_about: "",
@@ -38,7 +38,7 @@ export default function JoinPage() {
       const { error } = await supabase.from("members").insert({
         full_legal_name: form.name,
         email: form.email,
-        phone: form.phone || null,
+        mobile: form.mobile || null,
         status: "enquiry",
         membership_category: form.age_group === "junior" ? "junior" : "senior",
         notes: [form.experience, form.message, form.hear_about].filter(Boolean).join(" | "),
@@ -176,9 +176,9 @@ export default function JoinPage() {
                       </label>
                       <input
                         id="join-phone"
-                        name="phone"
+                        name="mobile"
                         type="tel"
-                        value={form.phone}
+                        value={form.mobile}
                         onChange={handleChange}
                         placeholder="+34 600 000 000"
                         className="input"

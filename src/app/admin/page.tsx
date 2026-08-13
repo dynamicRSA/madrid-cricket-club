@@ -97,23 +97,11 @@ export default function AdminPage() {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {isCaptain && (
-              <Link href="/captain" className="btn-outline btn-sm border-brand-500/40 text-brand-300 text-xs">
-                🏏 Captain Panel
-              </Link>
-            )}
-            <Link href="/dashboard" className="btn-ghost btn-sm text-xs">
-              <Eye size={14} /> Member View
-            </Link>
-            <button onClick={signOut} className="btn-outline btn-sm text-xs hidden sm:flex">
-              <LogOut size={14} /> Sign Out
-            </button>
-          </div>
         </div>
 
-        {/* Tabs */}
-        <div className="container-wide px-4 mt-3 tab-pills">
+
+        <div className="container-wide px-2 sm:px-4 mt-3">
+          <div className="flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide" style={{ scrollbarWidth: 'none' }}>
           {([
             { id: "applications", label: "Applications & Renewals", shortLabel: "Review", icon: CheckCircle },
             { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
@@ -124,7 +112,7 @@ export default function AdminPage() {
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shrink-0 ${
                 tab === id
                   ? "bg-brand-500/20 text-brand-300 border border-brand-500/30 shadow-sm"
                   : "text-slate-400 hover:text-white hover:bg-white/5 border border-transparent"
@@ -135,6 +123,7 @@ export default function AdminPage() {
               <span className="sm:hidden">{shortLabel}</span>
             </button>
           ))}
+          </div>
         </div>
       </section>
 
