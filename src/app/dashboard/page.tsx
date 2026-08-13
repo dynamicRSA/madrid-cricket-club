@@ -766,13 +766,8 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
           {/* PROFILE TAB */}
           {tab === "profile" && (
             <div className="space-y-6">
-              <ProfileEditor
-                member={member}
-                onUpdate={() => {}}
-                supabase={supabase}
-              />
 
-              {/* Jersey Number */}
+              {/* Jersey Number — shown first (informational/request, no save needed) */}
               <div className="glass-dark p-6 space-y-4">
                 <div className="border-b border-white/[0.06] pb-3">
                   <h3 className="text-white font-semibold flex items-center gap-2">
@@ -858,7 +853,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                 )}
               </div>
 
-              {/* Notification Preferences */}
+              {/* Notification Preferences — shown second (quick toggles, no save needed) */}
               <div className="glass-dark p-6 space-y-5">
                 <div className="border-b border-white/[0.06] pb-3 flex items-center justify-between">
                   <div>
@@ -919,6 +914,13 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                   ))}
                 </div>
               </div>
+
+              {/* Personal Details + Security — ProfileEditor goes last so Save Changes is at bottom */}
+              <ProfileEditor
+                member={member}
+                onUpdate={() => {}}
+                supabase={supabase}
+              />
             </div>
           )}
 
