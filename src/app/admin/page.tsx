@@ -15,7 +15,8 @@ import {
   Clock, AlertCircle, Loader2, Search, Download, ChevronDown,
   LogOut, ShieldAlert, Eye, Plus, ChevronRight, Utensils, Car,
   Trophy, Edit2, ArrowRight, Lock, Unlock, Shirt,
-  User, Shield, ShieldCheck, FileText, Zap, Copy, Key, ClipboardCopy
+  User, Shield, ShieldCheck, FileText, Zap, Copy, Key, ClipboardCopy,
+  Mail, Ban, Trash2, Info, MapPin, Phone
 } from "lucide-react";
 import {
   parseTourMeta, serializeTourMeta, defaultGame,
@@ -433,7 +434,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
         </div>
       ) : members.length === 0 ? (
         <div className="glass-dark p-12 text-center">
-          <div className="text-4xl mb-3">✅</div>
+          <CheckCircle size={32} className="text-brand-400 mx-auto mb-3" />
           <p className="text-white font-semibold mb-1">All clear</p>
           <EmptyState compact icon={Users} title={filter === "pending" ? "No pending applications at the moment." : "No members with renewal due."} />
         </div>
@@ -479,7 +480,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
               {/* Documents */}
               {m.id_type && (
                 <div className="flex items-center gap-2 text-xs bg-slate-900/60 rounded-lg px-3 py-2">
-                  <span className="text-slate-400">📄 ID Document:</span>
+                  <span className="text-slate-400"><FileText size={12} className="inline mr-1" />ID Document:</span>
                   <span className="text-slate-200 font-medium">{m.id_type}</span>
                   {m.id_number && <span className="text-slate-400">· {m.id_number}</span>}
                   <span className="ml-auto badge-gold text-[10px]">Needs verification</span>
@@ -507,7 +508,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                         disabled={!!actionLoading || !!inviteLinks[m.id]?.loading}
                         className="btn-primary btn-sm text-xs"
                       >
-                        {inviteLinks[m.id]?.loading ? <Loader2 size={12} className="animate-spin" /> : "📨"} Resend Invite
+                        {inviteLinks[m.id]?.loading ? <Loader2 size={12} className="animate-spin" /> : <Mail size={12} />} Resend Invite
                       </button>
                       <button
                         onClick={() => cancelInvitation(m.id)}
@@ -558,7 +559,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                           disabled={!!tempPasswords[m.id]?.loading}
                           className="btn-ghost btn-sm text-xs text-slate-400 border border-white/10 hover:text-amber-400 hover:border-amber-500/30 flex items-center gap-1"
                         >
-                          {tempPasswords[m.id]?.loading ? <Loader2 size={11} className="animate-spin" /> : "🔑"} Set Temp Password
+                          {tempPasswords[m.id]?.loading ? <Loader2 size={11} className="animate-spin" /> : <Key size={11} />} Set Temp Password
                         </button>
                         {tempPasswords[m.id]?.done && (
                           <div className="bg-slate-900/70 border border-white/[0.07] rounded-lg p-3 space-y-1.5">
@@ -736,7 +737,7 @@ function ResendInviteButton({ supabase, member }: { supabase: any; member: any }
         className="btn-sm text-[11px] py-1 px-2 flex items-center gap-1 bg-brand-500/15 text-brand-300 border border-brand-500/30 hover:bg-brand-500/25 rounded-lg"
         title={link}
       >
-        {copied ? "✓ Copied!" : "📋 Copy Link"}
+        {copied ? <><CheckCircle size={11} className="mr-1 text-brand-400" />Copied!</> : <><ClipboardCopy size={11} className="mr-1" />Copy Link</>}
       </button>
       <button onClick={resend} className="text-[10px] text-slate-500 hover:text-slate-300 px-1">↺</button>
     </div>
@@ -762,7 +763,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
   const [invitedSuccess, setInvitedSuccess] = useState("");
 
   useEffect(() => {
-    supabase.from("members").select("*").order("full_legal_name")
+    supabase.from("members").select("*, selected_players(id)").order("full_legal_name")
       .then(({ data }: any) => {
         if (data && data.length > 0) {
           setMembers(data);
@@ -1108,11 +1109,14 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
             <thead>
               <tr>
                 <th>Name</th>
-                <th>Email</th>
+                <th className="hidden sm:table-cell">Email</th>
+                <th className="text-center">Jersey</th>
+                <th>Category</th>
+                <th className="text-center">Fixtures</th>
                 <th>Status</th>
-                <th>Assigned Roles</th>
-                <th>Role Control</th>
-                {isSuperAdmin && <th>Approval Action</th>}
+                <th className="hidden md:table-cell">Roles</th>
+                <th>Actions</th>
+                {isSuperAdmin && <th>Approval</th>}
               </tr>
             </thead>
             <tbody>
@@ -1126,11 +1130,34 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
                       {m.preferred_name && <p className="text-slate-500 text-[11px]">{m.full_legal_name}</p>}
                     </div>
                   </td>
-                  <td className="text-slate-300">{m.email}</td>
+                  <td className="text-slate-300 hidden sm:table-cell">{m.email}</td>
+                  {/* Jersey # */}
+                  <td className="text-center">
+                    {m.jersey_number
+                      ? <span className="font-mono font-bold text-brand-300">#{m.jersey_number}</span>
+                      : <span className="text-slate-600">—</span>}
+                  </td>
+                  {/* Membership category */}
+                  <td>
+                    {m.membership_category
+                      ? <span className={`badge-slate text-[10px] capitalize ${
+                          m.membership_category === 'junior' ? 'text-yellow-300 border-yellow-500/30' :
+                          m.membership_category === 'senior' ? 'text-brand-300 border-brand-500/30' : ''
+                        }`}>{m.membership_category}</span>
+                      : <span className="text-slate-600">—</span>}
+                  </td>
+                  {/* Confirmed fixtures */}
+                  <td className="text-center">
+                    <span className={`text-xs font-semibold ${
+                      (m.selected_players?.length || 0) > 0 ? 'text-white' : 'text-slate-600'
+                    }`}>
+                      {m.selected_players?.length || 0}
+                    </span>
+                  </td>
                   <td>
                     <StatusBadge status={m.status} />
                   </td>
-                  <td>
+                  <td className="hidden md:table-cell">
                     <div className="flex flex-wrap gap-1">
                       {(m.roles || []).map((r: string) => (
                         <span key={r} className="badge-slate text-[10px]">{r.replace("_", " ")}</span>
@@ -1390,6 +1417,29 @@ function MemberDetailPanel({
                 <p className="text-slate-400 text-xs">{data.email}</p>
               </div>
             </div>
+            {/* Quick stats chips */}
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {data.jersey_number && (
+                <span className="text-[11px] font-mono font-bold bg-brand-500/20 text-brand-300 border border-brand-500/30 px-2 py-0.5 rounded-full">
+                  #{data.jersey_number}
+                </span>
+              )}
+              {data.membership_category && (
+                <span className="text-[11px] capitalize bg-white/5 text-slate-300 border border-white/10 px-2 py-0.5 rounded-full">
+                  {data.membership_category}
+                </span>
+              )}
+              {data.playing_role && (
+                <span className="text-[11px] capitalize bg-white/5 text-slate-400 border border-white/10 px-2 py-0.5 rounded-full">
+                  {(data.playing_role || "").replace(/_/g," ")}
+                </span>
+              )}
+              {(member.selected_players?.length || 0) > 0 && (
+                <span className="text-[11px] bg-white/5 text-slate-400 border border-white/10 px-2 py-0.5 rounded-full">
+                  {member.selected_players.length} fixtures
+                </span>
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {isSuperAdmin && !deleteConfirm && (
@@ -1472,6 +1522,54 @@ function MemberDetailPanel({
                   <label className="label text-xs">Nationality</label>
                   <input className="input" value={data.nationality || ""} onChange={(e) => setData((d: any) => ({ ...d, nationality: e.target.value }))} />
                 </div>
+                <div>
+                  <label className="label text-xs">Gender</label>
+                  <select className="input" value={data.gender || ""} onChange={(e) => setData((d: any) => ({ ...d, gender: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {["male","female","non_binary","prefer_not_to_say"].map(g => <option key={g} value={g}>{g.replace(/_/g," ")}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label text-xs">Playing Role</label>
+                  <select className="input" value={data.playing_role || ""} onChange={(e) => setData((d: any) => ({ ...d, playing_role: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {["batsman","bowler","all_rounder","wicket_keeper","batsman_wk"].map(r => <option key={r} value={r}>{r.replace(/_/g," ")}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="label text-xs">Kit Size</label>
+                  <select className="input" value={data.kit_size || ""} onChange={(e) => setData((d: any) => ({ ...d, kit_size: e.target.value }))}>
+                    <option value="">— Select —</option>
+                    {["XS","S","M","L","XL","XXL","XXXL"].map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="label text-xs">Address</label>
+                <input className="input" value={data.address || ""} onChange={(e) => setData((d: any) => ({ ...d, address: e.target.value }))} placeholder="Street, City, Postcode" />
+              </div>
+              <div className="glass-dark p-4 rounded-xl border border-white/[0.06] space-y-3">
+                <p className="text-xs font-semibold text-slate-300">Emergency Contact</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="label text-xs">Name</label>
+                    <input className="input" value={data.emergency_name || ""} onChange={(e) => setData((d: any) => ({ ...d, emergency_name: e.target.value }))} />
+                  </div>
+                  <div>
+                    <label className="label text-xs">Phone</label>
+                    <input className="input" value={data.emergency_phone || ""} onChange={(e) => setData((d: any) => ({ ...d, emergency_phone: e.target.value }))} />
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-5">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={!!data.photo_consent} onChange={(e) => setData((d: any) => ({ ...d, photo_consent: e.target.checked }))} className="w-4 h-4 accent-brand-500" />
+                  <span className="text-xs text-slate-300">Photo consent given</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={!!data.rules_accepted} onChange={(e) => setData((d: any) => ({ ...d, rules_accepted: e.target.checked }))} className="w-4 h-4 accent-brand-500" />
+                  <span className="text-xs text-slate-300">Club rules accepted</span>
+                </label>
               </div>
               <div>
                 <label className="label text-xs">Bio / Notes (internal)</label>
