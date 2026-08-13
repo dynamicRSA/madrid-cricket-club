@@ -208,6 +208,36 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
 
   // inviteLinks: { [memberId]: { link, loading, error } }
   const [inviteLinks, setInviteLinks] = useState<Record<string, { link?: string; loading?: boolean; error?: string }>>({});
+  // tempPasswords: { [memberId]: { password, loading, done, error } }
+  const [tempPasswords, setTempPasswords] = useState<Record<string, { password?: string; loading?: boolean; done?: boolean; error?: string }>>({});
+
+  function generatePassword() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#";
+    let pw = "";
+    for (let i = 0; i < 10; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+    return pw;
+  }
+
+  async function setTempPassword(memberId: string, userId: string | null) {
+    if (!userId) {
+      setTempPasswords((prev) => ({ ...prev, [memberId]: { error: "No auth account yet — send invite first" } }));
+      return;
+    }
+    const password = generatePassword();
+    setTempPasswords((prev) => ({ ...prev, [memberId]: { loading: true, password } }));
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-member", {
+        body: { action: "set_password", userId, password },
+      });
+      if (error || data?.error) {
+        setTempPasswords((prev) => ({ ...prev, [memberId]: { error: "Failed to set password" } }));
+      } else {
+        setTempPasswords((prev) => ({ ...prev, [memberId]: { done: true, password } }));
+      }
+    } catch (e: any) {
+      setTempPasswords((prev) => ({ ...prev, [memberId]: { error: String(e) } }));
+    }
+  }
 
   async function resendInvite(memberId: string, email: string, name: string) {
     setInviteLinks((prev) => ({ ...prev, [memberId]: { loading: true } }));
@@ -498,8 +528,39 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                     {inviteLinks[m.id]?.error && (
                       <p className="text-red-400 text-xs">{inviteLinks[m.id]!.error}</p>
                     )}
+                    {/* Set Temp Password — reliable fallback for Hotmail / email issues */}
                     {!inviteLinks[m.id] && (
-                      <p className="text-slate-600 text-[11px]">Email not received? Resend or copy the link to share directly.</p>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-600 text-[11px]">Email not received? Resend invite, or use <strong className="text-slate-400">Set Password</strong> to give them login credentials directly.</p>
+                        <button
+                          onClick={() => setTempPassword(m.id, m.user_id)}
+                          disabled={!!tempPasswords[m.id]?.loading}
+                          className="btn-ghost btn-sm text-xs text-slate-400 border border-white/10 hover:text-amber-400 hover:border-amber-500/30 flex items-center gap-1"
+                        >
+                          {tempPasswords[m.id]?.loading ? <Loader2 size={11} className="animate-spin" /> : "🔑"} Set Temp Password
+                        </button>
+                        {tempPasswords[m.id]?.done && (
+                          <div className="bg-slate-900/70 border border-white/[0.07] rounded-lg p-3 space-y-1.5">
+                            <p className="text-green-400 text-[11px] font-medium">✓ Temporary password set — share these credentials with {m.full_legal_name}:</p>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 text-[11px] w-16 shrink-0">Email:</span>
+                                <code className="text-brand-300 text-[11px] flex-1">{m.email}</code>
+                                <button onClick={() => navigator.clipboard.writeText(m.email)} className="text-[10px] text-slate-500 hover:text-slate-300">📋</button>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-slate-500 text-[11px] w-16 shrink-0">Password:</span>
+                                <code className="text-amber-300 text-[11px] font-bold flex-1">{tempPasswords[m.id]?.password}</code>
+                                <button onClick={() => navigator.clipboard.writeText(tempPasswords[m.id]?.password || "")} className="text-[10px] text-slate-500 hover:text-slate-300">📋</button>
+                              </div>
+                            </div>
+                            <p className="text-slate-600 text-[10px]">Send via WhatsApp. They can change their password from Profile settings after signing in.</p>
+                          </div>
+                        )}
+                        {tempPasswords[m.id]?.error && (
+                          <p className="text-red-400 text-[11px]">{tempPasswords[m.id]?.error}</p>
+                        )}
+                      </div>
                     )}
                   </div>
                 ) : (
