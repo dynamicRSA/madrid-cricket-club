@@ -198,6 +198,14 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
     });
   }
 
+  async function cancelInvitation(memberId: string) {
+    if (!window.confirm("Remove this pending invitation? The person will need to be re-invited to apply again.")) return;
+    setActionLoading(memberId + "_cancel");
+    await supabase.from("members").delete().eq("id", memberId);
+    setMembers((prev: any[]) => prev.filter((m: any) => m.id !== memberId));
+    setActionLoading(null);
+  }
+
   async function approveMember(memberId: string, name: string) {
     setActionLoading(memberId + "_approve");
     await supabase.from("members").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", memberId);
@@ -344,7 +352,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                 <p className="text-white text-xs font-medium">{rv.member_id}</p>
                 {rv.reason && <p className="text-slate-400 text-xs mt-0.5">Reason: {rv.reason}</p>}
                 <p className="text-slate-600 text-[11px] mt-1">
-                  {rv.decided_by?.full_legal_name || "Committee"} · {new Date(rv.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+                  {rv.decided_by?.full_legal_name || "Committee"} · {new Date(rv.created_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" })}
                 </p>
               </div>
             </div>
@@ -383,8 +391,8 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                   { label: "Playing Role", value: m.playing_role || "—" },
                   { label: "Date of Birth", value: m.date_of_birth ? new Date(m.date_of_birth).toLocaleDateString("en-GB") : "—" },
                   { label: "Mobile", value: m.mobile || "—" },
-                  { label: "Joined", value: m.created_at ? new Date(m.created_at).toLocaleDateString("en-GB") : "—" },
-                  { label: "Last Updated", value: m.updated_at ? new Date(m.updated_at).toLocaleDateString("en-GB") : "—" },
+                  { label: "Joined", value: m.created_at ? new Date(m.created_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
+                  { label: "Last Updated", value: m.updated_at ? new Date(m.updated_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
                   { label: "Dietary", value: m.dietary_requirements || "None stated" },
                   { label: "Kit Size", value: m.kit_size || "—" },
                 ].map(({ label, value }) => (
@@ -416,34 +424,59 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-2 pt-1 border-t border-white/[0.04]">
-                <button
-                  onClick={() => approveMember(m.id, m.full_legal_name)}
-                  disabled={!!actionLoading}
-                  className="btn-primary btn-sm text-xs"
-                >
-                  {actionLoading === m.id + "_approve" ? <Loader2 size={12} className="animate-spin" /> : "✓"} Approve & Activate
-                </button>
-                <button
-                  onClick={() => setDeclineModal({ memberId: m.id, name: m.full_legal_name })}
-                  disabled={!!actionLoading}
-                  className="btn-outline btn-sm text-xs text-red-400 border-red-500/30 hover:border-red-500/60"
-                >
-                  ✕ Decline
-                </button>
-                <button
-                  onClick={() => setInfoModal({ memberId: m.id, name: m.full_legal_name })}
-                  disabled={!!actionLoading}
-                  className="btn-ghost btn-sm text-xs"
-                >
-                  📩 Request Info
-                </button>
-                <button
-                  onClick={() => suspendMember(m.id)}
-                  disabled={!!actionLoading}
-                  className="btn-ghost btn-sm text-xs text-red-400"
-                >
-                  🚫 Suspend
-                </button>
+                {m.registration_status === "invited" ? (
+                  /* Invited (not yet applied) — only allow cancel or approve */
+                  <>
+                    <button
+                      onClick={() => cancelInvitation(m.id)}
+                      disabled={!!actionLoading}
+                      className="btn-ghost btn-sm text-xs text-slate-400 border border-white/10 hover:text-red-400 hover:border-red-500/30"
+                    >
+                      {actionLoading === m.id + "_cancel" ? <Loader2 size={12} className="animate-spin" /> : "✕"} Remove Invitation
+                    </button>
+                    <span className="text-slate-600 text-xs self-center">· Remove to re-invite with a different email or try again</span>
+                  </>
+                ) : (
+                  /* Applied / pending — full review actions */
+                  <>
+                    <button
+                      onClick={() => approveMember(m.id, m.full_legal_name)}
+                      disabled={!!actionLoading}
+                      className="btn-primary btn-sm text-xs"
+                    >
+                      {actionLoading === m.id + "_approve" ? <Loader2 size={12} className="animate-spin" /> : "✓"} Approve & Activate
+                    </button>
+                    <button
+                      onClick={() => setDeclineModal({ memberId: m.id, name: m.full_legal_name })}
+                      disabled={!!actionLoading}
+                      className="btn-outline btn-sm text-xs text-red-400 border-red-500/30 hover:border-red-500/60"
+                    >
+                      ✕ Decline
+                    </button>
+                    <button
+                      onClick={() => setInfoModal({ memberId: m.id, name: m.full_legal_name })}
+                      disabled={!!actionLoading}
+                      className="btn-ghost btn-sm text-xs"
+                    >
+                      📩 Request Info
+                    </button>
+                    <button
+                      onClick={() => suspendMember(m.id)}
+                      disabled={!!actionLoading}
+                      className="btn-ghost btn-sm text-xs text-red-400"
+                    >
+                      🚫 Suspend
+                    </button>
+                    <button
+                      onClick={() => cancelInvitation(m.id)}
+                      disabled={!!actionLoading}
+                      className="btn-ghost btn-sm text-xs text-slate-500 ml-auto"
+                      title="Remove this application entirely"
+                    >
+                      🗑 Remove
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           ))}
@@ -572,20 +605,37 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
   async function handleSendSingleInvite(e: React.FormEvent) {
     e.preventDefault();
     setInviting(true);
-    const email = singleInvite.email.trim();
+    const email = singleInvite.email.trim().toLowerCase();
     const name = singleInvite.name.trim() || email.split("@")[0];
 
-    // 1. Create (or upsert) the member record
-    const newMember: any = {
-      full_legal_name: name,
-      email,
-      status: "pending_approval",
-      roles: [singleInvite.role],
-      registration_status: "invited",
-    };
-    const { data: memberData } = await supabase.from("members").insert(newMember).select().single();
-    if (memberData) setMembers([memberData, ...members]);
-    else setMembers([{ id: crypto.randomUUID(), ...newMember }, ...members]);
+    // 1. Check if member already exists with this email (prevent duplicates)
+    const { data: existingMember } = await supabase
+      .from("members").select("id, full_legal_name, status, registration_status")
+      .eq("email", email).maybeSingle();
+
+    let memberData: any = existingMember;
+
+    if (existingMember) {
+      // Member exists — just resend invite, no new record
+      // Update roles if needed
+      await supabase.from("members").update({
+        registration_status: "invited",
+        roles: [singleInvite.role],
+        updated_at: new Date().toISOString(),
+      }).eq("id", existingMember.id);
+    } else {
+      // Create fresh member record
+      const newMember: any = {
+        full_legal_name: name,
+        email,
+        status: "pending_approval",
+        roles: [singleInvite.role],
+        registration_status: "invited",
+      };
+      const { data: created } = await supabase.from("members").insert(newMember).select().single();
+      memberData = created;
+      if (created) setMembers([created, ...members]);
+    }
 
     // 2. Send invite — try Edge Function first, fall back to magic link OTP
     const REDIRECT = `https://dynamicrsa.github.io/madrid-cricket-club/auth/callback`;
