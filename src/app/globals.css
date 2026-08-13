@@ -379,17 +379,20 @@
 }
 
 /* ─── Scrollable tab pills (horizontal) ─── */
-.tab-pills {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding-bottom: 2px;
-}
-.tab-pills::-webkit-scrollbar { display: none; }
-.tab-pills button {
-  flex-shrink: 0;
+/* .tab-pills — only apply flex at desktop (lg) so Tailwind 'hidden' works on mobile */
+@media (min-width: 1024px) {
+  .tab-pills {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .tab-pills::-webkit-scrollbar { display: none; }
+  .tab-pills button {
+    flex-shrink: 0;
+  }
 }
 
 /* ─── Safe area padding for fixed elements ─── */
