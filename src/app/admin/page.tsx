@@ -587,19 +587,37 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
     if (memberData) setMembers([memberData, ...members]);
     else setMembers([{ id: crypto.randomUUID(), ...newMember }, ...members]);
 
-    // 2. Send invite via Edge Function (uses admin API, bypasses OTP rate limits)
-    const { data: funcData, error: funcError } = await supabase.functions.invoke("invite-member", {
-      body: { email, name, memberId: memberData?.id },
-    });
+    // 2. Send invite — try Edge Function first, fall back to magic link OTP
+    const REDIRECT = `https://dynamicrsa.github.io/madrid-cricket-club/auth/callback`;
+    let inviteOk = false;
+    let inviteMsg = "";
+
+    try {
+      const { data: funcData, error: funcError } = await supabase.functions.invoke("invite-member", {
+        body: { email, name, memberId: memberData?.id },
+      });
+      if (!funcError && !funcData?.error) {
+        inviteOk = true;
+        inviteMsg = `✓ Invite sent to ${email}! They will receive a secure link to complete their profile.`;
+      }
+    } catch (_) { /* function not deployed yet, fall through */ }
+
+    if (!inviteOk) {
+      // Fallback: signInWithOtp (works if redirect URL is whitelisted in Supabase Auth settings)
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+        options: { shouldCreateUser: true, emailRedirectTo: REDIRECT },
+      });
+      if (!otpError) {
+        inviteOk = true;
+        inviteMsg = `✓ Magic link sent to ${email}. They can click it to sign in and complete their profile.`;
+      } else {
+        inviteMsg = `Member record created for ${email}. Email delivery failed (${otpError.message}). To fix: add ${REDIRECT} to Supabase Auth → URL Configuration → Redirect URLs, then retry.`;
+      }
+    }
 
     setInviting(false);
-    if (funcError || funcData?.error) {
-      const errMsg = funcError?.message || funcData?.error || "Unknown error";
-      // Member record created — show fallback instructions
-      setInvitedSuccess(`Member record created for ${email}. Invite email failed: ${errMsg}. They can sign in at: ${window.location.origin.replace("github.io", "github.io/madrid-cricket-club")}/auth/signin using their email.`);
-    } else {
-      setInvitedSuccess(`✓ Invite email sent to ${email}! They will receive a secure link to complete their profile.`);
-    }
+    setInvitedSuccess(inviteMsg);
     setTimeout(() => {
       setShowInviteModal(false);
       setInvitedSuccess("");
