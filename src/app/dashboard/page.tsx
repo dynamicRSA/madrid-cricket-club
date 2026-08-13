@@ -754,7 +754,20 @@ export default function DashboardPage() {
           {/* PROFILE TAB */}
           {tab === "profile" && (
             <div className="space-y-6">
-              <ProfileEditor member={member} onUpdate={() => {}} supabase={supabase} />
+              <ProfileEditor
+                member={member}
+                onUpdate={() => {}}
+                supabase={supabase}
+                jerseyProps={{
+                  jerseyStatus, jerseyLoading, jerseyNumber, myRequestedNum,
+                  jerseySubmitting, reservedNumbers, requestedNumbers,
+                  selectedJerseyRequest, setSelectedJerseyRequest,
+                  requestJerseyNumber, cancelJerseyRequest,
+                }}
+                notifProps={{
+                  notifPrefs, notifSaving, setNotifPrefs, setNotifSaving,
+                }}
+              />
 
               {/* Jersey Number */}
               <div className="glass-dark p-6 space-y-4">

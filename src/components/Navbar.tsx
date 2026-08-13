@@ -250,15 +250,53 @@ export default function Navbar() {
             </div>
           )}
 
+
+          {/* ── MY ACCOUNT — shown first when logged in ── */}
+          {loggedIn && (
+            <div className="px-4 pt-3 pb-2 border-b border-white/[0.08] space-y-1">
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1 mb-1.5">My Account</p>
+              <Link href="/dashboard" onClick={() => setMobileOpen(false)}
+                className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
+                  pathname.startsWith("/dashboard")
+                    ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
+                    : "text-white hover:bg-white/[0.06]")}>
+                <LayoutDashboard size={18} className="shrink-0" /> My Dashboard
+              </Link>
+              {isCaptain && (
+                <Link href="/captain" onClick={() => setMobileOpen(false)}
+                  className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
+                    pathname.startsWith("/captain")
+                      ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
+                      : "text-white hover:bg-white/[0.06]")}>
+                  <span className="text-xl leading-none shrink-0">🏏</span> Captain Panel
+                </Link>
+              )}
+              {isAdmin && (
+                <Link href="/admin" onClick={() => setMobileOpen(false)}
+                  className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
+                    pathname.startsWith("/admin")
+                      ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
+                      : "text-white hover:bg-white/[0.06]")}>
+                  <ShieldCheck size={18} className="text-brand-400 shrink-0" /> Club Admin
+                </Link>
+              )}
+            </div>
+          )}
+
           {/* Nav links */}
-          <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-1">
+          <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-0.5">
+            {loggedIn && (
+              <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider px-1 mb-1.5 mt-1">
+                Browse
+              </p>
+            )}
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center px-4 py-3.5 rounded-xl text-base font-medium transition-all",
+                  "flex items-center px-4 py-3 rounded-xl text-base font-medium transition-all",
                   pathname === link.href
                     ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
                     : "text-slate-300 hover:text-white hover:bg-white/[0.06]"
@@ -267,32 +305,6 @@ export default function Navbar() {
                 {t(link.key)}
               </Link>
             ))}
-
-            {/* Member/Captain/Admin panel links */}
-            {loggedIn && (
-              <div className="mt-3 pt-3 border-t border-white/[0.06] space-y-1">
-                <p className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider px-4 mb-2">My Account</p>
-                <Link href="/dashboard" onClick={() => setMobileOpen(false)}
-                  className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all",
-                    pathname.startsWith("/dashboard") ? "bg-brand-500/15 text-brand-300 border border-brand-500/20" : "text-slate-300 hover:text-white hover:bg-white/[0.06]")}>
-                  <LayoutDashboard size={18} /> My Dashboard
-                </Link>
-                {isCaptain && (
-                  <Link href="/captain" onClick={() => setMobileOpen(false)}
-                    className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all",
-                      pathname.startsWith("/captain") ? "bg-brand-500/15 text-brand-300 border border-brand-500/20" : "text-slate-300 hover:text-white hover:bg-white/[0.06]")}>
-                    <span className="text-xl">🏏</span> Captain Panel
-                  </Link>
-                )}
-                {isAdmin && (
-                  <Link href="/admin" onClick={() => setMobileOpen(false)}
-                    className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-medium transition-all",
-                      pathname.startsWith("/admin") ? "bg-brand-500/15 text-brand-300 border border-brand-500/20" : "text-slate-300 hover:text-white hover:bg-white/[0.06]")}>
-                    <ShieldCheck size={18} className="text-brand-400" /> Club Admin
-                  </Link>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Bottom auth actions */}
