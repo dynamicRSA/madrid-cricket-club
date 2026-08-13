@@ -218,19 +218,24 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
     return pw;
   }
 
-  async function setTempPassword(memberId: string, userId: string | null) {
-    if (!userId) {
-      setTempPasswords((prev) => ({ ...prev, [memberId]: { error: "No auth account yet — send invite first" } }));
-      return;
-    }
+  async function setTempPassword(memberId: string, memberEmail: string) {
     const password = generatePassword();
     setTempPasswords((prev) => ({ ...prev, [memberId]: { loading: true, password } }));
     try {
+      // Always fetch the freshest user_id from DB (avoids stale cache after re-invites)
+      const { data: freshMember } = await supabase
+        .from("members")
+        .select("user_id")
+        .eq("id", memberId)
+        .single();
+
+      const liveUserId = freshMember?.user_id || null;
+
       const { data, error } = await supabase.functions.invoke("delete-member", {
-        body: { action: "set_password", userId, password },
+        body: { action: "set_password", userId: liveUserId, email: memberEmail, password },
       });
       if (error || data?.error) {
-        setTempPasswords((prev) => ({ ...prev, [memberId]: { error: "Failed to set password" } }));
+        setTempPasswords((prev) => ({ ...prev, [memberId]: { error: data?.error || "Failed to set password. Try resending the invite first." } }));
       } else {
         setTempPasswords((prev) => ({ ...prev, [memberId]: { done: true, password } }));
       }
@@ -533,7 +538,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                       <div className="space-y-1.5">
                         <p className="text-slate-600 text-[11px]">Email not received? Resend invite, or use <strong className="text-slate-400">Set Password</strong> to give them login credentials directly.</p>
                         <button
-                          onClick={() => setTempPassword(m.id, m.user_id)}
+                          onClick={() => setTempPassword(m.id, m.email)}
                           disabled={!!tempPasswords[m.id]?.loading}
                           className="btn-ghost btn-sm text-xs text-slate-400 border border-white/10 hover:text-amber-400 hover:border-amber-500/30 flex items-center gap-1"
                         >
