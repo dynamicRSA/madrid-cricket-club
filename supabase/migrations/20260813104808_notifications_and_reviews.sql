@@ -73,3 +73,18 @@ INSERT INTO notification_preferences (member_id)
 SELECT id FROM members
 WHERE NOT EXISTS (SELECT 1 FROM notification_preferences np WHERE np.member_id = members.id)
 ON CONFLICT (member_id) DO NOTHING
+
+-- Fix handle_new_user trigger to use members table (profiles table does not exist)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM public.members WHERE email = new.email) THEN
+    UPDATE public.members SET user_id = new.id, updated_at = now() WHERE email = new.email AND user_id IS NULL;
+  ELSE
+    INSERT INTO public.members (user_id, email, full_legal_name, status, roles, registration_status, created_at, updated_at)
+    VALUES (new.id, new.email, COALESCE(new.raw_user_meta_data->>'full_name', split_part(new.email,'@',1)), 'pending_approval', ARRAY['member'], 'applied', now(), now());
+  END IF;
+  RETURN new;
+EXCEPTION WHEN OTHERS THEN RAISE WARNING 'handle_new_user failed: %', SQLERRM; RETURN new;
+END;
+$$;
