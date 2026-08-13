@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 import { imgSrc } from "@/lib/imgSrc";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 // Pre-generate a static page for every article id at build time
@@ -16,8 +16,9 @@ export async function generateStaticParams() {
   return articles.map((a) => ({ slug: a.id }));
 }
 
-export function generateMetadata({ params }: Props): Metadata {
-  const article = getArticle(params.slug);
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const article = getArticle(slug);
   if (!article) return { title: "Article Not Found" };
   return {
     title: `${article.title} | Madrid Cricket Club`,
@@ -30,12 +31,13 @@ export function generateMetadata({ params }: Props): Metadata {
   };
 }
 
-export default function ArticlePage({ params }: Props) {
-  const article = getArticle(params.slug);
+export default async function ArticlePage({ params }: Props) {
+  const { slug } = await params;
+  const article = getArticle(slug);
   if (!article) notFound();
 
   const related = articles
-    .filter((a) => a.id !== params.slug && !a.isPlaceholder)
+    .filter((a) => a.id !== slug && !a.isPlaceholder)
     .slice(0, 2);
 
   return (

@@ -2,7 +2,8 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { Calendar, Clock, ArrowRight, Tag } from "lucide-react";
+import { useState } from "react";
+import { Calendar, ArrowRight } from "lucide-react";
 import { useLanguage } from "@/lib/i18n";
 import { imgSrc } from "@/lib/imgSrc";
 
@@ -16,8 +17,14 @@ const categories = ["All", "Match Report", "Club News", "Tour Report", "Women's 
 
 export default function NewsPage() {
   const { t } = useLanguage();
-  const featured = articles[0];
-  const rest = articles.slice(1);
+  const [activeCategory, setActiveCategory] = useState("All");
+
+  const visibleArticles = activeCategory === "All"
+    ? articles
+    : articles.filter((a) => a.category === activeCategory);
+
+  const featured = visibleArticles[0];
+  const rest = visibleArticles.slice(1);
 
   return (
     <main className="min-h-screen flex flex-col">
@@ -32,15 +39,16 @@ export default function NewsPage() {
         </div>
       </section>
 
-      {/* Category filter (visual only — placeholder for JS filtering) */}
+      {/* Category filter */}
       <div className="px-4 py-4 border-b border-white/[0.06]" style={{ background: "#120808" }}>
         <div className="container-wide flex gap-2 overflow-x-auto pb-1">
           {categories.map((cat) => (
             <button
               key={cat}
+              onClick={() => setActiveCategory(cat)}
               className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                cat === "All"
-                  ? "bg-brand-600 text-white"
+                cat === activeCategory
+                  ? "bg-brand-600 text-white shadow-sm"
                   : "text-slate-400 hover:text-white border border-white/[0.1] hover:border-white/20"
               }`}
             >
@@ -51,10 +59,11 @@ export default function NewsPage() {
       </div>
 
       {/* Featured article */}
+      {featured && (
       <section className="px-4 py-10" style={{ background: "#120808" }}>
         <div className="container-wide">
           <div className="glass-dark overflow-hidden card-hover">
-            <div className="grid md:grid-cols-2">
+          <div className="grid md:grid-cols-2">
               <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[320px] overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -77,10 +86,18 @@ export default function NewsPage() {
                   {t("news.read_more")} <ArrowRight size={14} />
                 </Link>
               </div>
-            </div>
+          </div>
           </div>
         </div>
       </section>
+      )}
+
+      {/* No results */}
+      {visibleArticles.length === 0 && (
+        <section className="px-4 py-16 text-center" style={{ background: "#120808" }}>
+          <p className="text-slate-400 text-sm">No articles in this category yet.</p>
+        </section>
+      )}
 
       {/* Article grid */}
       <section className="pb-16 px-4" style={{ background: "#120808" }}>
@@ -111,7 +128,7 @@ export default function NewsPage() {
                     article.category === "Women's Cricket" ? "bg-purple-600/80 text-white" :
                     "bg-gold-600/80 text-white"
                   }`}>
-                    {article.isPlaceholder ? "📝 Placeholder" : article.category}
+                    {article.isPlaceholder ? "Placeholder" : article.category}
                   </span>
                 </div>
               </div>

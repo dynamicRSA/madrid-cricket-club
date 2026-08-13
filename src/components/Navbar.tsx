@@ -123,7 +123,7 @@ export default function Navbar() {
 
           {/* Desktop right */}
           <div className="hidden lg:flex items-center gap-2">
-            <LocaleSwitcher openUp />
+            <LocaleSwitcher />
             {loggedIn ? (
               /* ── Single user dropdown pill ── */
               <div className="relative" ref={userMenuRef}>
@@ -324,7 +324,7 @@ export default function Navbar() {
 
           {/* Bottom auth actions */}
           <div className="px-4 pb-8 pt-4 border-t border-white/[0.06] space-y-3" style={{ paddingBottom: "calc(2rem + env(safe-area-inset-bottom))" }}>
-            <LocaleSwitcher />
+            <LocaleSwitcher openUp />
             {loggedIn ? (
               <button onClick={handleSignOut}
                 className="btn-ghost w-full justify-center text-sm text-slate-400 border border-white/10">
