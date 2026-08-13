@@ -123,7 +123,7 @@ export default function Navbar() {
 
           {/* Desktop right */}
           <div className="hidden lg:flex items-center gap-2">
-            <LocaleSwitcher />
+            <LocaleSwitcher openUp />
             {loggedIn ? (
               /* ── Single user dropdown pill ── */
               <div className="relative" ref={userMenuRef}>
@@ -343,7 +343,7 @@ export default function Navbar() {
   );
 }
 
-function LocaleSwitcher() {
+function LocaleSwitcher({ openUp = false }: { openUp?: boolean }) {
   const { lang, setLang, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const options: { code: Language; flag: string; label: string }[] = [
@@ -361,7 +361,10 @@ function LocaleSwitcher() {
         <ChevronDown size={11} className={cn("transition-transform", open && "rotate-180")} />
       </button>
       {open && (
-        <div className="absolute right-0 mt-2 w-36 glass-dark rounded-xl overflow-hidden shadow-2xl z-50">
+        <div className={cn(
+          "absolute right-0 w-36 glass-dark rounded-xl overflow-hidden shadow-2xl z-[200]",
+          openUp ? "bottom-full mb-2" : "top-full mt-2"
+        )}>
           {options.map((opt) => (
             <button key={opt.code} onClick={() => { setLang(opt.code); setOpen(false); }}
               className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/10 transition-colors text-white flex items-center justify-between">
