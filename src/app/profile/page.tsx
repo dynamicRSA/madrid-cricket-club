@@ -1,4 +1,4 @@
-// @ts-nocheck
+"use client";
 /**
  * /profile — dedicated profile page
  * Renders the full dashboard with the Profile tab pre-selected.

@@ -769,15 +769,6 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                 member={member}
                 onUpdate={() => {}}
                 supabase={supabase}
-                jerseyProps={{
-                  jerseyStatus, jerseyLoading, jerseyNumber, myRequestedNum,
-                  jerseySubmitting, reservedNumbers, requestedNumbers,
-                  selectedJerseyRequest, setSelectedJerseyRequest,
-                  requestJerseyNumber, cancelJerseyRequest,
-                }}
-                notifProps={{
-                  notifPrefs, notifSaving, setNotifPrefs, setNotifSaving,
-                }}
               />
 
               {/* Jersey Number */}
