@@ -46,8 +46,11 @@ export function useAuth() {
   }
 
   async function sendPasswordReset(email: string) {
+    const redirectTo = typeof window !== "undefined"
+      ? `${window.location.origin}/auth/reset-password`
+      : "https://dynamicrsa.github.io/madrid-cricket-club/auth/reset-password";
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+      redirectTo,
     });
     return { error };
   }

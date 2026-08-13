@@ -18,8 +18,10 @@ import { formatDateShort } from "@/lib/utils";
 import NotificationBell from "@/components/NotificationBell";
 import {
   User, Calendar, CreditCard, LogOut, CheckCircle, XCircle, HelpCircle,
-  Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Car, ShieldCheck
+  Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Car, ShieldCheck,
+  Eye, EyeOff
 } from "lucide-react";
+
 
 type Tab = "overview" | "confirmations" | "availability" | "charges" | "profile" | "notifications";
 
@@ -1036,6 +1038,7 @@ function ChargeCard({ charge, onDeclare }: {
 }
 
 function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void }) {
+  const supabasePE = createClient();
   const { updateMember } = useMember(member?.user_id);
   const [form, setForm] = useState({
     preferred_name: member?.preferred_name || "",
@@ -1216,8 +1219,74 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
               </span>
             )}
           </div>
+
+          {/* Change Password */}
+          <ChangePasswordCard supabase={supabasePE} />
         </form>
       )}
+    </div>
+  );
+}
+
+function ChangePasswordCard({ supabase }: { supabase: any }) {
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [done, setDone] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function handleChange(e: React.FormEvent) {
+    e.preventDefault();
+    setErr("");
+    setDone(false);
+    if (newPw.length < 8) { setErr("Password must be at least 8 characters."); return; }
+    if (newPw !== confirmPw) { setErr("Passwords do not match."); return; }
+    setSaving(true);
+    const { error } = await supabase.auth.updateUser({ password: newPw });
+    setSaving(false);
+    if (error) { setErr(error.message); }
+    else { setDone(true); setNewPw(""); setConfirmPw(""); }
+  }
+
+  return (
+    <div className="glass-dark p-6 space-y-4 border border-white/[0.04]">
+      <div className="flex items-center gap-2">
+        <span className="text-base">🔑</span>
+        <h3 className="text-white font-semibold">Change Password</h3>
+      </div>
+      <p className="text-slate-400 text-xs">Set or update your sign-in password. Must be at least 8 characters.</p>
+      <form onSubmit={handleChange} className="space-y-3 max-w-sm">
+        <div className="relative">
+          <input
+            id="profile-newpw"
+            type={showPw ? "text" : "password"}
+            value={newPw}
+            onChange={(e) => { setNewPw(e.target.value); setDone(false); }}
+            className="input pr-10"
+            placeholder="New password"
+            autoComplete="new-password"
+          />
+          <button type="button" onClick={() => setShowPw((v) => !v)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+          </button>
+        </div>
+        <input
+          id="profile-confirmpw"
+          type={showPw ? "text" : "password"}
+          value={confirmPw}
+          onChange={(e) => { setConfirmPw(e.target.value); setDone(false); }}
+          className="input"
+          placeholder="Confirm new password"
+          autoComplete="new-password"
+        />
+        {err && <p className="text-red-400 text-xs">{err}</p>}
+        {done && <p className="text-green-400 text-xs flex items-center gap-1"><CheckCircle size={12} /> Password updated successfully!</p>}
+        <button type="submit" disabled={saving || !newPw || !confirmPw} className="btn-primary btn-sm text-sm">
+          {saving ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : "Update Password"}
+        </button>
+      </form>
     </div>
   );
 }
