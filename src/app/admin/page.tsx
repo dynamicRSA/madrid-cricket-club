@@ -587,22 +587,18 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
     if (memberData) setMembers([memberData, ...members]);
     else setMembers([{ id: crypto.randomUUID(), ...newMember }, ...members]);
 
-    // 2. Send magic link via Supabase Auth (creates account if not exists)
-    const redirectTo = `${window.location.origin}${window.location.pathname.includes("/madrid-cricket-club") ? "/madrid-cricket-club" : ""}/auth/callback`;
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: redirectTo,
-        data: { full_name: name, invited_by: "admin" },
-      },
+    // 2. Send invite via Edge Function (uses admin API, bypasses OTP rate limits)
+    const { data: funcData, error: funcError } = await supabase.functions.invoke("invite-member", {
+      body: { email, name, memberId: memberData?.id },
     });
 
     setInviting(false);
-    if (otpError) {
-      setInvitedSuccess(`Member record created. Email delivery failed: ${otpError.message}. Share this link manually: ${redirectTo}?email=${encodeURIComponent(email)}`);
+    if (funcError || funcData?.error) {
+      const errMsg = funcError?.message || funcData?.error || "Unknown error";
+      // Member record created — show fallback instructions
+      setInvitedSuccess(`Member record created for ${email}. Invite email failed: ${errMsg}. They can sign in at: ${window.location.origin.replace("github.io", "github.io/madrid-cricket-club")}/auth/signin using their email.`);
     } else {
-      setInvitedSuccess(`✓ Magic link invitation sent to ${email}! They can click it to sign in and complete their profile.`);
+      setInvitedSuccess(`✓ Invite email sent to ${email}! They will receive a secure link to complete their profile.`);
     }
     setTimeout(() => {
       setShowInviteModal(false);
@@ -634,9 +630,8 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
     const redirectTo = `${window.location.origin}${window.location.pathname.includes("/madrid-cricket-club") ? "/madrid-cricket-club" : ""}/auth/callback`;
     await Promise.allSettled(
       emailsList.map((email) =>
-        supabase.auth.signInWithOtp({
-          email,
-          options: { shouldCreateUser: true, emailRedirectTo: redirectTo },
+        supabase.functions.invoke("invite-member", {
+          body: { email },
         })
       )
     );
@@ -935,7 +930,12 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
             setMembers((prev) => prev.map((m) => m.id === updated.id ? updated : m));
             setSelectedMember(updated);
           }}
+          onDeleted={(id) => {
+            setMembers((prev) => prev.filter((m) => m.id !== id));
+            setSelectedMember(null);
+          }}
         />
+
       )}
     </div>
   );
@@ -946,10 +946,10 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
 type DetailTab = "profile" | "membership" | "access" | "charges" | "jersey" | "auth";
 
 function MemberDetailPanel({
-  member, supabase, isSuperAdmin, onClose, onSaved,
+  member, supabase, isSuperAdmin, onClose, onSaved, onDeleted,
 }: {
   member: any; supabase: any; isSuperAdmin: boolean;
-  onClose: () => void; onSaved: (updated: any) => void;
+  onClose: () => void; onSaved: (updated: any) => void; onDeleted?: (id: string) => void;
 }) {
   const [tab, setTab] = useState<DetailTab>("profile");
   const [data, setData] = useState<any>(member);
@@ -960,6 +960,8 @@ function MemberDetailPanel({
   const [newCharge, setNewCharge] = useState({ description: "", amount: "", type: "match_fee" });
   const [raisingCharge, setRaisingCharge] = useState(false);
   const [actionMsg, setActionMsg] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Load charges when that tab opens
   useEffect(() => {
@@ -970,12 +972,21 @@ function MemberDetailPanel({
     }
   }, [tab, member.id]);
 
-  const ALL_ROLES = ["member", "captain", "vice_captain", "treasurer", "secretary", "admin", "super_admin"];
+  const ALL_ROLES: { id: string; label: string; desc: string; icon: string }[] = [
+    { id: "member",       label: "Member",       desc: "Basic access — view fixtures, submit availability, manage own profile", icon: "👤" },
+    { id: "captain",      label: "Captain",      desc: "Full access to Captain's Panel — team selection, availability management", icon: "🏏" },
+    { id: "vice_captain", label: "Vice Captain", desc: "Captain's Panel access — can assist with selection and availability", icon: "🏏" },
+    { id: "treasurer",    label: "Treasurer",    desc: "Admin Panel — payments, charges, financial reports", icon: "💰" },
+    { id: "secretary",    label: "Secretary",    desc: "Admin Panel — member management, registration, documentation", icon: "📋" },
+    { id: "admin",        label: "Administrator",desc: "Full Admin Panel access — all club administration features", icon: "🛡️" },
+    { id: "super_admin",  label: "Super Admin",  desc: "Unrestricted access — all panels, all features, data management", icon: "⚡" },
+  ];
   const currentRoles: string[] = data.roles || ["member"];
 
-  function toggleRole(role: string) {
-    const has = currentRoles.includes(role);
-    const next = has ? currentRoles.filter((r: string) => r !== role) : [...currentRoles, role];
+  function toggleRole(roleId: string) {
+    const has = currentRoles.includes(roleId);
+    const next = has ? currentRoles.filter((r: string) => r !== roleId) : [...currentRoles, roleId];
+    // Always keep at least member
     setData((d: any) => ({ ...d, roles: next.length ? next : ["member"] }));
   }
 
@@ -1047,7 +1058,24 @@ function MemberDetailPanel({
     setSaving(false); setSaved(true); setTimeout(() => setSaved(false), 2000);
   }
 
-  const statusOptions = ["active", "pending_approval", "application", "enquiry", "suspended", "inactive"];
+  async function deleteMember() {
+    setDeleting(true);
+    try {
+      // Delete auth user via Edge Function (if linked)
+      if (member.user_id) {
+        await supabase.functions.invoke("delete-member", { body: { userId: member.user_id } });
+      }
+      // Delete member record (RLS allows admin)
+      await supabase.from("members").delete().eq("id", member.id);
+      onDeleted?.(member.id);
+      onClose();
+    } catch (e) {
+      console.error("Delete error", e);
+    }
+    setDeleting(false);
+  }
+
+  const statusOptions = ["active", "pending_approval", "application", "enquiry", "suspended", "inactive", "renewal_due"];
   const categoryOptions = ["senior", "junior", "social", "overseas"];
   const chargeTypes = ["match_fee", "membership_fee", "tour_fee", "equipment", "fine", "other"];
 
@@ -1084,9 +1112,32 @@ function MemberDetailPanel({
               </div>
             </div>
           </div>
-          <button onClick={onClose} className="text-slate-400 hover:text-white p-1">
-            <XCircle size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && !deleteConfirm && (
+              <button
+                onClick={() => setDeleteConfirm(true)}
+                className="btn-sm text-xs border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-lg px-3 py-1.5 transition-colors"
+              >
+                Delete Member
+              </button>
+            )}
+            {deleteConfirm && (
+              <div className="flex items-center gap-2">
+                <span className="text-red-400 text-xs font-semibold">Permanently delete?</span>
+                <button
+                  onClick={deleteMember}
+                  disabled={deleting}
+                  className="btn-sm text-xs bg-red-600 text-white rounded-lg px-3 py-1.5 hover:bg-red-500 transition-colors"
+                >
+                  {deleting ? "Deleting…" : "Yes, Delete"}
+                </button>
+                <button onClick={() => setDeleteConfirm(false)} className="btn-ghost btn-sm text-xs">Cancel</button>
+              </div>
+            )}
+            <button onClick={onClose} className="text-slate-400 hover:text-white p-1 ml-1">
+              <XCircle size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -1212,39 +1263,72 @@ function MemberDetailPanel({
                 </div>
               ) : (
                 <>
-                  <div className="glass-dark p-5">
-                    <h4 className="text-white font-semibold text-sm mb-4">Assigned Roles</h4>
-                    <div className="grid grid-cols-2 gap-3">
-                      {ALL_ROLES.map((role) => (
-                        <label key={role} className="flex items-center gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/8 cursor-pointer border border-white/[0.06]">
-                          <input
-                            type="checkbox"
-                            checked={currentRoles.includes(role)}
-                            onChange={() => toggleRole(role)}
-                            className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-brand-500"
-                          />
-                          <span className="text-slate-200 text-sm capitalize">{role.replace(/_/g, " ")}</span>
-                        </label>
-                      ))}
+                  {/* Active roles summary */}
+                  <div className="flex flex-wrap gap-2">
+                    {currentRoles.length === 0 || (currentRoles.length === 1 && currentRoles[0] === "member") ? (
+                      <span className="text-slate-500 text-xs">No committee roles assigned — basic member access only.</span>
+                    ) : currentRoles.map((r) => (
+                      <span key={r} className="badge-green text-xs">{r.replace(/_/g, " ")}</span>
+                    ))}
+                  </div>
+
+                  {/* Role cards — multi-select checkboxes */}
+                  <div className="glass-dark p-5 space-y-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white font-semibold text-sm">Assign Roles</h4>
+                      <span className="text-slate-500 text-xs">Select all that apply — a member can hold multiple roles</span>
+                    </div>
+                    <div className="space-y-2">
+                      {ALL_ROLES.map((role) => {
+                        const active = currentRoles.includes(role.id);
+                        return (
+                          <label
+                            key={role.id}
+                            className={`flex items-start gap-3 p-3.5 rounded-xl cursor-pointer border transition-all ${
+                              active
+                                ? "bg-brand-500/15 border-brand-500/40"
+                                : "bg-white/[0.03] border-white/[0.06] hover:bg-white/[0.06]"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={active}
+                              onChange={() => toggleRole(role.id)}
+                              className="w-4 h-4 mt-0.5 rounded border-slate-600 bg-slate-800 text-brand-500 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="text-base leading-none">{role.icon}</span>
+                                <span className={`text-sm font-semibold ${active ? "text-brand-300" : "text-slate-200"}`}>
+                                  {role.label}
+                                </span>
+                                {active && <span className="text-[10px] badge-green">Active</span>}
+                              </div>
+                              <p className="text-slate-500 text-xs mt-1">{role.desc}</p>
+                            </div>
+                          </label>
+                        );
+                      })}
                     </div>
                   </div>
 
+                  {/* Quick status actions */}
                   <div className="glass-dark p-5 space-y-3">
-                    <h4 className="text-white font-semibold text-sm mb-1">Quick Status Actions</h4>
+                    <h4 className="text-white font-semibold text-sm mb-1">Membership Status</h4>
                     <div className="flex flex-wrap gap-2">
-                      {["active", "suspended", "pending_approval", "inactive"].map((s) => (
+                      {["active", "suspended", "pending_approval", "renewal_due", "inactive"].map((s) => (
                         <button
                           key={s}
                           onClick={async () => {
                             await supabase.from("members").update({ status: s, updated_at: new Date().toISOString() }).eq("id", member.id);
                             setData((d: any) => ({ ...d, status: s }));
                             onSaved({ ...member, ...data, status: s });
-                            setActionMsg(`Status set to ${s}`);
+                            setActionMsg(`Status set to ${s.replace(/_/g, " ")}`);
                             setTimeout(() => setActionMsg(""), 2000);
                           }}
                           className={`btn-sm text-xs capitalize ${data.status === s ? "btn-primary" : "btn-ghost border border-white/10"}`}
                         >
-                          {s.replace("_", " ")}
+                          {s.replace(/_/g, " ")}
                         </button>
                       ))}
                     </div>
@@ -1261,6 +1345,8 @@ function MemberDetailPanel({
               )}
             </div>
           )}
+
+
 
           {/* ── CHARGES ── */}
           {tab === "charges" && (
