@@ -16,6 +16,7 @@ import { parseTourMeta, serializeTourMeta, STAGE_LABELS, type TourMeta, type Tou
 import { EVENTS } from "@/lib/mock-data";
 import { formatDateShort } from "@/lib/utils";
 import NotificationBell from "@/components/NotificationBell";
+import { EmptyState } from "@/components/EmptyState";
 import {
   User, Calendar, CreditCard, LogOut, CheckCircle, XCircle, HelpCircle,
   Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Car, ShieldCheck,
@@ -360,11 +361,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                     </button>
                   </div>
                   {registrationEvents.length === 0 ? (
-                    <div className="py-6 text-center">
-                      <Calendar size={24} className="text-slate-600 mx-auto mb-2" />
-                      <p className="text-slate-400 text-sm font-medium">No fixtures open for sign-up yet</p>
-                      <p className="text-slate-600 text-xs mt-1">The captain will open registration when the time is right.</p>
-                    </div>
+                    <EmptyState compact icon={Calendar} title="No fixtures open for sign-up yet" message="The captain will open registration when the time is right." />
                   ) : (
                     <div className="space-y-3">
                       {registrationEvents.slice(0, 3).map((event: any) => {
@@ -479,13 +476,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
               {eventsLoading ? (
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
               ) : registrationEvents.length === 0 ? (
-                <div className="glass-dark p-10 text-center space-y-3">
-                  <Calendar size={32} className="text-slate-600 mx-auto" />
-                  <h3 className="text-white font-semibold">No fixtures open for registration yet</h3>
-                  <p className="text-slate-400 text-sm max-w-sm mx-auto">
-                    The captain will open registration when the time is right. Check the <strong className="text-white">Fixtures</strong> page to see upcoming events on the calendar.
-                  </p>
-                </div>
+                <EmptyState icon={Calendar} title="No fixtures open for registration yet" message="The captain will open registration when the time is right. Check the Fixtures page to see upcoming events on the calendar." />
               ) : (
                 <div className="glass-dark divide-y divide-white/[0.04]">
                   {registrationEvents.map((ev: any) => {
@@ -559,15 +550,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
               {eventsLoading ? (
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
               ) : !isSelectedForMatch ? (
-                <div className="glass-dark p-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto">
-                <Lock size={22} className="text-gold-400" />
-              </div>
-                  <h3 className="text-white font-semibold text-lg">No Active Selection Pending</h3>
-                  <p className="text-slate-400 text-sm max-w-md mx-auto">
-                    You have not been selected for an active match squad yet. Please ensure your availability is marked in the <strong className="text-white">Availability Sign-Up</strong> tab. When the captain selects and publishes the squad, your match cards will appear here.
-                  </p>
-                </div>
+                <EmptyState icon={Lock} iconColor="text-slate-500" title="No Active Selection Pending" message="You have not been selected for an active match squad yet. Ensure your availability is marked in the Availability tab. Your match cards will appear here once the captain publishes the squad." />
               ) : (
                 <div className="space-y-8">
                   {selectedEvents.map((ev: any) => {
@@ -751,10 +734,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
               {chargesLoading ? (
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
               ) : charges.length === 0 ? (
-                <div className="glass-dark p-10 text-center">
-                  <CheckCircle size={32} className="text-brand-400 mx-auto mb-3" />
-                  <p className="text-white font-semibold">All clear! No charges outstanding.</p>
-                </div>
+                <EmptyState icon={CheckCircle} iconColor="text-brand-400" title="All clear! No charges outstanding." />
               ) : (
                 <div className="space-y-3">
                   {charges.map((charge) => (
@@ -1081,10 +1061,7 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
 
   if (!member) {
     return (
-      <div className="glass-dark p-8 text-center">
-        <p className="text-slate-400">Profile not yet created. Please complete the join process first.</p>
-        <Link href="/join" className="btn-primary mt-4 inline-flex">Apply to Join</Link>
-      </div>
+      <EmptyState icon={User} title="Profile not yet created." message="Please complete the join process first to access your profile." action={<Link href="/join" className="btn-primary inline-flex">Apply to Join</Link>} />
     );
   }
 

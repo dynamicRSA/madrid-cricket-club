@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
+import { EmptyState } from "@/components/EmptyState";
 import {
   Users, CreditCard, Calendar, BarChart3, CheckCircle, XCircle,
   Clock, AlertCircle, Loader2, Search, Download, ChevronDown,
@@ -408,7 +409,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
         /* Recent decisions audit trail */
         <div className="space-y-3">
           {reviews.length === 0 ? (
-            <div className="glass-dark p-8 text-center text-slate-500 text-sm">No decisions recorded yet.</div>
+            <EmptyState compact icon={CheckCircle} title="No decisions recorded yet." />
           ) : reviews.map((rv) => (
             <div key={rv.id} className="glass-dark p-4 flex items-start gap-4 text-sm">
               <div className={`px-2 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider ${
@@ -434,7 +435,7 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
         <div className="glass-dark p-12 text-center">
           <div className="text-4xl mb-3">✅</div>
           <p className="text-white font-semibold mb-1">All clear</p>
-          <p className="text-slate-400 text-sm">{filter === "pending" ? "No pending applications at the moment." : "No members with renewal due."}</p>
+          <EmptyState compact icon={Users} title={filter === "pending" ? "No pending applications at the moment." : "No members with renewal due."} />
         </div>
       ) : (
         <div className="space-y-4">
@@ -1658,7 +1659,7 @@ function MemberDetailPanel({
               {chargesLoading ? (
                 <div className="flex justify-center py-8"><Loader2 size={20} className="animate-spin text-brand-400" /></div>
               ) : charges.length === 0 ? (
-                <p className="text-slate-500 text-sm text-center py-6">No charges on record.</p>
+                <EmptyState compact icon={CreditCard} title="No charges on record." />
               ) : (
                 <div className="space-y-2">
                   <p className="text-slate-400 text-xs font-medium">{charges.length} charge{charges.length !== 1 ? "s" : ""} on record</p>
@@ -1877,7 +1878,7 @@ function PaymentsTab({ supabase }: { supabase: any }) {
       ) : filtered.length === 0 ? (
         <div className="glass-dark p-10 text-center">
           <CheckCircle size={28} className="text-brand-400 mx-auto mb-2" />
-          <p className="text-white">No charges to review.</p>
+          <EmptyState compact icon={CreditCard} title="No charges to review." />
         </div>
       ) : (
         <div className="glass-dark overflow-hidden">
@@ -2490,7 +2491,7 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
       {events.length === 0 ? (
         <div className="glass-dark p-10 text-center space-y-3">
           <Trophy size={32} className="text-slate-600 mx-auto" />
-          <p className="text-slate-400">No fixtures or tours created yet.</p>
+          <EmptyState compact icon={Calendar} title="No fixtures or tours created yet." />
           <button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm">Create your first fixture</button>
         </div>
       ) : (
@@ -2889,7 +2890,7 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
               ) : (
                 <>
                   {tourMeta.squad_pool.length === 0 ? (
-                    <div className="glass-dark p-8 text-center text-slate-400 text-sm">No squad pool configured.</div>
+                    <EmptyState compact icon={Users} title="No squad pool configured." message="Add players to the squad pool above." />
                   ) : (
                     <>
                       {/* Summary stats */}

@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
+import { EmptyState } from "@/components/EmptyState";
 import {
   Calendar, CheckCircle, XCircle, Clock, Loader2, LogOut,
   ShieldCheck, ShieldAlert, Eye, Utensils, Car, Users, ArrowRight,
@@ -138,12 +139,7 @@ export default function CaptainPage() {
 
 function LogisticsPlaceholder() {
   return (
-    <div className="glass-dark p-10 text-center">
-      <div className="text-4xl mb-4">🍽️</div>
-      <h2 className="text-xl font-display font-bold text-white mb-2">Match Logistics</h2>
-      <p className="text-slate-400 text-sm max-w-sm mx-auto">Meal preferences, travel coordination, and lift sharing for away games. Coming soon.</p>
-    </div>
-  );
+    <EmptyState icon={Car} title="Match Logistics" message="Meal preferences, travel coordination, and lift sharing for away games. Coming soon." />  );
 }
 
 function AvailabilityTab({ supabase }: { supabase: any }) {
@@ -196,11 +192,7 @@ function AvailabilityTab({ supabase }: { supabase: any }) {
       </div>
 
       {events.length === 0 ? (
-        <div className="glass-dark p-10 text-center space-y-2">
-          <Calendar size={28} className="text-slate-600 mx-auto" />
-          <p className="text-white font-semibold">No fixtures open for registration</p>
-          <p className="text-slate-400 text-sm">Advance a fixture to <strong className="text-white">Registration Open</strong> stage in the Captain&apos;s Selection tab to see responses here.</p>
-        </div>
+        <EmptyState icon={Calendar} title="No fixtures open for registration" message="Advance a fixture to Registration Open stage in the Selection tab to see responses here." />
       ) : (
         <>
           {/* Per-event availability summary */}
@@ -596,11 +588,7 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
 
       {/* ── Event selector + stage panel ──────────────────────────────────────── */}
       {events.length === 0 ? (
-        <div className="glass-dark p-10 text-center space-y-3">
-          <Trophy size={32} className="text-slate-600 mx-auto" />
-          <p className="text-slate-400">No fixtures or tours created yet.</p>
-          <button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm">Create your first fixture</button>
-        </div>
+        <EmptyState icon={Trophy} title="No fixtures or tours created yet." action={<button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm">Create your first fixture</button>} />
       ) : (
         <>
           {/* Event selector */}
