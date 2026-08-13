@@ -643,7 +643,8 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
 
             {/* Stage progression bar */}
             <div className="space-y-2">
-              <div className="flex items-center gap-1 text-xs">
+              {/* Progress bar */}
+              <div className="flex items-center gap-1">
                 {(["draft", "published", "squad_open", "squad_locked", "choices_open", "completed"] as EventStage[]).map((s, i, arr) => (
                   <div key={s} className="flex items-center gap-1 flex-1">
                     <div className={`h-1.5 flex-1 rounded-full transition-all ${
@@ -654,30 +655,42 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                   </div>
                 ))}
               </div>
-              <div className="flex justify-between text-[10px] text-slate-500">
-                <span>Draft</span>
-                <span>Published</span>
-                <span>Registration Open</span>
-                <span>Squad Published</span>
-                <span>Choices Open</span>
-                <span>Done</span>
+              {/* Mobile: single current step badge instead of 6 cramped labels */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {([
+                    { id: "draft",         label: "Draft" },
+                    { id: "published",     label: "Published" },
+                    { id: "squad_open",    label: "Registration Open" },
+                    { id: "squad_locked",  label: "Squad Published" },
+                    { id: "choices_open",  label: "Choices Open" },
+                    { id: "completed",     label: "Done" },
+                  ].map(({ id, label }, i) => id === currentStage ? (
+                    <span key={id} className="text-xs font-semibold text-brand-300 bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-full">
+                      {i + 1}/6 · {label}
+                    </span>
+                  ) : null))}
+                </div>
+                <span className="text-[10px] text-slate-600">
+                  {currentStage !== "completed" ? "→ advancing" : "✓ complete"}
+                </span>
               </div>
             </div>
 
             {/* Advance stage action */}
             {nextLabel && currentStage !== "completed" && currentStage !== "cancelled" && (
-              <div className="flex items-center justify-between border-t border-white/[0.06] pt-3">
-                <p className="text-slate-400 text-xs">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 border-t border-white/[0.06] pt-3">
+                <p className="text-slate-400 text-xs flex-1">
                   {currentStage === "draft" && "Publish this fixture to make it visible on the public Fixtures page. Registration stays closed until you decide."}
-                  {currentStage === "published" && "The fixture is live on the Fixtures page. Open registration when you are ready for members to sign up — not too early!"}
-                  {currentStage === "squad_open" && "Registration is open. Members can mark availability. Select your squad pool and per-game XIs below, then publish."}
-                  {currentStage === "squad_locked" && "Squad published. Add ground meal options per game below when the ground confirms, then open choices for players."}
+                  {currentStage === "published" && "The fixture is live. Open registration when you are ready for members to sign up."}
+                  {currentStage === "squad_open" && "Registration open. Select your squad pool and per-game XIs, then publish."}
+                  {currentStage === "squad_locked" && "Squad published. Add meal options per game, then open choices for players."}
                   {currentStage === "choices_open" && "All choices collected. Mark the event as completed after the matches."}
                 </p>
                 <button
                   onClick={advanceStage}
                   disabled={saving}
-                  className="btn-primary btn-sm shrink-0 ml-4"
+                  className="btn-primary btn-sm shrink-0 w-full sm:w-auto justify-center"
                 >
                   {saving ? <><Loader2 size={13} className="animate-spin" /></> : <ArrowRight size={13} />}
                   {nextLabel}
@@ -687,22 +700,25 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
           </div>
 
           {/* ── Sub-navigation ─────────────────────────────────────────────────── */}
-          <div className="flex gap-1">
+          {/* Mobile: 3-column card grid */}
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-1">
             {[
-              { id: "events", label: "Fixture Details", icon: Calendar },
-              { id: "squad", label: `Squad & XIs (${tourMeta?.squad_pool.length ?? 0} in pool)`, icon: Users },
-              { id: "responses", label: "Player Responses", icon: CheckCircle },
-            ].map(({ id, label, icon: Icon }) => (
+              { id: "events",    label: "Fixture Details",  shortLabel: "Details",   icon: Calendar },
+              { id: "squad",     label: `Squad & XIs`,       shortLabel: "Squad",     icon: Users },
+              { id: "responses", label: "Player Responses", shortLabel: "Responses", icon: CheckCircle },
+            ].map(({ id, label, shortLabel, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveView(id as any)}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                className={`flex flex-col sm:flex-row items-center gap-1 sm:gap-1.5 px-2 sm:px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold transition-all ${
                   activeView === id
                     ? "bg-brand-500/20 text-brand-300 border border-brand-500/30"
-                    : "text-slate-400 hover:text-white hover:bg-white/5"
+                    : "bg-white/[0.03] text-slate-400 hover:text-white hover:bg-white/5 border border-white/[0.06] sm:border-transparent"
                 }`}
               >
-                <Icon size={13} /> {label}
+                <Icon size={15} className="shrink-0" />
+                <span className="sm:hidden text-center leading-tight">{shortLabel}</span>
+                <span className="hidden sm:inline">{label}</span>
               </button>
             ))}
           </div>

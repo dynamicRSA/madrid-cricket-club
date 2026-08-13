@@ -38,13 +38,15 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  // Read ?tab= URL param on initial mount so /dashboard?tab=profile works
+  // Read intended tab from sessionStorage (set by Navbar "My Profile" button)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const t = params.get("tab");
+    const stored = sessionStorage.getItem("dashboardTab");
     const validTabs = ["overview", "confirmations", "availability", "charges", "profile"];
-    if (t && validTabs.includes(t)) setTab(t as Tab);
+    if (stored && validTabs.includes(stored)) {
+      setTab(stored as Tab);
+      sessionStorage.removeItem("dashboardTab"); // clear so subsequent visits start on overview
+    }
   }, []);
 
   const { member, loading: memberLoading } = useMember(user?.id);
