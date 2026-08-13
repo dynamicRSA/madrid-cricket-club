@@ -766,160 +766,160 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
           {/* PROFILE TAB */}
           {tab === "profile" && (
             <div className="space-y-6">
-
-              {/* Jersey Number — shown first (informational/request, no save needed) */}
-              <div className="glass-dark p-6 space-y-4">
-                <div className="border-b border-white/[0.06] pb-3">
-                  <h3 className="text-white font-semibold flex items-center gap-2">
-                    <span className="text-2xl leading-none">👕</span>
-                    Jersey Number
-                  </h3>
-                  <p className="text-slate-400 text-xs mt-1">
-                    Each member has a unique jersey number. Request an available number — the committee will approve and reserve it for you.
-                    Your number remains yours while your membership is active.
-                  </p>
-                </div>
-
-                {jerseyLoading ? (
-                  <div className="flex items-center gap-2 py-4 text-slate-400 text-sm">
-                    <Loader2 size={16} className="animate-spin" /> Loading jersey registry…
-                  </div>
-                ) : jerseyStatus === "reserved" ? (
-                  // Has a confirmed jersey number
-                  <div className="flex items-center gap-5">
-                    <div className="w-20 h-20 rounded-2xl bg-brand-600/20 border-2 border-brand-500/40 flex items-center justify-center flex-shrink-0">
-                      <span className="text-4xl font-black text-brand-300">#{jerseyNumber}</span>
-                    </div>
-                    <div>
-                      <p className="text-white font-semibold text-lg">Your jersey number is #{jerseyNumber}</p>
-                      <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full mt-1">
-                        <CheckCircle size={10} /> Reserved
-                      </span>
-                      <p className="text-slate-400 text-xs mt-2">This number is yours while your membership is active.</p>
-                    </div>
-                  </div>
-                ) : jerseyStatus === "requested" ? (
-                  // Has a pending request
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-5">
-                      <div className="w-20 h-20 rounded-2xl bg-gold-500/10 border-2 border-gold-500/30 flex items-center justify-center flex-shrink-0">
-                        <span className="text-4xl font-black text-gold-400">#{myRequestedNum}</span>
-                      </div>
-                      <div>
-                        <p className="text-white font-semibold text-lg">Request pending — #{myRequestedNum}</p>
-                        <span className="inline-flex items-center gap-1 text-xs text-gold-400 bg-gold-400/10 border border-gold-400/20 px-2 py-0.5 rounded-full mt-1">
-                          <Clock size={10} /> Awaiting committee approval
-                        </span>
-                        <p className="text-slate-400 text-xs mt-2">The treasurer will review and confirm your number shortly.</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={cancelJerseyRequest}
-                      disabled={jerseySubmitting}
-                      className="btn-ghost text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
-                    >
-                      {jerseySubmitting ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
-                      Cancel request
-                    </button>
-                  </div>
-                ) : (
-                  // No jersey number yet — show request form
-                  <div className="space-y-4">
-                    <p className="text-slate-400 text-sm">You don't have a jersey number yet. Select an available number below to request one.</p>
-                    <div className="flex gap-3">
-                      <select
-                        value={selectedJerseyRequest}
-                        onChange={(e) => setSelectedJerseyRequest(e.target.value)}
-                        className="input flex-1"
-                      >
-                        <option value="">— Select a number —</option>
-                        {availableNumbers.map((n) => (
-                          <option key={n} value={n}>#{n}</option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={requestJerseyNumber}
-                        disabled={!selectedJerseyRequest || jerseySubmitting}
-                        className="btn-primary whitespace-nowrap"
-                      >
-                        {jerseySubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
-                        Request Number
-                      </button>
-                    </div>
-                    <p className="text-slate-500 text-xs">
-                      {availableNumbers.length} number{availableNumbers.length !== 1 ? "s" : ""} available · Numbers 1–99
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {/* Notification Preferences — shown second (quick toggles, no save needed) */}
-              <div className="glass-dark p-6 space-y-5">
-                <div className="border-b border-white/[0.06] pb-3 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-semibold flex items-center gap-2">
-                      <Bell size={18} className="text-brand-400" /> Notification Preferences
-                    </h3>
-                    <p className="text-slate-400 text-xs mt-1">Control which events notify you in-app and by email.</p>
-                  </div>
-                  {notifSaving && <Loader2 size={14} className="animate-spin text-brand-400" />}
-                </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06]">
-                  <div>
-                    <p className="text-sm font-semibold text-white">Email notifications</p>
-                    <p className="text-xs text-slate-500 mt-0.5">Receive emails for the events you enable below</p>
-                  </div>
-                  <button
-                    onClick={async () => {
-                      const v = !notifPrefs.email_enabled;
-                      setNotifPrefs((p) => ({ ...p, email_enabled: v }));
-                      setNotifSaving(true);
-                      await supabase.from("notification_preferences").upsert({ member_id: member.id, email_enabled: v });
-                      setNotifSaving(false);
-                    }}
-                    className={`relative w-12 h-6 rounded-full transition-colors ${notifPrefs.email_enabled ? "bg-brand-500" : "bg-slate-700"}`}
-                  >
-                    <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${notifPrefs.email_enabled ? "translate-x-6" : ""}`} />
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 pb-1">Notify me when&hellip;</p>
-                  {([
-                    { key: "fixture_created",       label: "A new fixture is added",             icon: "🏏" },
-                    { key: "selected_for_team",     label: "I am selected for a squad",          icon: "✅" },
-                    { key: "selection_published",   label: "The team sheet is published",        icon: "📋" },
-                    { key: "availability_reminder", label: "Availability deadline approaching",  icon: "⏰" },
-                    { key: "match_reminder",        label: "A match is tomorrow",                icon: "🔔" },
-                    { key: "status_change",         label: "My membership status changes",       icon: "👤" },
-                    { key: "charge_raised",         label: "A charge is raised on my account",  icon: "💳" },
-                    { key: "jersey_assigned",       label: "My jersey number is assigned",      icon: "👕" },
-                  ] as { key: keyof typeof notifPrefs; label: string; icon: string }[]).map(({ key, label, icon }) => (
-                    <div key={key} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/[0.02] transition-colors">
-                      <span className="flex items-center gap-2.5 text-sm text-slate-300">
-                        <span className="w-5 text-center">{icon}</span> {label}
-                      </span>
-                      <button
-                        onClick={async () => {
-                          const v = !notifPrefs[key];
-                          setNotifPrefs((p) => ({ ...p, [key]: v }));
-                          setNotifSaving(true);
-                          await supabase.from("notification_preferences").upsert({ member_id: member.id, [key]: v });
-                          setNotifSaving(false);
-                        }}
-                        className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${notifPrefs[key] ? "bg-brand-500" : "bg-slate-700"}`}
-                      >
-                        <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${notifPrefs[key] ? "translate-x-5" : ""}`} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Personal Details + Security — ProfileEditor goes last so Save Changes is at bottom */}
               <ProfileEditor
                 member={member}
                 onUpdate={() => {}}
                 supabase={supabase}
+                extraSections={<>
+                  {/* Jersey Number — shown first (informational/request, no save needed) */}
+                  <div className="glass-dark p-6 space-y-4">
+                  <div className="border-b border-white/[0.06] pb-3">
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                  <span className="text-2xl leading-none">👕</span>
+                  Jersey Number
+                  </h3>
+                  <p className="text-slate-400 text-xs mt-1">
+                  Each member has a unique jersey number. Request an available number — the committee will approve and reserve it for you.
+                  Your number remains yours while your membership is active.
+                  </p>
+                  </div>
+
+                  {jerseyLoading ? (
+                  <div className="flex items-center gap-2 py-4 text-slate-400 text-sm">
+                  <Loader2 size={16} className="animate-spin" /> Loading jersey registry…
+                  </div>
+                  ) : jerseyStatus === "reserved" ? (
+                  // Has a confirmed jersey number
+                  <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 rounded-2xl bg-brand-600/20 border-2 border-brand-500/40 flex items-center justify-center flex-shrink-0">
+                  <span className="text-4xl font-black text-brand-300">#{jerseyNumber}</span>
+                  </div>
+                  <div>
+                  <p className="text-white font-semibold text-lg">Your jersey number is #{jerseyNumber}</p>
+                  <span className="inline-flex items-center gap-1 text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full mt-1">
+                  <CheckCircle size={10} /> Reserved
+                  </span>
+                  <p className="text-slate-400 text-xs mt-2">This number is yours while your membership is active.</p>
+                  </div>
+                  </div>
+                  ) : jerseyStatus === "requested" ? (
+                  // Has a pending request
+                  <div className="space-y-4">
+                  <div className="flex items-center gap-5">
+                  <div className="w-20 h-20 rounded-2xl bg-gold-500/10 border-2 border-gold-500/30 flex items-center justify-center flex-shrink-0">
+                  <span className="text-4xl font-black text-gold-400">#{myRequestedNum}</span>
+                  </div>
+                  <div>
+                  <p className="text-white font-semibold text-lg">Request pending — #{myRequestedNum}</p>
+                  <span className="inline-flex items-center gap-1 text-xs text-gold-400 bg-gold-400/10 border border-gold-400/20 px-2 py-0.5 rounded-full mt-1">
+                  <Clock size={10} /> Awaiting committee approval
+                  </span>
+                  <p className="text-slate-400 text-xs mt-2">The treasurer will review and confirm your number shortly.</p>
+                  </div>
+                  </div>
+                  <button
+                  onClick={cancelJerseyRequest}
+                  disabled={jerseySubmitting}
+                  className="btn-ghost text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
+                  >
+                  {jerseySubmitting ? <Loader2 size={12} className="animate-spin" /> : <XCircle size={12} />}
+                  Cancel request
+                  </button>
+                  </div>
+                  ) : (
+                  // No jersey number yet — show request form
+                  <div className="space-y-4">
+                  <p className="text-slate-400 text-sm">You don't have a jersey number yet. Select an available number below to request one.</p>
+                  <div className="flex gap-3">
+                  <select
+                  value={selectedJerseyRequest}
+                  onChange={(e) => setSelectedJerseyRequest(e.target.value)}
+                  className="input flex-1"
+                  >
+                  <option value="">— Select a number —</option>
+                  {availableNumbers.map((n) => (
+                  <option key={n} value={n}>#{n}</option>
+                  ))}
+                  </select>
+                  <button
+                  onClick={requestJerseyNumber}
+                  disabled={!selectedJerseyRequest || jerseySubmitting}
+                  className="btn-primary whitespace-nowrap"
+                  >
+                  {jerseySubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
+                  Request Number
+                  </button>
+                  </div>
+                  <p className="text-slate-500 text-xs">
+                  {availableNumbers.length} number{availableNumbers.length !== 1 ? "s" : ""} available · Numbers 1–99
+                  </p>
+                  </div>
+                  )}
+                  </div>
+
+
+                  {/* Notification Preferences — shown second (quick toggles, no save needed) */}
+                  <div className="glass-dark p-6 space-y-5">
+                  <div className="border-b border-white/[0.06] pb-3 flex items-center justify-between">
+                  <div>
+                  <h3 className="text-white font-semibold flex items-center gap-2">
+                  <Bell size={18} className="text-brand-400" /> Notification Preferences
+                  </h3>
+                  <p className="text-slate-400 text-xs mt-1">Control which events notify you in-app and by email.</p>
+                  </div>
+                  {notifSaving && <Loader2 size={14} className="animate-spin text-brand-400" />}
+                  </div>
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-white/[0.06]">
+                  <div>
+                  <p className="text-sm font-semibold text-white">Email notifications</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Receive emails for the events you enable below</p>
+                  </div>
+                  <button
+                  onClick={async () => {
+                  const v = !notifPrefs.email_enabled;
+                  setNotifPrefs((p) => ({ ...p, email_enabled: v }));
+                  setNotifSaving(true);
+                  await supabase.from("notification_preferences").upsert({ member_id: member.id, email_enabled: v });
+                  setNotifSaving(false);
+                  }}
+                  className={`relative w-12 h-6 rounded-full transition-colors ${notifPrefs.email_enabled ? "bg-brand-500" : "bg-slate-700"}`}
+                  >
+                  <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${notifPrefs.email_enabled ? "translate-x-6" : ""}`} />
+                  </button>
+                  </div>
+                  <div className="space-y-1">
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 pb-1">Notify me when&hellip;</p>
+                  {([
+                  { key: "fixture_created",       label: "A new fixture is added",             icon: "🏏" },
+                  { key: "selected_for_team",     label: "I am selected for a squad",          icon: "✅" },
+                  { key: "selection_published",   label: "The team sheet is published",        icon: "📋" },
+                  { key: "availability_reminder", label: "Availability deadline approaching",  icon: "⏰" },
+                  { key: "match_reminder",        label: "A match is tomorrow",                icon: "🔔" },
+                  { key: "status_change",         label: "My membership status changes",       icon: "👤" },
+                  { key: "charge_raised",         label: "A charge is raised on my account",  icon: "💳" },
+                  { key: "jersey_assigned",       label: "My jersey number is assigned",      icon: "👕" },
+                  ] as { key: keyof typeof notifPrefs; label: string; icon: string }[]).map(({ key, label, icon }) => (
+                  <div key={key} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/[0.02] transition-colors">
+                  <span className="flex items-center gap-2.5 text-sm text-slate-300">
+                  <span className="w-5 text-center">{icon}</span> {label}
+                  </span>
+                  <button
+                  onClick={async () => {
+                  const v = !notifPrefs[key];
+                  setNotifPrefs((p) => ({ ...p, [key]: v }));
+                  setNotifSaving(true);
+                  await supabase.from("notification_preferences").upsert({ member_id: member.id, [key]: v });
+                  setNotifSaving(false);
+                  }}
+                  className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ${notifPrefs[key] ? "bg-brand-500" : "bg-slate-700"}`}
+                  >
+                  <span className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${notifPrefs[key] ? "translate-x-5" : ""}`} />
+                  </button>
+                  </div>
+                  ))}
+                  </div>
+                  </div>
+                </>}
               />
             </div>
           )}
@@ -1042,7 +1042,7 @@ function ChargeCard({ charge, onDeclare }: {
   );
 }
 
-function ProfileEditor({ member, onUpdate, supabase: supabaseProp }: { member: any; onUpdate: () => void; supabase: any }) {
+function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections }: { member: any; onUpdate: () => void; supabase: any; extraSections?: React.ReactNode }) {
   const { updateMember } = useMember(member?.user_id);
   const [profileSection, setProfileSection] = useState<"details" | "security">("details");
   const [form, setForm] = useState({
@@ -1246,6 +1246,9 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp }: { member: a
               </div>
             </div>
           </div>
+
+          {/* Extra sections (e.g. Jersey, Notifications) — details tab only, just above Save */}
+          {extraSections}
 
           <div className="flex items-center gap-4 pb-4">
             <button type="submit" disabled={saving} className="btn-primary">
