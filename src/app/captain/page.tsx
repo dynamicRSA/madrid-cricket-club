@@ -76,28 +76,17 @@ export default function CaptainPage() {
               <p className="text-slate-500 text-xs">{member?.preferred_name || member?.full_legal_name} · {member?.roles?.filter((r: string) => ["captain","vice_captain"].includes(r)).join(", ") || "Captain"}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            {isAdmin && (
-              <Link href="/admin" className="btn-outline btn-sm border-brand-500/40 text-brand-300 text-xs">
-                <ShieldCheck size={13} /> Club Admin
-              </Link>
-            )}
-            <Link href="/dashboard" className="btn-ghost btn-sm text-xs">
-              <Eye size={13} /> Member View
-            </Link>
-            <button onClick={signOut} className="btn-outline btn-sm text-xs hidden sm:flex">
-              <LogOut size={13} /> Sign Out
-            </button>
-          </div>
         </div>
 
+
         {/* Tab nav */}
-        <div className="container-wide px-4 mt-3 tab-pills pb-0">
+        <div className="container-wide px-2 sm:px-4 mt-3">
+          <div className="flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
           {TABS.map(({ id, label, shortLabel, icon: Icon }) => (
             <button
               key={id}
               onClick={() => setTab(id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all border-b-2 ${
+              className={`flex items-center gap-1.5 px-3 py-2.5 rounded-t-xl text-xs sm:text-sm font-medium whitespace-nowrap transition-all border-b-2 shrink-0 ${
                 tab === id
                   ? "text-brand-300 border-brand-500 bg-brand-500/10"
                   : "text-slate-400 border-transparent hover:text-white hover:bg-white/5"
@@ -108,6 +97,7 @@ export default function CaptainPage() {
               <span className="sm:hidden">{shortLabel}</span>
             </button>
           ))}
+          </div>
         </div>
       </section>
 

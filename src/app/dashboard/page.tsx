@@ -1025,8 +1025,8 @@ function ChargeCard({ charge, onDeclare }: {
 }
 
 function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void }) {
-  const supabasePE = createClient();
   const { updateMember } = useMember(member?.user_id);
+  const [profileSection, setProfileSection] = useState<"details" | "security">("details");
   const [form, setForm] = useState({
     preferred_name: member?.preferred_name || "",
     mobile: member?.mobile || "",
@@ -1059,18 +1059,46 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
     setSaved(true);
   }
 
+  if (!member) {
+    return (
+      <div className="glass-dark p-8 text-center">
+        <p className="text-slate-400">Profile not yet created. Please complete the join process first.</p>
+        <Link href="/join" className="btn-primary mt-4 inline-flex">Apply to Join</Link>
+      </div>
+    );
+  }
+
   return (
     <div>
-      <h2 className="text-2xl font-display font-bold text-white mb-6">My Profile</h2>
-      {!member ? (
-        <div className="glass-dark p-8 text-center">
-          <p className="text-slate-400">Profile not yet created. Please complete the join process first.</p>
-          <Link href="/join" className="btn-primary mt-4 inline-flex">Apply to Join</Link>
-        </div>
-      ) : (
-        <form onSubmit={handleSave} className="space-y-6 max-w-2xl">
+      <h2 className="text-2xl font-display font-bold text-white mb-1">My Profile</h2>
+      <p className="text-slate-500 text-sm mb-5">{member.full_legal_name}</p>
+
+      {/* Inner profile tabs */}
+      <div className="flex gap-1 mb-6 border-b border-white/[0.06] overflow-x-auto">
+        {([
+          { id: "details" as const, label: "Profile Details", emoji: "👤" },
+          { id: "security" as const, label: "Account & Security", emoji: "🔑" },
+        ]).map(({ id, label, emoji }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setProfileSection(id)}
+            className={`flex items-center gap-2 px-4 py-2.5 text-sm font-medium whitespace-nowrap rounded-t-xl transition-all border-b-2 -mb-px shrink-0 ${
+              profileSection === id
+                ? "text-brand-300 border-brand-500 bg-brand-500/[0.06]"
+                : "text-slate-400 border-transparent hover:text-white hover:bg-white/[0.04]"
+            }`}
+          >
+            <span>{emoji}</span> {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── DETAILS TAB ── */}
+      {profileSection === "details" && (
+        <form onSubmit={handleSave} className="space-y-5 max-w-2xl">
           {/* Personal */}
-          <div className="glass-dark p-6 space-y-4">
+          <div className="glass-dark p-5 sm:p-6 space-y-4">
             <h3 className="text-white font-semibold">Personal Information</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -1097,7 +1125,7 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
           </div>
 
           {/* Cricket */}
-          <div className="glass-dark p-6 space-y-4">
+          <div className="glass-dark p-5 sm:p-6 space-y-4">
             <h3 className="text-white font-semibold">Cricket Details</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -1124,7 +1152,7 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
           </div>
 
           {/* Emergency */}
-          <div className="glass-dark p-6 space-y-4">
+          <div className="glass-dark p-5 sm:p-6 space-y-4">
             <h3 className="text-white font-semibold">Emergency Contact</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
@@ -1142,10 +1170,10 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
             </div>
           </div>
 
-          {/* ID & Documentation Verification for Committee */}
-          <div className="glass-dark p-6 space-y-4">
+          {/* ID & Documentation */}
+          <div className="glass-dark p-5 sm:p-6 space-y-4">
             <div className="border-b border-white/[0.06] pb-3">
-              <h3 className="text-white font-semibold flex items-center gap-2">
+              <h3 className="text-white font-semibold flex items-center gap-2 flex-wrap">
                 <span>ID &amp; Player Documentation</span>
                 <span className="flex items-center gap-1 text-xs text-green-400 bg-green-400/10 border border-green-400/20 px-2 py-0.5 rounded-full font-normal">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -1153,9 +1181,7 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
                 </span>
               </h3>
               <p className="text-slate-400 text-xs mt-1">Required for Cricket España player registration and official league compliance.</p>
-              <p className="text-slate-500 text-xs mt-1">🔒 Your data is encrypted, stored securely, and used solely for registration purposes. It is never shared with third parties.</p>
             </div>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="label" htmlFor="profile-idtype">ID Type</label>
@@ -1172,14 +1198,12 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
                 <input id="profile-idnum" name="id_number" className="input" value={form.id_number || ""} onChange={handleChange} placeholder="e.g. Y1234567X or Passport #" />
               </div>
             </div>
-
-            {/* Document Uploader */}
             <DocumentUploader memberId={member?.id} />
           </div>
 
           {/* Medical / dietary */}
-          <div className="glass-dark p-6 space-y-4">
-            <h3 className="text-white font-semibold">Medical & Dietary</h3>
+          <div className="glass-dark p-5 sm:p-6 space-y-4">
+            <h3 className="text-white font-semibold">Medical &amp; Dietary</h3>
             <div className="space-y-3">
               <div>
                 <label className="label" htmlFor="profile-dietary">Dietary requirements</label>
@@ -1196,7 +1220,7 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 pb-4">
             <button type="submit" disabled={saving} className="btn-primary">
               {saving ? <><Loader2 size={15} className="animate-spin" /> Saving...</> : "Save Changes"}
             </button>
@@ -1206,16 +1230,35 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
               </span>
             )}
           </div>
-
-          {/* Change Password */}
-          <ChangePasswordCard supabase={supabasePE} />
         </form>
+      )}
+
+      {/* ── SECURITY TAB — a standalone section, never nested in another form ── */}
+      {profileSection === "security" && (
+        <div className="max-w-2xl space-y-5">
+          <div className="glass-dark p-5 sm:p-6 space-y-3">
+            <h3 className="text-white font-semibold">Account Information</h3>
+            <div className="space-y-1 text-sm">
+              <div className="flex items-center gap-3 py-2.5 border-b border-white/[0.04]">
+                <span className="text-slate-500 w-20 shrink-0">Email</span>
+                <span className="text-slate-300 break-all">{member.email}</span>
+              </div>
+              <div className="flex items-center gap-3 py-2.5">
+                <span className="text-slate-500 w-20 shrink-0">Status</span>
+                <span className={`capitalize font-medium ${member.status === "active" ? "text-green-400" : "text-amber-400"}`}>
+                  {member.status?.replace(/_/g, " ") || "Member"}
+                </span>
+              </div>
+            </div>
+          </div>
+          <ChangePasswordCard />
+        </div>
       )}
     </div>
   );
 }
 
-function ChangePasswordCard({ supabase }: { supabase: any }) {
+function ChangePasswordCard() {
   const [newPw, setNewPw] = useState("");
   const [confirmPw, setConfirmPw] = useState("");
   const [showPw, setShowPw] = useState(false);
@@ -1223,60 +1266,109 @@ function ChangePasswordCard({ supabase }: { supabase: any }) {
   const [done, setDone] = useState(false);
   const [err, setErr] = useState("");
 
-  async function handleChange(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr("");
     setDone(false);
     if (newPw.length < 8) { setErr("Password must be at least 8 characters."); return; }
     if (newPw !== confirmPw) { setErr("Passwords do not match."); return; }
     setSaving(true);
-    const { error } = await supabase.auth.updateUser({ password: newPw });
+    try {
+      // Create a fresh client so we always have the current session from cookies
+      const sb = createClient();
+      const { data: sessionData } = await sb.auth.getSession();
+      if (!sessionData?.session) {
+        setErr("You must be signed in to change your password. Please refresh and try again.");
+        setSaving(false);
+        return;
+      }
+      const { error } = await sb.auth.updateUser({ password: newPw });
+      if (error) { setErr(error.message); }
+      else { setDone(true); setNewPw(""); setConfirmPw(""); }
+    } catch (ex: any) {
+      setErr(ex?.message || "Something went wrong.");
+    }
     setSaving(false);
-    if (error) { setErr(error.message); }
-    else { setDone(true); setNewPw(""); setConfirmPw(""); }
   }
 
   return (
-    <div className="glass-dark p-6 space-y-4 border border-white/[0.04]">
-      <div className="flex items-center gap-2">
-        <span className="text-base">🔑</span>
-        <h3 className="text-white font-semibold">Change Password</h3>
+    <div className="glass-dark p-5 sm:p-6 space-y-4">
+      <div>
+        <h3 className="text-white font-semibold flex items-center gap-2">
+          <span>🔑</span> Change Password
+        </h3>
+        <p className="text-slate-400 text-xs mt-1">
+          Set or update your sign-in password. Must be at least 8 characters.<br />
+          After saving, use your new password next time you sign in.
+        </p>
       </div>
-      <p className="text-slate-400 text-xs">Set or update your sign-in password. Must be at least 8 characters.</p>
-      <form onSubmit={handleChange} className="space-y-3 max-w-sm">
-        <div className="relative">
+
+      <form onSubmit={handleSubmit} className="space-y-3 max-w-sm">
+        <div>
+          <label className="label" htmlFor="profile-newpw">New password</label>
+          <div className="relative">
+            <input
+              id="profile-newpw"
+              type={showPw ? "text" : "password"}
+              value={newPw}
+              onChange={(e) => { setNewPw(e.target.value); setDone(false); }}
+              className="input pr-10"
+              placeholder="At least 8 characters"
+              autoComplete="new-password"
+            />
+            <button type="button" onClick={() => setShowPw((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
+              {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label className="label" htmlFor="profile-confirmpw">Confirm new password</label>
           <input
-            id="profile-newpw"
+            id="profile-confirmpw"
             type={showPw ? "text" : "password"}
-            value={newPw}
-            onChange={(e) => { setNewPw(e.target.value); setDone(false); }}
-            className="input pr-10"
-            placeholder="New password"
+            value={confirmPw}
+            onChange={(e) => { setConfirmPw(e.target.value); setDone(false); }}
+            className="input"
+            placeholder="Repeat your password"
             autoComplete="new-password"
           />
-          <button type="button" onClick={() => setShowPw((v) => !v)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300">
-            {showPw ? <EyeOff size={15} /> : <Eye size={15} />}
-          </button>
         </div>
-        <input
-          id="profile-confirmpw"
-          type={showPw ? "text" : "password"}
-          value={confirmPw}
-          onChange={(e) => { setConfirmPw(e.target.value); setDone(false); }}
-          className="input"
-          placeholder="Confirm new password"
-          autoComplete="new-password"
-        />
-        {err && <p className="text-red-400 text-xs">{err}</p>}
-        {done && <p className="text-green-400 text-xs flex items-center gap-1"><CheckCircle size={12} /> Password updated successfully!</p>}
-        <button type="submit" disabled={saving || !newPw || !confirmPw} className="btn-primary btn-sm text-sm">
-          {saving ? <><Loader2 size={13} className="animate-spin" /> Saving...</> : "Update Password"}
+
+        {/* Strength bar */}
+        {newPw.length > 0 && (
+          <div className="space-y-1">
+            <div className="flex gap-1">
+              {[8, 10, 12, 14].map((min) => (
+                <div key={min} className={`h-1 flex-1 rounded-full transition-all ${newPw.length >= min ? "bg-brand-500" : "bg-white/10"}`} />
+              ))}
+            </div>
+            <p className="text-slate-500 text-xs">
+              {newPw.length < 8 ? "Too short" : newPw.length < 10 ? "Acceptable" : newPw.length < 12 ? "Good" : "Strong"}
+            </p>
+          </div>
+        )}
+
+        {err && (
+          <div className="flex items-start gap-2 bg-red-500/10 border border-red-500/30 text-red-300 text-xs p-3 rounded-xl">
+            <span className="shrink-0 mt-0.5">⚠️</span> {err}
+          </div>
+        )}
+        {done && (
+          <div className="flex items-center gap-2 text-green-400 text-xs bg-green-400/10 border border-green-400/20 p-3 rounded-xl">
+            <CheckCircle size={14} /> Password updated! Use your new password next time you sign in.
+          </div>
+        )}
+
+        <button type="submit" disabled={saving || !newPw || !confirmPw} className="btn-primary">
+          {saving ? <><Loader2 size={14} className="animate-spin" /> Updating...</> : "Update Password"}
         </button>
       </form>
     </div>
   );
 }
+
 
 function DocumentUploader({ memberId }: { memberId?: string }) {
   const [docs, setDocs] = useState([

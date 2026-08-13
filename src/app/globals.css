@@ -454,3 +454,112 @@
   background: #0d1420;
 }
 
+/* ─── Scrollbar-hide utility ─── */
+.scrollbar-hide { scrollbar-width: none; -ms-overflow-style: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+
+/* ─────────────────────────────────────────────
+   COMPREHENSIVE MOBILE UX — logged-in areas
+   ──────────────────────────────────────────── */
+@media (max-width: 640px) {
+
+  /* Dashboard content clears the fixed bottom nav */
+  .dashboard-content {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  /* Panel headers — stack nicely on mobile */
+  .panel-header {
+    padding-top: 1rem;
+  }
+
+  /* Taller tap targets on select/dropdowns */
+  select.input, textarea.input {
+    min-height: 48px;
+  }
+
+  /* Profile inner tabs — full width scroll */
+  .profile-tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .profile-tabs::-webkit-scrollbar { display: none; }
+
+  /* Glass cards in profile forms — tighter padding */
+  .glass-dark.p-6 {
+    padding: 1rem !important;
+  }
+
+  /* Bottom navigation active indicator larger */
+  nav.mobile-bottom-nav button svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Member status badge — readable size */
+  .badge {
+    font-size: 11px;
+    padding: 2px 8px;
+  }
+
+  /* Tables inside cards — horizontal scroll */
+  table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  /* Action rows wrap cleanly */
+  .flex-wrap-mobile {
+    flex-wrap: wrap;
+  }
+
+  /* Section headings inside cards */
+  .glass-dark h3 {
+    font-size: 0.95rem;
+  }
+
+  /* Stat cards compact */
+  .stat-card {
+    padding: 0.875rem;
+  }
+}
+
+/* ─── Desktop improvements for logged-in pages ─── */
+@media (min-width: 640px) {
+  /* Give panel content area breathing room */
+  .panel-content {
+    padding: 2rem 0;
+  }
+
+  /* Side-by-side profile form grid */
+  .profile-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .profile-grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1rem;
+  }
+}
+
+/* ─── Match card improvements ─── */
+.match-card-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+@media (max-width: 640px) {
+  .match-card-actions {
+    flex-direction: column;
+  }
+  .match-card-actions button,
+  .match-card-actions a {
+    width: 100%;
+    justify-content: center;
+  }
+}
