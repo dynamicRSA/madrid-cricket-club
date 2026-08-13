@@ -12,6 +12,7 @@ import { useMember } from "@/hooks/useMember";
 import { useAvailability } from "@/hooks/useAvailability";
 import { useCharges } from "@/hooks/useCharges";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n";
 import { parseTourMeta, serializeTourMeta, STAGE_LABELS, type TourMeta, type TourGame } from "@/lib/eventHelpers";
 import { EVENTS } from "@/lib/mock-data";
 import { formatDateShort } from "@/lib/utils";
@@ -253,11 +254,11 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
         {/* Desktop tab nav — hidden on mobile (bottom nav used instead) */}
         <div className="container-wide px-4 mt-4 hidden lg:flex gap-1 overflow-x-auto pb-1 tab-pills">
           {([
-            { id: "overview", label: "Overview", icon: Bell },
-            { id: "confirmations", label: "My Matches", icon: CheckCircle },
-            { id: "availability", label: "Availability", icon: Calendar },
-            { id: "charges", label: "Dues & Payments", icon: CreditCard },
-            { id: "profile", label: "Profile", icon: User },
+            { id: "overview", label: t("dash.tab.overview"), icon: Bell },
+            { id: "confirmations", label: t("dash.tab.my_matches"), icon: CheckCircle },
+            { id: "availability", label: t("dash.tab.availability"), icon: Calendar },
+            { id: "charges", label: t("dash.tab.dues_payments"), icon: CreditCard },
+            { id: "profile", label: t("dash.tab.profile"), icon: User },
           ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -278,11 +279,11 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
       {/* Mobile bottom navigation bar */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex mobile-bottom-nav" style={{ background: "rgba(8,15,24,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", paddingBottom: "env(safe-area-inset-bottom)" }}>
         {([
-          { id: "overview", label: "Overview", icon: Bell },
-          { id: "confirmations", label: "Matches", icon: CheckCircle, badge: isSelectedForMatch },
-          { id: "availability", label: "Availability", icon: Calendar },
-          { id: "charges", label: "Dues", icon: CreditCard, badge: pendingCharges.length > 0 },
-          { id: "profile", label: "Profile", icon: User },
+          { id: "overview", label: t("dash.tab.overview"), icon: Bell },
+          { id: "confirmations", label: t("dash.tab.matches"), icon: CheckCircle, badge: isSelectedForMatch },
+          { id: "availability", label: t("dash.tab.availability"), icon: Calendar },
+          { id: "charges", label: t("dash.tab.dues"), icon: CreditCard, badge: pendingCharges.length > 0 },
+          { id: "profile", label: t("dash.tab.profile"), icon: User },
         ] as { id: Tab; label: string; icon: any; badge?: boolean }[]).map(({ id, label, icon: Icon, badge }) => (
           <button
             key={id}
@@ -406,9 +407,9 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
               <div className="space-y-4">
                 {/* Quick stats */}
                 {[
-                  { label: "Availability set", value: availability.length, icon: Calendar, color: "text-brand-400" },
-                  { label: "Outstanding charges", value: `€${totalOutstanding.toFixed(0)}`, icon: CreditCard, color: "text-gold-400" },
-                  { label: "Member since", value: member?.created_at ? new Date(member.created_at).getFullYear().toString() : "—", icon: Clock, color: "text-blue-400" },
+                  { label: t("dash.overview.availability_set"), value: availability.length, icon: Calendar, color: "text-brand-400" },
+                  { label: t("dash.overview.outstanding_charges"), value: `€${totalOutstanding.toFixed(0)}`, icon: CreditCard, color: "text-gold-400" },
+                  { label: t("dash.overview.member_since"), value: member?.created_at ? new Date(member.created_at).getFullYear().toString() : "—", icon: Clock, color: "text-blue-400" },
                 ].map((stat) => (
                   <div key={stat.label} className="glass-dark p-4 flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${stat.color}`}>
@@ -427,12 +428,12 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                     <h3 className="text-white font-semibold text-sm mb-3">Profile completeness</h3>
                     {(() => {
                       const fields = [
-                        { key: "mobile", label: "Phone number" },
-                        { key: "date_of_birth", label: "Date of birth" },
-                        { key: "nationality", label: "Nationality" },
-                        { key: "emergency_name", label: "Emergency contact" },
-                        { key: "playing_role", label: "Playing role" },
-                        { key: "kit_size", label: "Kit size" },
+                        { key: "mobile", label: t("dash.profile.phone") },
+                        { key: "date_of_birth", label: t("dash.profile.dob") },
+                        { key: "nationality", label: t("dash.profile.nationality") },
+                        { key: "emergency_name", label: t("dash.profile.emergency") },
+                        { key: "playing_role", label: t("dash.profile.playing_role") },
+                        { key: "kit_size", label: t("dash.profile.kit_size") },
                       ];
                       const filled = fields.filter((f) => !!(member as any)[f.key]);
                       const pct = Math.round((filled.length / fields.length) * 100);
@@ -514,9 +515,9 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
 
                         <div className="flex gap-2 shrink-0">
                           {([
-                            { s: "available" as const, icon: CheckCircle, label: "Available", active: "bg-brand-500/20 border-brand-500 text-brand-300" },
+                            { s: "available" as const, icon: CheckCircle, label: t("dash.status.available"), active: "bg-brand-500/20 border-brand-500 text-brand-300" },
                             { s: "maybe" as const, icon: HelpCircle, label: "Maybe", active: "bg-gold-500/20 border-gold-500 text-gold-300" },
-                            { s: "not_available" as const, icon: XCircle, label: "Not available", active: "bg-red-500/20 border-red-500 text-red-300" },
+                            { s: "not_available" as const, icon: XCircle, label: t("dash.status.not_available"), active: "bg-red-500/20 border-red-500 text-red-300" },
                           ]).map(({ s, icon: Icon, label, active }) => (
                             <button
                               key={s}
@@ -872,14 +873,14 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                   <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 pb-1">Notify me when&hellip;</p>
                   {([
-                  { key: "fixture_created",       label: "A new fixture is added",             icon: Calendar },
-                  { key: "selected_for_team",     label: "I am selected for a squad",          icon: CheckCircle },
-                  { key: "selection_published",   label: "The team sheet is published",        icon: Bell },
-                  { key: "availability_reminder", label: "Availability deadline approaching",  icon: Clock },
-                  { key: "match_reminder",        label: "A match is tomorrow",                icon: AlertCircle },
-                  { key: "status_change",         label: "My membership status changes",       icon: User },
-                  { key: "charge_raised",         label: "A charge is raised on my account",  icon: CreditCard },
-                  { key: "jersey_assigned",       label: "My jersey number is assigned",       icon: Shirt },
+                  { key: "fixture_created",       label: t("dash.notifications.new_fixture"),             icon: Calendar },
+                  { key: "selected_for_team",     label: t("dash.notifications.selected"),          icon: CheckCircle },
+                  { key: "selection_published",   label: t("dash.notifications.squad_published"),        icon: Bell },
+                  { key: "availability_reminder", label: t("dash.notifications.deadline"),  icon: Clock },
+                  { key: "match_reminder",        label: t("dash.notifications.match_tomorrow"),                icon: AlertCircle },
+                  { key: "status_change",         label: t("dash.notifications.status_change"),       icon: User },
+                  { key: "charge_raised",         label: t("dash.notifications.charge"),  icon: CreditCard },
+                  { key: "jersey_assigned",       label: t("dash.notifications.jersey"),       icon: Shirt },
                   ] as { key: keyof typeof notifPrefs; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
                   <div key={key} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/[0.02] transition-colors">
                   <span className="flex items-center gap-2.5 text-sm text-slate-300">
@@ -1061,7 +1062,7 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
 
   if (!member) {
     return (
-      <EmptyState icon={User} title="Profile not yet created." message="Please complete the join process first to access your profile." action={<Link href="/join" className="btn-primary inline-flex">Apply to Join</Link>} />
+      <EmptyState icon={User} title={t("dash.profile.no_profile")} message={t("dash.profile.complete_join")} action={<Link href="/join" className="btn-primary inline-flex">Apply to Join</Link>} />
     );
   }
 
@@ -1074,7 +1075,7 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
       <div className="flex gap-1 mb-6 border-b border-white/[0.06] overflow-x-auto">
         {([
           { id: "details" as const, label: "Profile Details", icon: User },
-          { id: "security" as const, label: "Account & Security", icon: Lock },
+          { id: "security" as const, label: t("dash.profile.account"), icon: Lock },
         ]).map(({ id, label, icon: Icon }) => (
           <button
             key={id}

@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/supabase";
 import { EmptyState } from "@/components/EmptyState";
@@ -107,11 +108,11 @@ export default function AdminPage() {
           {/* Desktop: horizontal pill tabs */}
           <div className="hidden lg:flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide">
           {([
-            { id: "applications", label: "Applications & Renewals", shortLabel: "Review", icon: CheckCircle },
-            { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
-            ...(isTreasurer ? [{ id: "payments", label: "Payments", shortLabel: "Payments", icon: CreditCard }] : []),
-            { id: "jersey", label: "Jersey Numbers", shortLabel: "Jerseys", icon: Shirt },
-            { id: "reports", label: "Reports", shortLabel: "Reports", icon: BarChart3 },
+            { id: "applications", label: t("admin.tab.applications"), shortLabel: t("admin.tab.review"), icon: CheckCircle },
+            { id: "members", label: t("admin.tab.members"), shortLabel: t("admin.tab.members_short"), icon: Users },
+            ...(isTreasurer ? [{ id: "payments", label: t("admin.tab.payments"), shortLabel: t("admin.tab.payments"), icon: CreditCard }] : []),
+            { id: "jersey", label: t("admin.tab.jersey"), shortLabel: t("admin.tab.jerseys"), icon: Shirt },
+            { id: "reports", label: t("admin.tab.reports"), shortLabel: t("admin.tab.reports"), icon: BarChart3 },
           ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
@@ -144,11 +145,11 @@ export default function AdminPage() {
       {/* Mobile bottom nav — matches Dashboard style */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex" style={{ background: "rgba(8,15,24,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", paddingBottom: "env(safe-area-inset-bottom)" }}>
         {([
-          { id: "applications", label: "Review",  icon: CheckCircle },
-          { id: "members",      label: "Members",  icon: Users },
-          ...(isTreasurer ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
-          { id: "jersey",       label: "Jerseys",  icon: Shirt },
-          { id: "reports",      label: "Reports",  icon: BarChart3 },
+          { id: "applications", label: t("admin.tab.review"),  icon: CheckCircle },
+          { id: "members",      label: t("admin.tab.members_short"),  icon: Users },
+          ...(isTreasurer ? [{ id: "payments", label: t("admin.tab.payments"), icon: CreditCard }] : []),
+          { id: "jersey",       label: t("admin.tab.jerseys"),  icon: Shirt },
+          { id: "reports",      label: t("admin.tab.reports"),  icon: BarChart3 },
         ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -349,9 +350,9 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
   }
 
   const FILTER_TABS = [
-    { id: "pending", label: "Pending Applications", count: null },
-    { id: "renewal_due", label: "Renewal Due", count: null },
-    { id: "recent", label: "Recently Decided", count: null },
+    { id: "pending", label: t("admin.applications.pending"), count: null },
+    { id: "renewal_due", label: t("admin.applications.renewal"), count: null },
+    { id: "recent", label: t("admin.applications.recent"), count: null },
   ] as { id: typeof filter; label: string; count: number | null }[];
 
   const statusColor: Record<string, string> = {
@@ -461,13 +462,13 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
               {/* Member details grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 {[
-                  { label: "Nationality", value: m.nationality || "—" },
-                  { label: "Playing Role", value: m.playing_role || "—" },
-                  { label: "Date of Birth", value: m.date_of_birth ? new Date(m.date_of_birth).toLocaleDateString("en-GB") : "—" },
-                  { label: "Mobile", value: m.mobile || "—" },
-                  { label: "Joined", value: m.created_at ? new Date(m.created_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
+                  { label: t("admin.member.nationality"), value: m.nationality || "—" },
+                  { label: t("admin.member.playing_role"), value: m.playing_role || "—" },
+                  { label: t("admin.member.dob"), value: m.date_of_birth ? new Date(m.date_of_birth).toLocaleDateString("en-GB") : "—" },
+                  { label: t("admin.member.mobile"), value: m.mobile || "—" },
+                  { label: t("admin.member.joined"), value: m.created_at ? new Date(m.created_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
                   { label: "Last Updated", value: m.updated_at ? new Date(m.updated_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
-                  { label: "Dietary", value: m.dietary_requirements || "None stated" },
+                  { label: t("admin.member.dietary"), value: m.dietary_requirements || "None stated" },
                   { label: "Kit Size", value: m.kit_size || "—" },
                 ].map(({ label, value }) => (
                   <div key={label}>

@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
+import { useLanguage } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
 import {
   Calendar, CheckCircle, XCircle, Clock, Loader2, LogOut,
@@ -56,9 +57,9 @@ export default function CaptainPage() {
   const isSuperAdmin = user?.email?.toLowerCase() === "svenprinsloo@gmail.com" || member?.roles?.includes("super_admin");
 
   const TABS = [
-    { id: "selection",   label: "Team Selection", shortLabel: "Selection",   icon: CheckCircle },
-    { id: "availability", label: "Who Can Play",   shortLabel: "Availability", icon: Calendar },
-    { id: "logistics",   label: "Match Logistics", shortLabel: "Logistics",   icon: Car },
+    { id: "selection",   label: t("cap.tab.selection"),   shortLabel: t("cap.tab.selection_short"),   icon: CheckCircle },
+    { id: "availability", label: t("cap.tab.availability"), shortLabel: t("cap.tab.availability_short"), icon: Calendar },
+    { id: "logistics",   label: t("cap.tab.logistics"),   shortLabel: t("cap.tab.logistics_short"),   icon: Car },
   ] as { id: Tab; label: string; shortLabel: string; icon: any }[];
 
   return (
@@ -588,7 +589,7 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
 
       {/* ── Event selector + stage panel ──────────────────────────────────────── */}
       {events.length === 0 ? (
-        <EmptyState icon={Trophy} title="No fixtures or tours created yet." action={<button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm">Create your first fixture</button>} />
+        <EmptyState icon={Trophy} title={t("cap.no_fixtures")} action={<button onClick={() => setShowCreateModal(true)} className="btn-primary btn-sm">Create your first fixture</button>} />
       ) : (
         <>
           {/* Event selector */}
@@ -649,12 +650,12 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {([
-                    { id: "draft",         label: "Draft" },
-                    { id: "published",     label: "Published" },
-                    { id: "squad_open",    label: "Registration Open" },
-                    { id: "squad_locked",  label: "Squad Published" },
-                    { id: "choices_open",  label: "Choices Open" },
-                    { id: "completed",     label: "Done" },
+                    { id: "draft",         label: t("cap.status.draft") },
+                    { id: "published",     label: t("cap.status.published") },
+                    { id: "squad_open",    label: t("cap.status.squad_open") },
+                    { id: "squad_locked",  label: t("cap.status.squad_locked") },
+                    { id: "choices_open",  label: t("cap.status.choices_open") },
+                    { id: "completed",     label: t("cap.status.completed") },
                   ].map(({ id, label }, i) => id === currentStage ? (
                     <span key={id} className="text-xs font-semibold text-brand-300 bg-brand-500/15 border border-brand-500/30 px-2 py-0.5 rounded-full">
                       {i + 1}/6 · {label}
@@ -693,9 +694,9 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
           {/* Mobile: 3-column card grid */}
           <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-1">
             {[
-              { id: "events",    label: "Fixture Details",  shortLabel: "Details",   icon: Calendar },
-              { id: "squad",     label: `Squad & XIs`,       shortLabel: "Squad",     icon: Users },
-              { id: "responses", label: "Player Responses", shortLabel: "Responses", icon: CheckCircle },
+              { id: "events",    label: t("cap.subtab.details"),   shortLabel: t("cap.subtab.details_short"),   icon: Calendar },
+              { id: "squad",     label: t("cap.subtab.squad"),         shortLabel: t("cap.subtab.squad_short"),     icon: Users },
+              { id: "responses", label: t("cap.subtab.responses"),   shortLabel: t("cap.subtab.responses_short"), icon: CheckCircle },
             ].map(({ id, label, shortLabel, icon: Icon }) => (
               <button
                 key={id}
@@ -1012,10 +1013,10 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
                           const declined = poolMembers.filter((id: string) => tourMeta.player_responses[id]?.declined).length;
                           const pending = poolMembers.length - confirmed - declined;
                           return [
-                            { label: "In Squad Pool", value: poolMembers.length, color: "text-brand-400" },
-                            { label: "Confirmed", value: confirmed, color: "text-brand-400" },
-                            { label: "Declined", value: declined, color: "text-red-400" },
-                            { label: "Pending", value: pending, color: "text-gold-400" },
+                            { label: t("cap.squad.in_pool"), value: poolMembers.length, color: "text-brand-400" },
+                            { label: t("cap.squad.confirmed"), value: confirmed, color: "text-brand-400" },
+                            { label: t("cap.squad.declined"), value: declined, color: "text-red-400" },
+                            { label: t("cap.squad.pending"), value: pending, color: "text-gold-400" },
                           ].map(({ label, value, color }) => (
                             <div key={label} className="glass-dark p-4 text-center">
                               <p className={`text-2xl font-bold ${color}`}>{value}</p>
