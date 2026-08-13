@@ -1443,3 +1443,87 @@ async function resizeImage(file: File, maxPx: number): Promise<Blob> {
     img.src = url;
   });
 }
+
+// ─── AvatarUploadCard ──────────────────────────────────────────────────────────
+// Was referenced in ProfileEditor's details tab but never defined — added here.
+function AvatarUploadCard({
+  member,
+  onAvatarChange,
+}: {
+  member: any;
+  onAvatarChange: (url: string) => void;
+}) {
+  const supabase = createClient();
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [preview, setPreview] = useState<string | null>(member?.avatar_url || null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const displayName = member?.preferred_name || member?.full_legal_name || "Member";
+  const initials = displayName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadError("");
+    setUploading(true);
+    try {
+      const blob = await resizeImage(file, 400);
+      const path = `${member.id}/avatar.jpg`;
+      const { error: uploadErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, blob, { upsert: true, contentType: "image/jpeg" });
+      if (uploadErr) throw uploadErr;
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = `${data.publicUrl}?t=${Date.now()}`;
+      setPreview(url);
+      onAvatarChange(url);
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed. Ensure the avatars storage bucket exists.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="glass-dark p-5 rounded-2xl flex items-center gap-5 border border-white/[0.06]">
+      {/* Avatar */}
+      <div className="relative shrink-0">
+        {preview ? (
+          <img src={preview} alt="Profile" className="w-20 h-20 rounded-full object-cover border-2 border-brand-500/40" />
+        ) : (
+          <div className="w-20 h-20 rounded-full bg-brand-700/60 border-2 border-brand-500/30 flex items-center justify-center text-white text-2xl font-bold select-none">
+            {initials}
+          </div>
+        )}
+        {uploading && (
+          <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+            <Loader2 size={20} className="animate-spin text-brand-400" />
+          </div>
+        )}
+      </div>
+      {/* Controls */}
+      <div className="flex-1 min-w-0">
+        <p className="text-white font-semibold text-sm mb-0.5">Profile Photo</p>
+        <p className="text-slate-500 text-xs mb-3">JPEG or PNG · auto-resized to 400 × 400 px</p>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={handleFile}
+        />
+        <button
+          type="button"
+          disabled={uploading}
+          onClick={() => fileInputRef.current?.click()}
+          className="btn-outline btn-sm text-xs"
+        >
+          {uploading ? <><Loader2 size={12} className="animate-spin" /> Uploading…</> : "Change Photo"}
+        </button>
+        {uploadError && <p className="text-red-400 text-xs mt-2">{uploadError}</p>}
+      </div>
+    </div>
+  );
+}
