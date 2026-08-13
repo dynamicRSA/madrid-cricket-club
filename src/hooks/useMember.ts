@@ -35,6 +35,7 @@ type MemberRow = {
   registration_status: string;
   created_at: string;
   updated_at: string;
+  avatar_url: string | null;
 };
 
 export function useMember(userId?: string) {

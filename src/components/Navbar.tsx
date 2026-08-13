@@ -71,7 +71,7 @@ export default function Navbar() {
 
   async function loadMember(u: any) {
     const isSven = u.email?.toLowerCase() === "svenprinsloo@gmail.com";
-    const { data } = await supabase.from("members").select("id,roles,preferred_name,full_legal_name,status").eq("user_id", u.id).single();
+    const { data } = await supabase.from("members").select("id,roles,preferred_name,full_legal_name,status,avatar_url").eq("user_id", u.id).single();
     if (isSven) {
       setMember({ ...(data || {}), roles: ["super_admin","admin","captain","vice_captain","treasurer","secretary"] });
     } else {
@@ -131,10 +131,18 @@ export default function Navbar() {
                   onClick={() => setUserMenuOpen((v) => !v)}
                   className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full bg-white/[0.06] border border-white/10 hover:bg-white/10 transition-colors text-sm"
                 >
-                  {/* Avatar circle */}
-                  <span className="w-7 h-7 rounded-full bg-brand-700/60 border border-brand-500/30 flex items-center justify-center text-white text-xs font-bold shrink-0">
-                    {initials}
-                  </span>
+                  {/* Avatar circle — photo or initials */}
+                  {member?.avatar_url ? (
+                    <img
+                      src={member.avatar_url}
+                      alt={displayName || "Avatar"}
+                      className="w-7 h-7 rounded-full object-cover border border-white/20 shrink-0"
+                    />
+                  ) : (
+                    <span className="w-7 h-7 rounded-full bg-brand-700/60 border border-brand-500/30 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                      {initials}
+                    </span>
+                  )}
                   <span className="text-white font-medium max-w-[100px] truncate">{displayName || "Account"}</span>
                   <ChevronDown size={13} className={cn("text-slate-400 transition-transform", userMenuOpen && "rotate-180")} />
                 </button>
@@ -224,9 +232,17 @@ export default function Navbar() {
           {/* If logged in, show user identity strip */}
           {loggedIn && (
             <div className="px-4 py-3 border-b border-white/[0.06] flex items-center gap-3 bg-white/[0.02]">
-              <span className="w-9 h-9 rounded-full bg-brand-700/60 border border-brand-500/30 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                {initials}
-              </span>
+              {member?.avatar_url ? (
+                <img
+                  src={member.avatar_url}
+                  alt={displayName || "Avatar"}
+                  className="w-10 h-10 rounded-full object-cover border border-white/20 shrink-0"
+                />
+              ) : (
+                <span className="w-10 h-10 rounded-full bg-brand-700/60 border border-brand-500/30 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                  {initials}
+                </span>
+              )}
               <div className="min-w-0">
                 <p className="text-white text-sm font-semibold truncate">{displayName || "Member"}</p>
                 <p className="text-slate-500 text-xs truncate">{user?.email}</p>

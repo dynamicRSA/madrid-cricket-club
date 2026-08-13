@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -1097,6 +1097,15 @@ function ProfileEditor({ member, onUpdate }: { member: any; onUpdate: () => void
       {/* ── DETAILS TAB ── */}
       {profileSection === "details" && (
         <form onSubmit={handleSave} className="space-y-5 max-w-2xl">
+          {/* ── Profile Photo ── */}
+          <AvatarUploadCard
+            member={member}
+            onAvatarChange={(url) => {
+              // updateMember handles the DB write; we pass the new URL directly
+              updateMember({ avatar_url: url } as any);
+            }}
+          />
+
           {/* Personal */}
           <div className="glass-dark p-5 sm:p-6 space-y-4">
             <h3 className="text-white font-semibold">Personal Information</h3>
@@ -1451,3 +1460,178 @@ function DocumentUploader({ memberId }: { memberId?: string }) {
   );
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AvatarUploadCard — profile photo upload with Supabase Storage
+// ─────────────────────────────────────────────────────────────────────────────
+function AvatarUploadCard({
+  member,
+  onAvatarChange,
+}: {
+  member: any;
+  onAvatarChange: (url: string | null) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [preview, setPreview] = useState<string | null>(member?.avatar_url || null);
+  const [err, setErr] = useState("");
+  const fileRef = useRef<HTMLInputElement>(null);
+  const supabase = createClient();
+
+  const initials = (() => {
+    const name = member?.preferred_name || member?.full_legal_name || "?";
+    return name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase();
+  })();
+
+  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setErr("");
+
+    // Validate
+    if (!file.type.startsWith("image/")) { setErr("Please choose an image file."); return; }
+    if (file.size > 5 * 1024 * 1024) { setErr("Image must be under 5 MB."); return; }
+
+    setUploading(true);
+
+    try {
+      // Resize to 400×400 via canvas to keep storage small
+      const resized = await resizeImage(file, 400);
+
+      const ext = file.type === "image/png" ? "png" : "jpg";
+      const path = `${member.id}/avatar.${ext}`;
+
+      const { error: upErr } = await supabase.storage
+        .from("avatars")
+        .upload(path, resized, { upsert: true, contentType: resized.type });
+
+      if (upErr) { setErr(upErr.message); setUploading(false); return; }
+
+      const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
+      // Bust cache so the new image loads immediately
+      const publicUrl = `${urlData.publicUrl}?t=${Date.now()}`;
+
+      setPreview(publicUrl);
+      onAvatarChange(publicUrl);
+    } catch (ex: any) {
+      setErr(ex?.message || "Upload failed.");
+    }
+    setUploading(false);
+    // Reset input so same file can be re-selected
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  async function handleRemove() {
+    if (!member?.id) return;
+    setUploading(true);
+    // Delete both jpg and png variants (we don't know which was uploaded)
+    await supabase.storage.from("avatars").remove([`${member.id}/avatar.jpg`, `${member.id}/avatar.png`]);
+    setPreview(null);
+    onAvatarChange(null);
+    setUploading(false);
+  }
+
+  return (
+    <div className="glass-dark p-5 sm:p-6">
+      <h3 className="text-white font-semibold mb-4">Profile Photo</h3>
+      <div className="flex items-center gap-5 flex-wrap">
+        {/* Avatar display */}
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="relative group shrink-0 focus:outline-none"
+          title="Click to upload a photo"
+        >
+          {preview ? (
+            <img
+              src={preview}
+              alt="Profile photo"
+              className="w-24 h-24 rounded-full object-cover border-2 border-brand-500/40 transition-all group-hover:opacity-80"
+            />
+          ) : (
+            <div className="w-24 h-24 rounded-full bg-brand-700/40 border-2 border-brand-500/30 border-dashed flex items-center justify-center text-3xl font-black text-brand-300 transition-all group-hover:bg-brand-700/60">
+              {initials}
+            </div>
+          )}
+          {/* Camera overlay */}
+          <span className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            {uploading ? (
+              <Loader2 size={22} className="text-white animate-spin" />
+            ) : (
+              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" className="w-7 h-7">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <circle cx="12" cy="13" r="4"/>
+              </svg>
+            )}
+          </span>
+        </button>
+
+        {/* Text instructions and actions */}
+        <div className="space-y-2 min-w-0">
+          <p className="text-white font-medium text-sm">
+            {preview ? "Change your photo" : "Add a profile photo"}
+          </p>
+          <p className="text-slate-400 text-xs leading-relaxed">
+            JPG or PNG, max 5 MB.<br />
+            Your photo appears in the team selector and articles.
+          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              className="btn-outline btn-sm text-xs"
+            >
+              {uploading ? <><Loader2 size={12} className="animate-spin" /> Uploading...</> : preview ? "Change Photo" : "Upload Photo"}
+            </button>
+            {preview && (
+              <button
+                type="button"
+                onClick={handleRemove}
+                disabled={uploading}
+                className="btn-ghost btn-sm text-xs text-slate-400 hover:text-red-400"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {err && <p className="text-red-400 text-xs">{err}</p>}
+        </div>
+      </div>
+
+      {/* Hidden file input */}
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,image/gif"
+        onChange={handleFile}
+        className="hidden"
+        aria-label="Upload profile photo"
+      />
+    </div>
+  );
+}
+
+/** Resize an image file to maxPx × maxPx using a canvas, returning a Blob */
+async function resizeImage(file: File, maxPx: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxPx / Math.max(img.width, img.height));
+      const w = Math.round(img.width * scale);
+      const h = Math.round(img.height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        (blob) => blob ? resolve(blob) : reject(new Error("Canvas toBlob failed")),
+        "image/jpeg", 0.88
+      );
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+}
