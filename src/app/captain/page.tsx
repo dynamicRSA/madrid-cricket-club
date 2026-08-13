@@ -8,7 +8,7 @@ import Footer from "@/components/Footer";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
-import { useLanguage } from "@/lib/i18n";
+import { translate as t } from "@/lib/i18n";
 import { EmptyState } from "@/components/EmptyState";
 import {
   Calendar, CheckCircle, XCircle, Clock, Loader2, LogOut,
@@ -57,9 +57,9 @@ export default function CaptainPage() {
   const isSuperAdmin = user?.email?.toLowerCase() === "svenprinsloo@gmail.com" || member?.roles?.includes("super_admin");
 
   const TABS = [
-    { id: "selection",   label: t("cap.tab.selection"),   shortLabel: t("cap.tab.selection_short"),   icon: CheckCircle },
+    { id: "selection",   label: t("cap.tab.selection"), shortLabel: t("cap.tab.selection_short"),   icon: CheckCircle },
     { id: "availability", label: t("cap.tab.availability"), shortLabel: t("cap.tab.availability_short"), icon: Calendar },
-    { id: "logistics",   label: t("cap.tab.logistics"),   shortLabel: t("cap.tab.logistics_short"),   icon: Car },
+    { id: "logistics",   label: t("cap.tab.logistics"), shortLabel: t("cap.tab.logistics_short"),   icon: Car },
   ] as { id: Tab; label: string; shortLabel: string; icon: any }[];
 
   return (
@@ -694,9 +694,9 @@ function CaptainSelectionTab({ supabase }: { supabase: any }) {
           {/* Mobile: 3-column card grid */}
           <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-1">
             {[
-              { id: "events",    label: t("cap.subtab.details"),   shortLabel: t("cap.subtab.details_short"),   icon: Calendar },
-              { id: "squad",     label: t("cap.subtab.squad"),         shortLabel: t("cap.subtab.squad_short"),     icon: Users },
-              { id: "responses", label: t("cap.subtab.responses"),   shortLabel: t("cap.subtab.responses_short"), icon: CheckCircle },
+              { id: "events",    label: t("cap.subtab.details"), shortLabel: t("cap.subtab.details_short"),   icon: Calendar },
+              { id: "squad",     label: t("cap.subtab.squad"), shortLabel: t("cap.subtab.squad_short"),     icon: Users },
+              { id: "responses", label: t("cap.subtab.responses"), shortLabel: t("cap.subtab.responses_short"), icon: CheckCircle },
             ].map(({ id, label, shortLabel, icon: Icon }) => (
               <button
                 key={id}

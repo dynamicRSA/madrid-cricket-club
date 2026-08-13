@@ -711,3 +711,18 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 export function useLanguage() {
   return useContext(LanguageContext);
 }
+
+// Non-hook utility — safe to call from any function (including nested helpers).
+// Reads localStorage directly so it works outside React component context.
+// Not reactive itself, but pages re-render on navigation picking up changes.
+export function translate(key: string): string {
+  try {
+    const lang = typeof window !== "undefined"
+      ? (localStorage.getItem("mcc_lang") as Language | null)
+      : null;
+    const dict = lang === "es" ? es : en;
+    return dict[key] ?? en[key] ?? key;
+  } catch {
+    return en[key] ?? key;
+  }
+}

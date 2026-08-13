@@ -12,7 +12,7 @@ import { useMember } from "@/hooks/useMember";
 import { useAvailability } from "@/hooks/useAvailability";
 import { useCharges } from "@/hooks/useCharges";
 import { createClient } from "@/lib/supabase/client";
-import { useLanguage } from "@/lib/i18n";
+import { translate as t } from "@/lib/i18n";
 import { parseTourMeta, serializeTourMeta, STAGE_LABELS, type TourMeta, type TourGame } from "@/lib/eventHelpers";
 import { EVENTS } from "@/lib/mock-data";
 import { formatDateShort } from "@/lib/utils";
@@ -1062,7 +1062,7 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
 
   if (!member) {
     return (
-      <EmptyState icon={User} title={t("dash.profile.no_profile")} message={t("dash.profile.complete_join")} action={<Link href="/join" className="btn-primary inline-flex">Apply to Join</Link>} />
+      <EmptyState icon={User} title="Profile not yet created." message="Please complete the join process first to access your profile." action={<Link href="/join" className="btn-primary inline-flex">Apply to Join</Link>} />
     );
   }
 
@@ -1075,7 +1075,7 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
       <div className="flex gap-1 mb-6 border-b border-white/[0.06] overflow-x-auto">
         {([
           { id: "details" as const, label: "Profile Details", icon: User },
-          { id: "security" as const, label: t("dash.profile.account"), icon: Lock },
+          { id: "security" as const, label: "Account & Security", icon: Lock },
         ]).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
