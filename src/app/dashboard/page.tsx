@@ -19,7 +19,7 @@ import NotificationBell from "@/components/NotificationBell";
 import {
   User, Calendar, CreditCard, LogOut, CheckCircle, XCircle, HelpCircle,
   Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Car, ShieldCheck,
-  Eye, EyeOff
+  Eye, EyeOff, Shirt, Lock
 } from "lucide-react";
 
 
@@ -560,7 +560,9 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                 <div className="flex justify-center py-12"><Loader2 size={24} className="animate-spin text-brand-400" /></div>
               ) : !isSelectedForMatch ? (
                 <div className="glass-dark p-8 text-center space-y-3">
-                  <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto text-2xl">🔒</div>
+                  <div className="w-12 h-12 rounded-full bg-gold-500/10 border border-gold-500/30 flex items-center justify-center mx-auto">
+                <Lock size={22} className="text-gold-400" />
+              </div>
                   <h3 className="text-white font-semibold text-lg">No Active Selection Pending</h3>
                   <p className="text-slate-400 text-sm max-w-md mx-auto">
                     You have not been selected for an active match squad yet. Please ensure your availability is marked in the <strong className="text-white">Availability Sign-Up</strong> tab. When the captain selects and publishes the squad, your match cards will appear here.
@@ -775,7 +777,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                   <div className="glass-dark p-6 space-y-4">
                   <div className="border-b border-white/[0.06] pb-3">
                   <h3 className="text-white font-semibold flex items-center gap-2">
-                  <span className="text-2xl leading-none">👕</span>
+                  <Shirt size={20} className="text-brand-400" />
                   Jersey Number
                   </h3>
                   <p className="text-slate-400 text-xs mt-1">
@@ -890,18 +892,18 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                   <div className="space-y-1">
                   <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider px-3 pb-1">Notify me when&hellip;</p>
                   {([
-                  { key: "fixture_created",       label: "A new fixture is added",             icon: "🏏" },
-                  { key: "selected_for_team",     label: "I am selected for a squad",          icon: "✅" },
-                  { key: "selection_published",   label: "The team sheet is published",        icon: "📋" },
-                  { key: "availability_reminder", label: "Availability deadline approaching",  icon: "⏰" },
-                  { key: "match_reminder",        label: "A match is tomorrow",                icon: "🔔" },
-                  { key: "status_change",         label: "My membership status changes",       icon: "👤" },
-                  { key: "charge_raised",         label: "A charge is raised on my account",  icon: "💳" },
-                  { key: "jersey_assigned",       label: "My jersey number is assigned",      icon: "👕" },
-                  ] as { key: keyof typeof notifPrefs; label: string; icon: string }[]).map(({ key, label, icon }) => (
+                  { key: "fixture_created",       label: "A new fixture is added",             icon: Calendar },
+                  { key: "selected_for_team",     label: "I am selected for a squad",          icon: CheckCircle },
+                  { key: "selection_published",   label: "The team sheet is published",        icon: Bell },
+                  { key: "availability_reminder", label: "Availability deadline approaching",  icon: Clock },
+                  { key: "match_reminder",        label: "A match is tomorrow",                icon: AlertCircle },
+                  { key: "status_change",         label: "My membership status changes",       icon: User },
+                  { key: "charge_raised",         label: "A charge is raised on my account",  icon: CreditCard },
+                  { key: "jersey_assigned",       label: "My jersey number is assigned",       icon: Shirt },
+                  ] as { key: keyof typeof notifPrefs; label: string; icon: any }[]).map(({ key, label, icon: Icon }) => (
                   <div key={key} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/[0.02] transition-colors">
                   <span className="flex items-center gap-2.5 text-sm text-slate-300">
-                  <span className="w-5 text-center">{icon}</span> {label}
+                  <Icon size={16} className="text-slate-400 shrink-0" /> {label}
                   </span>
                   <button
                   onClick={async () => {
@@ -1094,9 +1096,9 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
       {/* Inner profile tabs */}
       <div className="flex gap-1 mb-6 border-b border-white/[0.06] overflow-x-auto">
         {([
-          { id: "details" as const, label: "Profile Details", emoji: "👤" },
-          { id: "security" as const, label: "Account & Security", emoji: "🔑" },
-        ]).map(({ id, label, emoji }) => (
+          { id: "details" as const, label: "Profile Details", icon: User },
+          { id: "security" as const, label: "Account & Security", icon: Lock },
+        ]).map(({ id, label, icon: Icon }) => (
           <button
             key={id}
             type="button"
@@ -1107,7 +1109,7 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
                 : "text-slate-400 border-transparent hover:text-white hover:bg-white/[0.04]"
             }`}
           >
-            <span>{emoji}</span> {label}
+            <Icon size={15} className="shrink-0" /> {label}
           </button>
         ))}
       </div>
@@ -1331,7 +1333,7 @@ function ChangePasswordCard({ supabase }: { supabase: any }) {
     <div className="glass-dark p-5 sm:p-6 space-y-5">
       <div>
         <h3 className="text-white font-semibold text-base flex items-center gap-2">
-          <span>🔑</span> Change Password
+          <Lock size={18} className="text-brand-400" /> Change Password
         </h3>
         <p className="text-slate-400 text-sm mt-1">
           Set a new sign-in password. After saving, use your new password next time you sign in.
@@ -1399,7 +1401,7 @@ function ChangePasswordCard({ supabase }: { supabase: any }) {
         {/* SUCCESS — large and prominent */}
         {done && (
           <div className="flex items-start gap-3 bg-green-500/10 border border-green-500/40 text-green-200 p-4 rounded-xl">
-            <span className="text-xl shrink-0">✅</span>
+            <CheckCircle size={18} className="text-brand-400 shrink-0 mt-0.5" />
             <div>
               <p className="font-semibold text-sm">Password updated successfully!</p>
               <p className="text-sm text-green-300 mt-0.5">

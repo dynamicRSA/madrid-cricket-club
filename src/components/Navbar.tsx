@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import {
   Menu, X, Globe, ChevronDown, Check, ShieldCheck,
-  LogOut, User, LayoutDashboard, Swords
+  LogOut, User, LayoutDashboard, Swords, Trophy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { imgSrc } from "@/lib/imgSrc";
@@ -175,7 +175,7 @@ export default function Navbar() {
                         <Link href="/captain" onClick={() => setUserMenuOpen(false)}
                           className={cn("flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:text-white hover:bg-white/[0.06] transition-colors",
                             pathname.startsWith("/captain") && "text-brand-300 bg-brand-500/10")}>
-                          <span className="text-base leading-none">🏏</span>
+                          <Trophy size={15} className="text-brand-400" />
                           Captain Panel
                         </Link>
                       )}
@@ -278,12 +278,13 @@ export default function Navbar() {
               </Link>
               {isCaptain && (
                 <Link href="/captain" onClick={() => setMobileOpen(false)}
-                  className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
-                    pathname.startsWith("/captain")
-                      ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
-                      : "text-white hover:bg-white/[0.06]")}>
-                  <span className="text-xl leading-none shrink-0">🏏</span> Captain Panel
-                </Link>
+                className={cn("flex items-center gap-3 px-4 py-3.5 rounded-xl text-base font-semibold transition-all",
+                  pathname.startsWith("/captain")
+                    ? "bg-brand-500/15 text-brand-300 border border-brand-500/20"
+                    : "text-white hover:bg-white/[0.06]")}
+              >
+                <Trophy size={18} className="shrink-0 text-brand-400" /> Captain Panel
+              </Link>
               )}
               {isAdmin && (
                 <Link href="/admin" onClick={() => setMobileOpen(false)}

@@ -13,7 +13,8 @@ import {
   Users, CreditCard, Calendar, BarChart3, CheckCircle, XCircle,
   Clock, AlertCircle, Loader2, Search, Download, ChevronDown,
   LogOut, ShieldAlert, Eye, Plus, ChevronRight, Utensils, Car,
-  Trophy, Edit2, ArrowRight, Lock, Unlock, Shirt
+  Trophy, Edit2, ArrowRight, Lock, Unlock, Shirt,
+  User, Shield, ShieldCheck, FileText, Zap, Copy, Key, ClipboardCopy
 } from "lucide-react";
 import {
   parseTourMeta, serializeTourMeta, defaultGame,
@@ -1250,13 +1251,13 @@ function MemberDetailPanel({
   }, [tab, member.id]);
 
   const ALL_ROLES: { id: string; label: string; desc: string; icon: string }[] = [
-    { id: "member",       label: "Member",       desc: "Basic access — view fixtures, submit availability, manage own profile", icon: "👤" },
-    { id: "captain",      label: "Captain",      desc: "Full access to Captain's Panel — team selection, availability management", icon: "🏏" },
-    { id: "vice_captain", label: "Vice Captain", desc: "Captain's Panel access — can assist with selection and availability", icon: "🏏" },
-    { id: "treasurer",    label: "Treasurer",    desc: "Admin Panel — payments, charges, financial reports", icon: "💰" },
-    { id: "secretary",    label: "Secretary",    desc: "Admin Panel — member management, registration, documentation", icon: "📋" },
-    { id: "admin",        label: "Administrator",desc: "Full Admin Panel access — all club administration features", icon: "🛡️" },
-    { id: "super_admin",  label: "Super Admin",  desc: "Unrestricted access — all panels, all features, data management", icon: "⚡" },
+    { id: "member",       label: "Member",       desc: "Basic access — view fixtures, submit availability, manage own profile", icon: User },
+    { id: "captain",      label: "Captain",      desc: "Full access to Captain's Panel — team selection, availability management", icon: Trophy },
+    { id: "vice_captain", label: "Vice Captain", desc: "Captain's Panel access — can assist with selection and availability", icon: Shield },
+    { id: "treasurer",    label: "Treasurer",    desc: "Admin Panel — payments, charges, financial reports", icon: CreditCard },
+    { id: "secretary",    label: "Secretary",    desc: "Admin Panel — member management, registration, documentation", icon: FileText },
+    { id: "admin",        label: "Administrator",desc: "Full Admin Panel access — all club administration features", icon: ShieldCheck },
+    { id: "super_admin",  label: "Super Admin",  desc: "Unrestricted access — all panels, all features, data management", icon: Zap },
   ];
   const currentRoles: string[] = data.roles || ["member"];
 
@@ -1575,7 +1576,7 @@ function MemberDetailPanel({
                             />
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2">
-                                <span className="text-base leading-none">{role.icon}</span>
+                                {(() => { const RIcon = role.icon; return <RIcon size={16} className="text-brand-400 shrink-0" />; })()}
                                 <span className={`text-sm font-semibold ${active ? "text-brand-300" : "text-slate-200"}`}>
                                   {role.label}
                                 </span>
