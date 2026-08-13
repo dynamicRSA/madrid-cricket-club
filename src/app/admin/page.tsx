@@ -13,7 +13,7 @@ import {
   Users, CreditCard, Calendar, BarChart3, CheckCircle, XCircle,
   Clock, AlertCircle, Loader2, Search, Download, ChevronDown,
   LogOut, ShieldAlert, Eye, Plus, ChevronRight, Utensils, Car,
-  Trophy, Edit2, ArrowRight, Lock, Unlock
+  Trophy, Edit2, ArrowRight, Lock, Unlock, Shirt
 } from "lucide-react";
 import {
   parseTourMeta, serializeTourMeta, defaultGame,
@@ -101,37 +101,13 @@ export default function AdminPage() {
 
 
         <div className="container-wide px-3 sm:px-4 mt-3">
-          {/* Mobile: grid of card tabs — all visible, no scroll */}
-          <div className="lg:hidden grid grid-cols-2 gap-2 pb-3">
-          {([
-            { id: "applications", label: "Applications", icon: CheckCircle },
-            { id: "members",      label: "Members",      icon: Users },
-            ...(isTreasurer ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
-            { id: "jersey",  label: "Jerseys",  icon: Trophy },
-            { id: "reports", label: "Reports",  icon: BarChart3 },
-          ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setTab(id)}
-              className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all text-left ${
-                tab === id
-                  ? "bg-brand-500/20 text-brand-300 border border-brand-500/40 shadow-sm"
-                  : "bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.07] border border-white/[0.06]"
-              }`}
-            >
-              <Icon size={16} className="shrink-0" />
-              {label}
-            </button>
-          ))}
-          </div>
-
           {/* Desktop: horizontal pill tabs */}
           <div className="hidden lg:flex items-center gap-1 overflow-x-auto pb-px scrollbar-hide">
           {([
             { id: "applications", label: "Applications & Renewals", shortLabel: "Review", icon: CheckCircle },
             { id: "members", label: "Members Roster", shortLabel: "Members", icon: Users },
             ...(isTreasurer ? [{ id: "payments", label: "Payments", shortLabel: "Payments", icon: CreditCard }] : []),
-            { id: "jersey", label: "Jersey Numbers", shortLabel: "Jerseys", icon: Trophy },
+            { id: "jersey", label: "Jersey Numbers", shortLabel: "Jerseys", icon: Shirt },
             { id: "reports", label: "Reports", shortLabel: "Reports", icon: BarChart3 },
           ] as { id: Tab; label: string; shortLabel: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
             <button
@@ -161,6 +137,29 @@ export default function AdminPage() {
           {tab === "reports" && <ReportsTab isSuperAdmin={isSuperAdmin} />}
         </div>
       </div>
+
+      {/* Mobile bottom nav — matches Dashboard style */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex" style={{ background: "rgba(8,15,24,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {([
+          { id: "applications", label: "Review",  icon: CheckCircle },
+          { id: "members",      label: "Members",  icon: Users },
+          ...(isTreasurer ? [{ id: "payments", label: "Payments", icon: CreditCard }] : []),
+          { id: "jersey",       label: "Jerseys",  icon: Shirt },
+          { id: "reports",      label: "Reports",  icon: BarChart3 },
+        ] as { id: Tab; label: string; icon: any }[]).map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setTab(id)}
+            className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-[10px] font-semibold transition-all ${
+              tab === id ? "text-brand-400" : "text-slate-500"
+            }`}
+          >
+            <Icon size={20} strokeWidth={tab === id ? 2.5 : 1.8} />
+            {label}
+          </button>
+        ))}
+      </nav>
+
       <Footer />
     </main>
   );

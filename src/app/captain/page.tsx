@@ -12,7 +12,7 @@ import {
   Calendar, CheckCircle, XCircle, Clock, Loader2, LogOut,
   ShieldCheck, ShieldAlert, Eye, Utensils, Car, Users, ArrowRight,
   Plus, Trophy, Lock, Unlock, AlertCircle, Edit2,
-  ChevronDown, ChevronRight, Search, Download, CreditCard, BarChart3
+  ChevronDown, ChevronRight, Search, Download, CreditCard, BarChart3, Shirt
 } from "lucide-react";
 import {
   parseTourMeta, serializeTourMeta, defaultGame,
@@ -55,9 +55,9 @@ export default function CaptainPage() {
   const isSuperAdmin = user?.email?.toLowerCase() === "svenprinsloo@gmail.com" || member?.roles?.includes("super_admin");
 
   const TABS = [
-    { id: "selection", label: "Team Selection", shortLabel: "Selection", icon: CheckCircle },
-    { id: "availability", label: "Who Can Play", shortLabel: "Availability", icon: Calendar },
-    { id: "logistics", label: "Match Logistics", shortLabel: "Logistics", icon: Utensils },
+    { id: "selection",   label: "Team Selection", shortLabel: "Selection",   icon: CheckCircle },
+    { id: "availability", label: "Who Can Play",   shortLabel: "Availability", icon: Calendar },
+    { id: "logistics",   label: "Match Logistics", shortLabel: "Logistics",   icon: Car },
   ] as { id: Tab; label: string; shortLabel: string; icon: any }[];
 
   return (
@@ -68,8 +68,8 @@ export default function CaptainPage() {
       <section className="pt-20 pb-0 bg-gradient-to-b from-slate-900 to-slate-950 border-b border-white/[0.06]">
         <div className="container-wide px-4 pt-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-brand-700/30 border border-brand-500/30 flex items-center justify-center text-2xl">
-              🏏
+            <div className="w-10 h-10 rounded-xl bg-brand-700/30 border border-brand-500/30 flex items-center justify-center">
+              <ShieldCheck size={20} className="text-brand-400" />
             </div>
             <div>
               <h1 className="text-xl font-display font-bold text-white">Captain's Panel</h1>
@@ -82,23 +82,7 @@ export default function CaptainPage() {
         {/* Tab nav */}
         <div className="container-wide px-3 sm:px-4 mt-3">
           {/* Mobile: 3-column grid — all tabs visible at once */}
-          <div className="lg:hidden grid grid-cols-3 gap-2 pb-3">
-            {TABS.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setTab(id)}
-                className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl text-xs font-semibold transition-all ${
-                  tab === id
-                    ? "bg-brand-500/20 text-brand-300 border border-brand-500/40"
-                    : "bg-white/[0.04] text-slate-400 hover:text-white hover:bg-white/[0.07] border border-white/[0.06]"
-                }`}
-              >
-                <Icon size={18} className="shrink-0" />
-                <span className="text-center leading-tight">{label}</span>
-              </button>
-            ))}
-          </div>
+          <div className="lg:hidden" style={{display:'none'}}></div>
 
           {/* Desktop: horizontal underline tabs */}
           <div className="hidden lg:flex gap-1 overflow-x-auto pb-px" style={{ scrollbarWidth: 'none' }}>
@@ -129,6 +113,24 @@ export default function CaptainPage() {
           {tab === "logistics" && <LogisticsPlaceholder />}
         </div>
       </div>
+
+      {/* Mobile bottom nav — matches Dashboard style */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 border-t border-white/[0.08] flex" style={{ background: "rgba(8,15,24,0.96)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)", paddingBottom: "env(safe-area-inset-bottom)" }}>
+        {TABS.map(({ id, shortLabel, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            onClick={() => setTab(id)}
+            className={`flex-1 flex flex-col items-center justify-center py-3 gap-0.5 text-[10px] font-semibold transition-all ${
+              tab === id ? "text-brand-400" : "text-slate-500"
+            }`}
+          >
+            <Icon size={20} strokeWidth={tab === id ? 2.5 : 1.8} />
+            {shortLabel}
+          </button>
+        ))}
+      </nav>
+
       <Footer />
     </main>
   );
