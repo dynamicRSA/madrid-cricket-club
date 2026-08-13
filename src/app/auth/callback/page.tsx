@@ -8,7 +8,7 @@ import { Loader2 } from "lucide-react";
 
 export default function AuthCallbackPage() {
   const router = useRouter();
-  const [status, setStatus] = useState("Completing sign in…");
+  const [status, setStatus] = useState("Verifying your link…");
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -18,72 +18,48 @@ export default function AuthCallbackPage() {
       try {
         // ── 1. Parse URL ─────────────────────────────────────────────────
         const searchParams = new URLSearchParams(window.location.search);
-        const hash         = window.location.hash.slice(1);
-        const hashParams   = new URLSearchParams(hash);
+        const hashParams   = new URLSearchParams(window.location.hash.slice(1));
 
-        const code         = searchParams.get("code");            // PKCE
-        const accessToken  = hashParams.get("access_token");      // implicit / magic link
-        const refreshToken = hashParams.get("refresh_token") || "";
-        const errorMsg     = searchParams.get("error_description")
-                           || searchParams.get("error")
-                           || hashParams.get("error_description")
-                           || hashParams.get("error");
+        const errorMsg = searchParams.get("error_description")
+                       || searchParams.get("error")
+                       || hashParams.get("error_description")
+                       || hashParams.get("error");
 
         if (errorMsg) {
-          setError(decodeURIComponent(errorMsg));
-          setTimeout(() => router.replace(`/auth/signin?error=${encodeURIComponent(errorMsg)}`), 2000);
+          const msg = decodeURIComponent(errorMsg);
+          setError(msg);
+          setTimeout(() => router.replace(`/auth/signin?error=${encodeURIComponent(msg)}`), 2500);
           return;
         }
 
-        // ── 2. Exchange / set session ─────────────────────────────────────
-        if (code) {
-          // PKCE flow: exchange the one-time code for a session
-          setStatus("Verifying your link…");
-          const { error: exchErr } = await supabase.auth.exchangeCodeForSession(code);
-          if (exchErr) {
-            // PKCE code-verifier mismatch (admin-generated link opened in different browser)
-            // Fall through — try to get any existing session
-            console.warn("exchangeCodeForSession error:", exchErr.message);
-          }
-        } else if (accessToken) {
-          // Hash / implicit flow — explicitly set session from hash tokens
-          setStatus("Verifying your link…");
-          const { error: sessErr } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-          if (sessErr) {
-            console.warn("setSession error:", sessErr.message);
-          }
-        } else {
-          // No obvious auth params — wait briefly for SDK to auto-process
-          setStatus("Loading session…");
-          await new Promise((r) => setTimeout(r, 1500));
-        }
-
-        // ── 3. Wait for session (with retry + timeout) ───────────────────
-        setStatus("Setting up your account…");
+        // ── 2. Wait for SDK to process the session from URL ───────────────
+        // With flowType:"implicit" + detectSessionInUrl:true, the SDK
+        // auto-detects #access_token or ?code and sets up the session.
+        // We just poll until it's ready (usually < 500ms).
+        setStatus("Signing you in…");
 
         let session = null;
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 8; attempt++) {
+          await new Promise((r) => setTimeout(r, 500));
           const { data } = await supabase.auth.getSession();
-          session = data?.session;
-          if (session?.user) break;
-          await new Promise((r) => setTimeout(r, 800));
+          if (data?.session?.user) {
+            session = data.session;
+            break;
+          }
         }
 
         if (!session?.user) {
-          setError("Authentication failed — the link may have expired. Please request a new one.");
-          setTimeout(() => router.replace("/auth/signin?error=Link+expired+or+invalid.+Please+request+a+new+invite."), 3000);
+          const msg = "Link expired or already used. Please request a new invite link.";
+          setError(msg);
+          setTimeout(() => router.replace("/auth/signin?error=Link+expired+or+already+used"), 2500);
           return;
         }
 
         const user = session.user;
+        setStatus("Setting up your profile…");
 
-        // ── 4. Link member record ────────────────────────────────────────
-        setStatus("Linking your profile…");
-
-        // Check for pre-created member record (invited via admin)
+        // ── 3. Link member record ────────────────────────────────────────
+        // Check for pre-created member record (admin-invited member)
         const { data: existingMember } = await supabase
           .from("members")
           .select("id, user_id, status")
@@ -92,6 +68,7 @@ export default function AuthCallbackPage() {
           .maybeSingle();
 
         if (existingMember) {
+          // Link auth user to the pre-created member record
           await supabase.from("members").update({
             user_id: user.id,
             status: "pending_approval",
@@ -103,7 +80,7 @@ export default function AuthCallbackPage() {
             .onConflict("member_id")
             .ignore();
         } else {
-          // Check if already linked (returning sign-in)
+          // Already linked (returning sign-in) or new Google user
           const { data: linkedMember } = await supabase
             .from("members")
             .select("id")
@@ -111,7 +88,7 @@ export default function AuthCallbackPage() {
             .maybeSingle();
 
           if (!linkedMember) {
-            // New sign-in via Google or other — create member record
+            // New sign-in (Google OAuth, etc.) — create member record
             const { data: newMember } = await supabase
               .from("members")
               .insert({
@@ -137,13 +114,14 @@ export default function AuthCallbackPage() {
           }
         }
 
-        // ── 5. Redirect ──────────────────────────────────────────────────
-        setStatus("Redirecting…");
+        // ── 4. Done ──────────────────────────────────────────────────────
+        setStatus("Welcome! Redirecting…");
         router.replace("/dashboard");
 
       } catch (err: any) {
         console.error("Auth callback error:", err);
-        setError("Something went wrong. Redirecting…");
+        const msg = "Something went wrong during sign in.";
+        setError(msg);
         setTimeout(() => router.replace("/auth/signin?error=Unexpected+error"), 2500);
       }
     }
@@ -156,23 +134,26 @@ export default function AuthCallbackPage() {
       className="min-h-screen flex flex-col items-center justify-center gap-5"
       style={{ background: "linear-gradient(135deg, #0d1420 0%, #0a1628 100%)" }}
     >
-      {/* Logo */}
-      <div className="mb-2 opacity-60">
-        <div className="w-14 h-14 rounded-2xl bg-brand-500/10 border border-brand-500/20 flex items-center justify-center">
-          <span className="text-2xl">🏏</span>
+      {/* Cricket club logo mark */}
+      <div className="mb-2 opacity-50">
+        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <span className="text-3xl">🏏</span>
         </div>
       </div>
 
       {error ? (
-        <div className="text-center space-y-2 max-w-xs px-4">
-          <p className="text-red-400 text-sm font-medium">⚠ {error}</p>
+        <div className="text-center space-y-3 max-w-xs px-6">
+          <div className="w-10 h-10 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center mx-auto">
+            <span className="text-lg">⚠</span>
+          </div>
+          <p className="text-white text-sm font-medium">{error}</p>
           <p className="text-slate-500 text-xs">Redirecting to sign in…</p>
         </div>
       ) : (
         <>
           <Loader2 size={28} className="animate-spin text-brand-400" />
-          <div className="text-center space-y-1">
-            <p className="text-white text-sm font-medium">{status}</p>
+          <div className="text-center space-y-1.5">
+            <p className="text-white text-sm font-semibold">{status}</p>
             <p className="text-slate-500 text-xs">Madrid Cricket Club</p>
           </div>
         </>

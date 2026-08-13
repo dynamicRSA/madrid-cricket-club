@@ -27,5 +27,12 @@ export function createClient() {
     } as any;
   }
 
-  return createBrowserClient<Database>(url, key);
+  return createBrowserClient<Database>(url, key, {
+    auth: {
+      flowType: "implicit",        // admin-generated magic links use hash tokens, not PKCE codes
+      detectSessionInUrl: true,    // auto-process #access_token=... from hash
+      persistSession: true,
+    },
+  });
+
 }
