@@ -38,16 +38,17 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
     }
   }, [user, authLoading, router]);
 
-  // Read intended tab from sessionStorage (set by Navbar "My Profile" button)
+  // Read intended tab from sessionStorage (set by /profile redirect or Navbar)
+  // Runs on mount AND after user auth resolves so it's never missed
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || authLoading) return;
     const stored = sessionStorage.getItem("dashboardTab");
     const validTabs = ["overview", "confirmations", "availability", "charges", "profile"];
     if (stored && validTabs.includes(stored)) {
       setTab(stored as Tab);
-      sessionStorage.removeItem("dashboardTab"); // clear so subsequent visits start on overview
+      sessionStorage.removeItem("dashboardTab");
     }
-  }, []);
+  }, [authLoading]); // re-check when auth finishes loading
 
   const { member, loading: memberLoading } = useMember(user?.id);
   const { availability, setEventAvailability, getStatus } = useAvailability(member?.id);
