@@ -10,7 +10,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 import {
   Calendar, CheckCircle, XCircle, Clock, Loader2, LogOut,
-  ShieldCheck, Eye, Utensils, Car, Users, ArrowRight
+  ShieldCheck, ShieldAlert, Eye, Utensils, Car, Users, ArrowRight,
+  Plus, Trophy, Lock, Unlock, AlertCircle, Edit2,
+  ChevronDown, ChevronRight, Search, Download, CreditCard, BarChart3
 } from "lucide-react";
 import {
   parseTourMeta, serializeTourMeta, defaultGame,
