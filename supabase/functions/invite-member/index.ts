@@ -1,5 +1,7 @@
 // Supabase Edge Function — invite-member
-// Uses auth.admin.inviteUserByEmail. If user already exists, falls back to generateLink (magic link).
+// Strategy: always use inviteUserByEmail (official Supabase invite flow).
+// If user already exists in auth.users, delete them first then re-invite.
+// This guarantees a fresh, valid invite token every time.
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -13,7 +15,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
@@ -35,7 +36,27 @@ serve(async (req) => {
 
     const redirectTo = `${SITE_URL}/auth/callback`;
 
-    // Try admin invite first (best for brand-new users)
+    // ── Step 1: If user already exists in auth, delete them first ───────
+    // This ensures inviteUserByEmail always gets a clean slate.
+    const { data: { users } } = await supabase.auth.admin.listUsers();
+    const existingAuthUser = users?.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+
+    if (existingAuthUser) {
+      console.log(`Deleting existing auth user ${existingAuthUser.id} for ${email} to enable clean re-invite`);
+      await supabase.auth.admin.deleteUser(existingAuthUser.id);
+      // Small delay for the deletion to propagate
+      await new Promise((r) => setTimeout(r, 500));
+    }
+
+    // Also reset user_id on the member record so callback can re-link
+    if (memberId || existingAuthUser) {
+      const query = memberId
+        ? supabase.from("members").update({ user_id: null, updated_at: new Date().toISOString() }).eq("id", memberId)
+        : supabase.from("members").update({ user_id: null, updated_at: new Date().toISOString() }).eq("email", email);
+      await query;
+    }
+
+    // ── Step 2: Send official invite via inviteUserByEmail ───────────────
     const { data, error } = await supabase.auth.admin.inviteUserByEmail(email, {
       redirectTo,
       data: {
@@ -46,16 +67,15 @@ serve(async (req) => {
     });
 
     if (!error) {
-      // Success
       return new Response(
         JSON.stringify({ success: true, type: "invite", user_id: data.user?.id }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // If invite failed for ANY reason (user exists, DB conflict, etc.)
-    // fall back to generating a magic link — works for both new & existing users
-    console.log("inviteUserByEmail failed:", error.message, "— trying magic link fallback");
+    // ── Step 3: Fallback — generate magic link (returns action_link) ─────
+    // Only reached if inviteUserByEmail fails for unexpected reason.
+    console.log("inviteUserByEmail failed:", error.message, "— trying generateLink fallback");
 
     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
       type: "magiclink",
@@ -64,19 +84,17 @@ serve(async (req) => {
     });
 
     if (linkError) {
-      // Both approaches failed — last resort: try OTP via admin
-      console.log("generateLink also failed:", linkError.message);
       return new Response(
         JSON.stringify({ error: `Invite failed: ${error.message}. Magic link also failed: ${linkError.message}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
-    // Magic link generated — email is sent automatically by Supabase when using generateLink with type magiclink
     return new Response(
       JSON.stringify({ success: true, type: "magic_link", action_link: linkData.properties?.action_link }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
+
   } catch (err) {
     console.error("Unexpected error:", err);
     return new Response(
