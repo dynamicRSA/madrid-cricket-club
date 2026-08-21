@@ -29,7 +29,7 @@ The complete Supabase schema is in `supabase/schema.sql`. Run it in the Supabase
 
 The site is deployed automatically to GitHub Pages on every push to `main` via `.github/workflows/deploy.yml`.
 
-Live site: [https://dynamicrsa.github.io/madrid-cricket-club](https://dynamicrsa.github.io/madrid-cricket-club)
+Live site: [https://madridcricketclub.com](https://madridcricketclub.com)
 
 ## Features
 

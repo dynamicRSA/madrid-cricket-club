@@ -9,7 +9,7 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const SUPABASE_URL   = Deno.env.get("SUPABASE_URL") ?? "";
 const SERVICE_KEY    = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 const FROM_EMAIL     = "Madrid Cricket Club <onboarding@resend.dev>";
-const SITE_URL       = "https://dynamicrsa.github.io/madrid-cricket-club";
+const SITE_URL       = "https://madridcricketclub.com";
 
 const TYPE_SUBJECT: Record<string, string> = {
   fixture_created:       "New fixture added — Madrid Cricket Club",

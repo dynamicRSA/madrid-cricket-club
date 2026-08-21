@@ -845,7 +845,7 @@ function MembersTab({ supabase, isSuperAdmin }: { supabase: any; isSuperAdmin: b
     }
 
     // 2. Send invite — try Edge Function first, fall back to magic link OTP
-    const REDIRECT = `https://dynamicrsa.github.io/madrid-cricket-club/auth/callback`;
+    const REDIRECT = `https://madridcricketclub.com/auth/callback`;
     let inviteOk = false;
     let inviteMsg = "";
 

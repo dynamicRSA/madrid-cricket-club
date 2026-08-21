@@ -16,7 +16,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://dynamicrsa.github.io/madrid-cricket-club"),
+  metadataBase: new URL("https://madridcricketclub.com"),
   title: {
     default: "Madrid Cricket Club",
     template: "%s | Madrid Cricket Club",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_GB",
-    url: "https://dynamicrsa.github.io/madrid-cricket-club",
+    url: "https://madridcricketclub.com",
     siteName: "Madrid Cricket Club",
     title: "Madrid Cricket Club",
     description: "Cricket in the heart of Spain since 2001. All nationalities welcome.",
