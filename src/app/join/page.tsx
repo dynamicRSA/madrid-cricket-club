@@ -2,9 +2,9 @@
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLanguage } from "@/lib/i18n";
-import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown } from "lucide-react";
+import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown, Lock } from "lucide-react";
 import Link from "next/link";
 
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,7 @@ export default function JoinPage() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [registrationsOpen, setRegistrationsOpen] = useState<boolean | null>(null); // null = loading
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -23,6 +24,21 @@ export default function JoinPage() {
     hear_about: "",
     message: "",
   });
+
+  // Check if registrations are open
+  useEffect(() => {
+    const supabase = createClient();
+    supabase
+      .from("site_config")
+      .select("value")
+      .eq("key", "registrations_open")
+      .single()
+      .then(({ data }) => {
+        // Default to open if config row missing
+        setRegistrationsOpen(data ? data.value === true : true);
+      })
+      .catch(() => setRegistrationsOpen(true));
+  }, []);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -46,7 +62,28 @@ export default function JoinPage() {
 
       if (error) {
         console.error("Supabase insert error:", error);
-        // Fallback to success display even if mock/offline mode
+      }
+
+      // Fire admin notification — best effort, non-blocking
+      try {
+        await fetch(
+          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-admin-join`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({
+              name: form.name,
+              email: form.email,
+              phone: form.mobile || null,
+              age_group: form.age_group,
+            }),
+          }
+        );
+      } catch (notifyErr) {
+        console.warn("Admin notification failed (non-blocking):", notifyErr);
       }
     } catch (err) {
       console.warn("Using offline/mock mode for form submit");
@@ -54,6 +91,19 @@ export default function JoinPage() {
       setSubmitting(false);
       setSubmitted(true);
     }
+  }
+
+  // Loading state
+  if (registrationsOpen === null) {
+    return (
+      <main className="min-h-screen">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 size={32} className="animate-spin text-brand-400" />
+        </div>
+        <Footer />
+      </main>
+    );
   }
 
   return (
@@ -121,9 +171,27 @@ export default function JoinPage() {
               </div>
             </div>
 
-            {/* Form */}
+            {/* Form / Closed state */}
             <div className="lg:col-span-2">
-              {submitted ? (
+              {!registrationsOpen ? (
+                /* ── Registrations closed ── */
+                <div className="glass-dark p-10 text-center">
+                  <div className="w-14 h-14 rounded-full bg-slate-700/40 flex items-center justify-center mx-auto mb-5">
+                    <Lock size={28} className="text-slate-400" />
+                  </div>
+                  <h3 className="text-2xl font-display font-bold text-white mb-3">
+                    Registrations are currently closed
+                  </h3>
+                  <p className="text-slate-400 max-w-md mx-auto mb-6">
+                    We&apos;re not accepting new membership applications at this time.
+                    Check back soon, or get in touch if you have a question.
+                  </p>
+                  <Link href="/contact" className="btn-outline btn-lg">
+                    Contact Us
+                  </Link>
+                </div>
+              ) : submitted ? (
+                /* ── Success state ── */
                 <div className="glass-dark p-10 text-center">
                   <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-4">
                     <CheckCircle size={32} className="text-brand-400" />
@@ -132,6 +200,7 @@ export default function JoinPage() {
                   <p className="text-slate-400">We look forward to meeting you at the ground!</p>
                 </div>
               ) : (
+                /* ── Application form ── */
                 <form onSubmit={handleSubmit} className="glass-dark p-8 space-y-5">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
@@ -261,6 +330,10 @@ export default function JoinPage() {
                       . I understand my data will be used to process this enquiry.
                     </label>
                   </div>
+
+                  {errorMsg && (
+                    <p className="text-red-400 text-sm">{errorMsg}</p>
+                  )}
 
                   <button
                     type="submit"

@@ -15,7 +15,6 @@ const InstagramIcon = () => (
 const upcomingEvents = [
   { month: "Aug", day: "28", title: "Spanish Under-18 Championship", location: "Menorca Cricket Club, Biniparrell, Illes Balears", type: "tournament" },
   { month: "Sep", day: "6",  title: "Senior Net Practice", time: "10am – 1pm", location: "Av. Complutense, Moncloa-Aravaca, Madrid", type: "training" },
-  { month: "Sep", day: "9",  title: "Net Practice",        time: "6pm – 8pm",  location: "Av. Complutense, Moncloa-Aravaca, Madrid", type: "training" },
   { month: "Sep", day: "18", title: "Junior Cricket",      time: "6pm – 8pm",  location: "Centro Deportivo Municipal La Elipa, Moratalaz", type: "junior" },
 ];
 

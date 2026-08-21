@@ -96,7 +96,7 @@ export default function AboutPage() {
               </div>
               <div className="relative h-52 rounded-2xl overflow-hidden shadow-2xl border border-white/10">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imgSrc("/images/real/mcc-juniors.jpg")} alt="Madrid Cricket Club Junior Squad" className="w-full h-full object-cover" />
+                <img src={imgSrc("/images/real/la-elipa-juniors.jpg")} alt="Junior & Youth Development Squad at La Elipa" className="w-full h-full object-cover" />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(to top, rgba(18,8,8,0.8) 0%, transparent 60%)" }} />
                 <div className="absolute bottom-3 left-3">
                   <span className="text-xs text-white/90 font-medium bg-black/60 px-2.5 py-1 rounded-md backdrop-blur">Junior & Youth Development Squad at La Elipa</span>
@@ -117,7 +117,7 @@ export default function AboutPage() {
             <div className="glass-dark overflow-hidden rounded-2xl border border-white/10 flex flex-col">
               <div className="relative h-48 overflow-hidden">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={imgSrc("/images/real/mcc-batting-cages.jpg")} alt="CDM La Elipa Batting Cages" className="w-full h-full object-cover" />
+                <img src={imgSrc("/images/real/la-elipa-ground.jpg")} alt="La Elipa cricket ground, Madrid" className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#120808] to-transparent" />
               </div>
               <div className="p-6 flex-1 flex flex-col justify-between">
