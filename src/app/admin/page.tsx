@@ -281,11 +281,38 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
 
   async function approveMember(memberId: string, name: string) {
     setActionLoading(memberId + "_approve");
+
+    // 1. Get member details needed for the approval email
+    const { data: m } = await supabase
+      .from("members")
+      .select("email, full_legal_name, membership_category")
+      .eq("id", memberId)
+      .single();
+
+    // 2. Activate the member record
     await supabase.from("members").update({ status: "active", updated_at: new Date().toISOString() }).eq("id", memberId);
     await logReview(memberId, "approved");
+
+    // 3. Send branded approval email + magic sign-in link
+    if (m?.email) {
+      try {
+        await supabase.functions.invoke("notify-member-approved", {
+          body: {
+            email: m.email,
+            name: m.full_legal_name || name,
+            member_id: memberId,
+            membership_category: m.membership_category || "senior",
+          },
+        });
+      } catch (err) {
+        console.warn("Approval email failed (non-blocking):", err);
+      }
+    }
+
     setMembers((prev) => prev.filter((m) => m.id !== memberId));
     setActionLoading(null);
   }
+
 
   async function declineMember() {
     if (!declineModal) return;

@@ -2,18 +2,42 @@
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown, Lock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+
+// ── Cloudflare Turnstile ──────────────────────────────────────────────────────
+// Replace with your real site key from https://dash.cloudflare.com/?to=/:account/turnstile
+// Test key (always passes, no challenge shown): 1x00000000000000000000AA
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "1x00000000000000000000AA";
+
+// ── How did you hear about us — options ──────────────────────────────────────
+const HEAR_OPTIONS = [
+  { value: "",              label: "Select an option..." },
+  { value: "instagram",     label: "Instagram" },
+  { value: "facebook",      label: "Facebook" },
+  { value: "google",        label: "Google Search" },
+  { value: "friend",        label: "Friend / Word of mouth" },
+  { value: "cricket_espana",label: "Cricket España" },
+  { value: "ecn",           label: "European Cricket Network (ECN)" },
+  { value: "local_event",   label: "Local event / saw us playing" },
+  { value: "other",         label: "Other" },
+];
+
+// Phone: allow digits, +, spaces, dashes, parens only
+const PHONE_REGEX = /^[+\d\s\-().]{6,20}$/
 
 export default function JoinPage() {
   const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [registrationsOpen, setRegistrationsOpen] = useState<boolean | null>(null); // null = loading
+  const [phoneError, setPhoneError] = useState("");
+  const [registrationsOpen, setRegistrationsOpen] = useState<boolean | null>(null);
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const turnstileRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -21,8 +45,22 @@ export default function JoinPage() {
     age_group: "senior",
     experience: "",
     hear_about: "",
+    hear_about_other: "",  // free text when "other" is chosen
     message: "",
+    honeypot: "",           // bot trap — must stay empty
   });
+
+  // Load Cloudflare Turnstile script once
+  useEffect(() => {
+    if (document.querySelector("script[data-turnstile]")) { setTurnstileReady(true); return; }
+    const s = document.createElement("script");
+    s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+    s.async = true;
+    s.defer = true;
+    s.dataset.turnstile = "1";
+    s.onload = () => setTurnstileReady(true);
+    document.head.appendChild(s);
+  }, []);
 
   // Check if registrations are open
   useEffect(() => {
@@ -33,7 +71,6 @@ export default function JoinPage() {
       .eq("key", "registrations_open")
       .single()
       .then(({ data }: { data: any }) => {
-        // Default to open if config row missing
         setRegistrationsOpen(data ? data.value === true : true);
       })
       .catch(() => setRegistrationsOpen(true));
@@ -43,14 +80,41 @@ export default function JoinPage() {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   }
 
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    // Strip letters — only allow digits, +, spaces, dashes, parens
+    const cleaned = e.target.value.replace(/[^+\d\s\-().]/g, "");
+    setForm((f) => ({ ...f, mobile: cleaned }));
+    if (cleaned && !PHONE_REGEX.test(cleaned)) {
+      setPhoneError("Please enter a valid phone number (digits, +, spaces, dashes only)");
+    } else {
+      setPhoneError("");
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Honeypot check — bots fill hidden fields, humans don't
+    if (form.honeypot) return;
+
+    // Phone validation
+    if (form.mobile && !PHONE_REGEX.test(form.mobile)) {
+      setPhoneError("Please enter a valid phone number");
+      return;
+    }
+
+    // Grab Turnstile token from the widget's hidden input
+    const turnstileInput = turnstileRef.current?.querySelector<HTMLInputElement>("[name='cf-turnstile-response']");
+    const turnstileToken = turnstileInput?.value || "";
+
     setSubmitting(true);
     setErrorMsg("");
 
+    const hear = form.hear_about === "other" && form.hear_about_other
+      ? `Other: ${form.hear_about_other}`
+      : HEAR_OPTIONS.find(o => o.value === form.hear_about)?.label || form.hear_about || null;
+
     try {
-      // The Edge Function inserts the member record (service role bypasses RLS)
-      // AND sends the admin notification email — one call does both
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-admin-join`,
         {
@@ -65,8 +129,9 @@ export default function JoinPage() {
             phone: form.mobile || null,
             age_group: form.age_group,
             experience: form.experience || null,
-            hear_about: form.hear_about || null,
+            hear_about: hear,
             message: form.message || null,
+            turnstile_token: turnstileToken,
           }),
         }
       );
@@ -244,10 +309,13 @@ export default function JoinPage() {
                         name="mobile"
                         type="tel"
                         value={form.mobile}
-                        onChange={handleChange}
+                        onChange={handlePhoneChange}
                         placeholder="+34 600 000 000"
-                        className="input"
+                        className={`input ${phoneError ? "border-red-500" : ""}`}
+                        inputMode="tel"
+                        autoComplete="tel"
                       />
+                      {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
                     </div>
                     <div>
                       <label className="label" htmlFor="join-age">
@@ -289,15 +357,31 @@ export default function JoinPage() {
                     <label className="label" htmlFor="join-hear">
                       How did you hear about us?
                     </label>
-                    <input
-                      id="join-hear"
-                      name="hear_about"
-                      type="text"
-                      value={form.hear_about}
-                      onChange={handleChange}
-                      placeholder="e.g. Instagram, Google, a friend..."
-                      className="input"
-                    />
+                    <div className="relative">
+                      <select
+                        id="join-hear"
+                        name="hear_about"
+                        value={form.hear_about}
+                        onChange={handleChange}
+                        className="input appearance-none pr-10"
+                      >
+                        {HEAR_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+                      <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+                    </div>
+                    {form.hear_about === "other" && (
+                      <input
+                        name="hear_about_other"
+                        type="text"
+                        value={form.hear_about_other}
+                        onChange={handleChange}
+                        placeholder="Please tell us how you found us..."
+                        className="input mt-2"
+                        maxLength={200}
+                      />
+                    )}
                   </div>
 
                   <div>
@@ -315,6 +399,29 @@ export default function JoinPage() {
                       className="input resize-none"
                     />
                   </div>
+
+                  {/* Honeypot — hidden from real users, bots fill it */}
+                  <input
+                    name="honeypot"
+                    type="text"
+                    value={form.honeypot}
+                    onChange={handleChange}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    style={{ position: "absolute", left: "-9999px", width: 0, height: 0, opacity: 0 }}
+                  />
+
+                  {/* Cloudflare Turnstile CAPTCHA */}
+                  {turnstileReady && (
+                    <div ref={turnstileRef}>
+                      <div
+                        className="cf-turnstile"
+                        data-sitekey={TURNSTILE_SITE_KEY}
+                        data-theme="dark"
+                      />
+                    </div>
+                  )}
 
                   <div className="flex items-start gap-3">
                     <input type="checkbox" required id="join-privacy" className="mt-1 accent-brand-500" />
