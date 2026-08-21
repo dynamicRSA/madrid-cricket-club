@@ -1,16 +1,10 @@
 /**
- * Returns the correct image path including the basePath for GitHub Pages.
- * Next.js <Image> components handle this automatically only when NOT unoptimized
- * and NOT using fill+src combo on static exports.
- * Plain <img> tags always need this prefix.
+ * Returns the correct image path.
+ * Previously prefixed paths with /madrid-cricket-club for GitHub Pages subdirectory.
+ * Now the site is served from the root of madridcricketclub.com, so no prefix needed.
  */
-const basePath =
-  process.env.NODE_ENV === "production" ? "/madrid-cricket-club" : "";
-
 export function imgSrc(path: string): string {
   // External URLs — pass through unchanged
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  // Already prefixed
-  if (path.startsWith(basePath + "/")) return path;
-  return `${basePath}${path}`;
+  return path;
 }
