@@ -7,8 +7,6 @@ import { useLanguage } from "@/lib/i18n";
 import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown, Lock } from "lucide-react";
 import Link from "next/link";
 
-import { createClient } from "@/lib/supabase/client";
-
 export default function JoinPage() {
   const { t } = useLanguage();
   const [submitting, setSubmitting] = useState(false);
@@ -50,47 +48,44 @@ export default function JoinPage() {
     setErrorMsg("");
 
     try {
-      const supabase = createClient();
-      const { error } = await supabase.from("members").insert({
-        full_legal_name: form.name,
-        email: form.email,
-        mobile: form.mobile || null,
-        status: "enquiry",
-        membership_category: form.age_group === "junior" ? "junior" : "senior",
-        notes: [form.experience, form.message, form.hear_about].filter(Boolean).join(" | "),
-      });
+      // The Edge Function inserts the member record (service role bypasses RLS)
+      // AND sends the admin notification email — one call does both
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-admin-join`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            name: form.name,
+            email: form.email,
+            phone: form.mobile || null,
+            age_group: form.age_group,
+            experience: form.experience || null,
+            hear_about: form.hear_about || null,
+            message: form.message || null,
+          }),
+        }
+      );
 
-      if (error) {
-        console.error("Supabase insert error:", error);
-      }
-
-      // Fire admin notification — best effort, non-blocking
-      try {
-        await fetch(
-          `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/notify-admin-join`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-            },
-            body: JSON.stringify({
-              name: form.name,
-              email: form.email,
-              phone: form.mobile || null,
-              age_group: form.age_group,
-            }),
-          }
-        );
-      } catch (notifyErr) {
-        console.warn("Admin notification failed (non-blocking):", notifyErr);
+      if (!res.ok) {
+        const err = await res.text();
+        console.error("Submission error:", err);
+        setErrorMsg("Something went wrong. Please try again or email us directly.");
+        setSubmitting(false);
+        return;
       }
     } catch (err) {
-      console.warn("Using offline/mock mode for form submit");
-    } finally {
+      console.error("Network error:", err);
+      setErrorMsg("Could not reach the server. Please check your connection.");
       setSubmitting(false);
-      setSubmitted(true);
+      return;
     }
+
+    setSubmitting(false);
+    setSubmitted(true);
   }
 
   // Loading state
