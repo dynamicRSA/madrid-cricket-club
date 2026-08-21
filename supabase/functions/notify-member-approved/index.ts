@@ -77,13 +77,7 @@ serve(async (req) => {
     // Continue — we still send the email, just without the magic link button
   }
 
-  // ── Step 2: Determine fee based on membership category ─────────────────────
-  const isJunior = membership_category === "junior";
-  const fullFee  = isJunior ? "€60" : "€100";
-  const halfFee  = isJunior ? "€35" : "€60";
-  const category = isJunior ? "Junior" : "Senior";
-
-  // ── Step 3: Send branded approval email via Resend ─────────────────────────
+  // ── Step 2: Send branded approval email via Resend ─────────────────────────
   if (!RESEND_API_KEY) {
     console.warn("RESEND_API_KEY not set — skipping approval email");
     return new Response(JSON.stringify({ success: true, email_sent: false, action_link: actionLink }), {
@@ -141,38 +135,30 @@ serve(async (req) => {
             <!-- CTA button -->
             ${ctaButton}
 
-            <!-- Membership fee section -->
+            <!-- Bank details section -->
             <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1420;border-radius:8px;border:1px solid #1e3050;margin:24px 0;">
               <tr><td style="padding:20px 24px;">
-                <p style="margin:0 0 12px;color:#f0b429;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">💳 Membership Fee</p>
-                <p style="margin:0 0 10px;color:#94a3b8;font-size:14px;line-height:1.6;">
-                  To complete your registration, please transfer your membership fee:
-                </p>
+                <p style="margin:0 0 14px;color:#f0b429;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px;">💳 Membership Fee — Bank Transfer</p>
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr>
-                    <td style="padding:6px 0;border-bottom:1px solid #1e3050;">
-                      <span style="color:#64748b;font-size:12px;">Full Season</span>
+                    <td style="padding:7px 0;border-bottom:1px solid #1e3050;width:120px;">
+                      <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">Account name</span>
                     </td>
-                    <td style="padding:6px 0;border-bottom:1px solid #1e3050;text-align:right;">
-                      <span style="color:#f1f5f9;font-weight:700;">${fullFee}</span>
+                    <td style="padding:7px 0;border-bottom:1px solid #1e3050;">
+                      <span style="color:#f1f5f9;font-size:14px;font-weight:600;">Club Deportivo Elemental Madrid Cricket</span>
                     </td>
                   </tr>
                   <tr>
-                    <td style="padding:6px 0;">
-                      <span style="color:#64748b;font-size:12px;">Half Season (joining after July)</span>
+                    <td style="padding:7px 0;">
+                      <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;">IBAN</span>
                     </td>
-                    <td style="padding:6px 0;text-align:right;">
-                      <span style="color:#f1f5f9;font-weight:700;">${halfFee}</span>
+                    <td style="padding:7px 0;">
+                      <span style="color:#f1f5f9;font-size:14px;font-weight:600;letter-spacing:1px;">ES44 2100 9201 4722 0003 9856</span>
                     </td>
                   </tr>
                 </table>
-                <p style="margin:14px 0 0;color:#94a3b8;font-size:13px;line-height:1.6;">
-                  <strong style="color:#e2e8f0;">Bank transfer details:</strong><br/>
-                  ${BANK_DETAILS}
-                </p>
-                <p style="margin:10px 0 0;color:#64748b;font-size:12px;">
-                  Use your full name as the payment reference.
-                  Once paid, please upload proof of payment in your member portal.
+                <p style="margin:14px 0 0;color:#64748b;font-size:12px;">
+                  Please use your <strong style="color:#94a3b8;">full name</strong> as the payment reference.
                 </p>
               </td></tr>
             </table>
