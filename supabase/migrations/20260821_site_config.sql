@@ -1,5 +1,6 @@
 -- Migration: site_config table for club-wide settings
 -- Allows admins to toggle features like registrations from the admin panel
+-- Note: members.roles is a text[] array, not a single-value column
 
 CREATE TABLE IF NOT EXISTS public.site_config (
   key        TEXT PRIMARY KEY,
@@ -16,23 +17,40 @@ ON CONFLICT (key) DO NOTHING;
 ALTER TABLE public.site_config ENABLE ROW LEVEL SECURITY;
 
 -- Anyone can read (join page needs to check this without auth)
-CREATE POLICY "site_config_public_read" ON public.site_config
-  FOR SELECT USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='site_config' AND policyname='site_config_public_read') THEN
+    CREATE POLICY "site_config_public_read" ON public.site_config FOR SELECT USING (true);
+  END IF;
+END $$;
 
--- Only admins can update
-CREATE POLICY "site_config_admin_write" ON public.site_config
-  FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.members
-      WHERE user_id = auth.uid()
-        AND role IN ('admin', 'super_admin', 'secretary')
-    )
-  )
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM public.members
-      WHERE user_id = auth.uid()
-        AND role IN ('admin', 'super_admin', 'secretary')
-    )
-  );
+-- Only admins/committee can update (roles is a text[] array)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='site_config' AND policyname='site_config_admin_write') THEN
+    CREATE POLICY "site_config_admin_write" ON public.site_config
+      FOR ALL
+      USING (
+        EXISTS (
+          SELECT 1 FROM public.members
+          WHERE user_id = auth.uid()
+            AND (
+              'admin' = ANY(roles) OR
+              'secretary' = ANY(roles) OR
+              'president' = ANY(roles) OR
+              'super_admin' = ANY(roles)
+            )
+        )
+      )
+      WITH CHECK (
+        EXISTS (
+          SELECT 1 FROM public.members
+          WHERE user_id = auth.uid()
+            AND (
+              'admin' = ANY(roles) OR
+              'secretary' = ANY(roles) OR
+              'president' = ANY(roles) OR
+              'super_admin' = ANY(roles)
+            )
+        )
+      );
+  END IF;
+END $$;

@@ -33,7 +33,7 @@ export default function JoinPage() {
       .select("value")
       .eq("key", "registrations_open")
       .single()
-      .then(({ data }) => {
+      .then(({ data }: { data: any }) => {
         // Default to open if config row missing
         setRegistrationsOpen(data ? data.value === true : true);
       })

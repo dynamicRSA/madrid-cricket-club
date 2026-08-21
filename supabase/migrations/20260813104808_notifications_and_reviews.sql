@@ -7,27 +7,27 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   data        jsonb DEFAULT '{}',
   is_read     boolean DEFAULT false,
   created_at  timestamptz DEFAULT now()
-)
+);
 
-ALTER TABLE notifications ENABLE ROW LEVEL SECURITY
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='notifications' AND policyname='Members read own notifications') THEN
     CREATE POLICY "Members read own notifications" ON notifications FOR SELECT USING (member_id IN (SELECT id FROM members WHERE user_id = auth.uid()));
   END IF;
-END $$
+END $$;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='notifications' AND policyname='Members update own notifications') THEN
     CREATE POLICY "Members update own notifications" ON notifications FOR UPDATE USING (member_id IN (SELECT id FROM members WHERE user_id = auth.uid()));
   END IF;
-END $$
+END $$;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='notifications' AND policyname='System insert notifications') THEN
     CREATE POLICY "System insert notifications" ON notifications FOR INSERT WITH CHECK (true);
   END IF;
-END $$
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.notification_preferences (
   member_id               uuid PRIMARY KEY REFERENCES members(id) ON DELETE CASCADE,
@@ -42,15 +42,15 @@ CREATE TABLE IF NOT EXISTS public.notification_preferences (
   email_enabled           boolean DEFAULT true,
   inapp_enabled           boolean DEFAULT true,
   updated_at              timestamptz DEFAULT now()
-)
+);
 
-ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY
+ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='notification_preferences' AND policyname='Members manage own preferences') THEN
     CREATE POLICY "Members manage own preferences" ON notification_preferences FOR ALL USING (member_id IN (SELECT id FROM members WHERE user_id = auth.uid()));
   END IF;
-END $$
+END $$;
 
 CREATE TABLE IF NOT EXISTS public.membership_reviews (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -59,20 +59,20 @@ CREATE TABLE IF NOT EXISTS public.membership_reviews (
   reason       text,
   decided_by   uuid REFERENCES members(id),
   created_at   timestamptz DEFAULT now()
-)
+);
 
-ALTER TABLE membership_reviews ENABLE ROW LEVEL SECURITY
+ALTER TABLE membership_reviews ENABLE ROW LEVEL SECURITY;
 
 DO $$ BEGIN
   IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='membership_reviews' AND policyname='Admins manage reviews') THEN
     CREATE POLICY "Admins manage reviews" ON membership_reviews FOR ALL USING (is_admin());
   END IF;
-END $$
+END $$;
 
 INSERT INTO notification_preferences (member_id)
 SELECT id FROM members
 WHERE NOT EXISTS (SELECT 1 FROM notification_preferences np WHERE np.member_id = members.id)
-ON CONFLICT (member_id) DO NOTHING
+ON CONFLICT (member_id) DO NOTHING;
 
 -- Fix handle_new_user trigger to use members table (profiles table does not exist)
 CREATE OR REPLACE FUNCTION public.handle_new_user()
