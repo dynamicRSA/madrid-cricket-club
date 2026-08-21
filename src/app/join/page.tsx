@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { useLanguage } from "@/lib/i18n";
 import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown, Lock } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function JoinPage() {
   const { t } = useLanguage();
