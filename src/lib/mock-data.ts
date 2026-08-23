@@ -466,7 +466,7 @@ export const COMMITTEE = [
     name: "Jon Woodward",
     email: "jonwoodward1975@gmail.com",
     phone: "+34 655 069 911",
-    bio: "One of the club's founding members. Jon has been based in Madrid for over 30 years and has been central to MCC's growth and community work.",
+    bio: "One of MCC's founding members, Jon has been a cornerstone of cricket in Madrid for over 30 years. As President, he sets the direction for the club and ensures it continues to grow in the right way — but his influence extends well beyond the committee room. Jon is deeply embedded in the Cricket España ecosystem, working at a national level to help shape the game's development across the country. Behind the scenes, he juggles an enormous amount: from navigating the logistics of registrations, tour planning, and venue coordination, to building the relationships with federations and partner clubs that keep MCC operating at the standard it does. Much of what makes the club function smoothly is Jon's doing — quietly, consistently, and without fanfare.",
   },
   {
     role: "Vice President",
