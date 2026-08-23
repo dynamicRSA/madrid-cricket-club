@@ -473,7 +473,7 @@ export const COMMITTEE = [
     name: "Lewis Clarke",
     email: "mail@lewclark.com",
     phone: "+34 687 424 539",
-    bio: "Vice President responsible for club operations and player welfare.",
+    bio: "As Vice President, Lewis is the driving force behind MCC's growth beyond the senior game. He leads the club's Juniors setup — personally organising and running the Youth programme that has brought a new generation of cricketers through the ranks in Madrid. Alongside that, he plays a central role in developing and supporting Women's cricket at the club, helping to make MCC one of the most inclusive cricket communities in Spain.",
   },
   {
     role: "Treasurer",
@@ -483,7 +483,7 @@ export const COMMITTEE = [
   {
     role: "Secretary",
     name: "Victor Medina",
-    bio: "Club Secretary — manages communications, Cricket España registration, and player records.",
+    bio: "Victor is the engine room of MCC's day-to-day operations. As Club Secretary, he handles the lion's share of the club's administration — from managing correspondence and coordinating with Cricket España, to keeping player records in order and making sure everything behind the scenes runs without a hitch. If something needs doing, Victor has almost certainly already done it.",
   },
   {
     role: "Captain (40-over)",
