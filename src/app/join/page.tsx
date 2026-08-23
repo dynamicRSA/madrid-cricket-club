@@ -4,9 +4,10 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useState, useEffect, useRef } from "react";
 import { useLanguage } from "@/lib/i18n";
-import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown, Lock } from "lucide-react";
+import { User, Mail, Phone, MessageSquare, CheckCircle, Loader2, ChevronDown, Lock, FileText } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import DocumentUploader, { type UploadedDocument } from "@/components/DocumentUploader";
 
 // ── Cloudflare Turnstile ──────────────────────────────────────────────────────
 // Replace with your real site key from https://dash.cloudflare.com/?to=/:account/turnstile
@@ -38,6 +39,10 @@ export default function JoinPage() {
   const [registrationsOpen, setRegistrationsOpen] = useState<boolean | null>(null);
   const [turnstileReady, setTurnstileReady] = useState(false);
   const turnstileRef = useRef<HTMLDivElement>(null);
+  // Step 2 — document upload after successful form submission
+  const [pendingMemberId, setPendingMemberId] = useState<string | null>(null);
+  const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
+  const [docsComplete, setDocsComplete] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -143,6 +148,13 @@ export default function JoinPage() {
         setSubmitting(false);
         return;
       }
+
+      // Capture member_id so Step 2 can attach documents
+      try {
+        const json = await res.json();
+        if (json?.member_id) setPendingMemberId(json.member_id);
+      } catch { /* non-fatal — documents can still be skipped */ }
+
     } catch (err) {
       console.error("Network error:", err);
       setErrorMsg("Could not reach the server. Please check your connection.");
@@ -252,13 +264,80 @@ export default function JoinPage() {
                   </Link>
                 </div>
               ) : submitted ? (
-                /* ── Success state ── */
-                <div className="glass-dark p-10 text-center">
-                  <div className="w-12 h-12 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto mb-4">
-                    <CheckCircle size={32} className="text-brand-400" />
+                /* ── Step 2: Document Upload ── */
+                <div className="glass-dark p-8 space-y-6">
+                  {/* Step header */}
+                  <div className="flex items-center gap-4 border-b border-white/[0.06] pb-5">
+                    <div className="w-12 h-12 rounded-full bg-brand-500/20 border border-brand-500/30 flex items-center justify-center shrink-0">
+                      <CheckCircle size={24} className="text-brand-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-display font-bold text-xl">Application received!</h3>
+                      <p className="text-slate-400 text-sm mt-0.5">Now upload your registration documents below.</p>
+                    </div>
                   </div>
-                  <h3 className="text-2xl font-display font-bold text-white mb-2">Thanks, we&apos;ll be in touch!</h3>
-                  <p className="text-slate-400">We look forward to meeting you at the ground!</p>
+
+                  {docsComplete ? (
+                    /* All done */
+                    <div className="text-center py-6 space-y-3">
+                      <div className="w-14 h-14 rounded-full bg-brand-500/20 flex items-center justify-center mx-auto">
+                        <CheckCircle size={30} className="text-brand-400" />
+                      </div>
+                      <p className="text-white font-semibold text-lg">Documents submitted — we&apos;re reviewing your application!</p>
+                      <p className="text-slate-400 text-sm">We&apos;ll be in touch by email within a few days. Welcome to Madrid Cricket Club 🏏</p>
+                    </div>
+                  ) : (
+                    <>
+                      {pendingMemberId ? (
+                        <div className="space-y-5">
+                          <p className="text-slate-300 text-sm">
+                            Please upload a copy of your <strong className="text-white">ID document</strong> (passport, DNI, or NIE) and <strong className="text-white">proof of payment</strong> if you&apos;ve already paid your membership fee. You can also skip this step and upload them later from your profile.
+                          </p>
+
+                          {/* ID Document */}
+                          <DocumentUploader
+                            memberId={pendingMemberId}
+                            docType="id_document"
+                            source="registration"
+                            label="ID Document (Passport, DNI, NIE)"
+                            onUploaded={(doc) => setUploadedDocs((prev) => [...prev, doc])}
+                          />
+
+                          {/* Payment Proof */}
+                          <DocumentUploader
+                            memberId={pendingMemberId}
+                            docType="payment_proof"
+                            source="registration"
+                            label="Proof of Membership Fee Payment"
+                            onUploaded={(doc) => setUploadedDocs((prev) => [...prev, doc])}
+                          />
+
+                          <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+                            <button
+                              type="button"
+                              onClick={() => setDocsComplete(true)}
+                              className="btn-gold w-full sm:w-auto justify-center"
+                            >
+                              <CheckCircle size={16} />
+                              {uploadedDocs.length > 0
+                                ? `Done — ${uploadedDocs.length} document${uploadedDocs.length === 1 ? "" : "s"} uploaded`
+                                : "Skip for now"}
+                            </button>
+                            {uploadedDocs.length === 0 && (
+                              <p className="text-slate-500 text-xs text-center sm:text-left">You can upload documents later from your member profile.</p>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        /* Could not get member_id — still show success */
+                        <div className="text-center py-6 space-y-3">
+                          <FileText size={32} className="mx-auto text-brand-400" />
+                          <p className="text-white font-semibold">Thanks, we&apos;ll be in touch!</p>
+                          <p className="text-slate-400 text-sm">We look forward to meeting you at the ground! Once approved, you can upload your documents from your member profile.</p>
+                        </div>
+                      )}
+                    </>
+                  )}
                 </div>
               ) : (
                 /* ── Application form ── */

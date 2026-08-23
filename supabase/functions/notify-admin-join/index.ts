@@ -42,7 +42,7 @@ serve(async (req) => {
 
   const notes = [experience, message, hear_about].filter(Boolean).join(" | ");
 
-  const { error: insertError } = await supabase.from("members").insert({
+  const { data: memberRow, error: insertError } = await supabase.from("members").insert({
     full_legal_name: name,
     email: email,
     mobile: phone || null,
@@ -50,12 +50,14 @@ serve(async (req) => {
     membership_category: age_group === "junior" ? "junior" : "senior",
     registration_status: "applied",
     notes: notes || null,
-  });
+  }).select("id").single();
 
   if (insertError) {
     console.error("Member insert error:", insertError);
     // Don't fail the whole request — still send the admin email
   }
+
+  const newMemberId = memberRow?.id ?? null;
 
   // ── 2. Send admin notification email via Resend ───────────────────────────
   if (!RESEND_API_KEY) {
@@ -165,7 +167,7 @@ serve(async (req) => {
   }
 
   return new Response(
-    JSON.stringify({ inserted: !insertError, email_sent: emailRes.ok }),
+    JSON.stringify({ inserted: !insertError, email_sent: emailRes.ok, member_id: newMemberId }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 });

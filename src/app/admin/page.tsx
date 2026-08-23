@@ -17,7 +17,7 @@ import {
   LogOut, ShieldAlert, Eye, Plus, ChevronRight, Utensils, Car,
   Trophy, Edit2, ArrowRight, Lock, Unlock, Shirt,
   User, Shield, ShieldCheck, FileText, Zap, Copy, Key, ClipboardCopy,
-  Mail, Ban, Trash2, Info, MapPin, Phone
+  Mail, Ban, Trash2, Info, MapPin, Phone, ExternalLink, Upload
 } from "lucide-react";
 import {
   parseTourMeta, serializeTourMeta, defaultGame,
@@ -393,6 +393,9 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
 
   return (
     <div className="space-y-6">
+      {/* Joining Date Correction Requests */}
+      <JoiningDateRequestsPanel supabase={supabase} />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -505,15 +508,8 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                 ))}
               </div>
 
-              {/* Documents */}
-              {m.id_type && (
-                <div className="flex items-center gap-2 text-xs bg-slate-900/60 rounded-lg px-3 py-2">
-                  <span className="text-slate-400"><FileText size={12} className="inline mr-1" />ID Document:</span>
-                  <span className="text-slate-200 font-medium">{m.id_type}</span>
-                  {m.id_number && <span className="text-slate-400">· {m.id_number}</span>}
-                  <span className="ml-auto badge-gold text-[10px]">Needs verification</span>
-                </div>
-              )}
+              {/* Documents — fetched from member_documents table */}
+              <MemberDocumentsAdminSection memberId={m.id} supabase={supabase} />
 
               {/* Emergency contact */}
               {m.emergency_name && (
@@ -3445,6 +3441,143 @@ function JerseyTab({ supabase }: { supabase: any }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── MemberDocumentsAdminSection ──────────────────────────────────────────────
+function MemberDocumentsAdminSection({ memberId, supabase }: { memberId: string; supabase: any }) {
+  const [docs, setDocs]             = useState<any[]>([]);
+  const [loading, setLoading]       = useState(true);
+  const [urlLoading, setUrlLoading] = useState<string | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from("member_documents")
+      .select("id, file_name, doc_type, storage_path, uploaded_at, scan_status, source")
+      .eq("member_id", memberId)
+      .order("uploaded_at", { ascending: false })
+      .then(({ data }: any) => { setDocs(data ?? []); setLoading(false); });
+  }, [memberId]);
+
+  const DOC_LABELS: Record<string, string> = {
+    id_document: "ID Document", payment_proof: "Payment Proof", other: "Other",
+  };
+
+  async function openDoc(storagePath: string, docId: string) {
+    setUrlLoading(docId);
+    try {
+      const { data, error } = await supabase.storage
+        .from("member-documents")
+        .createSignedUrl(storagePath, 3600);
+      if (error || !data?.signedUrl) throw error ?? new Error("No signed URL returned");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (e: any) {
+      alert(`Could not open document: ${e?.message ?? String(e)}`);
+    } finally {
+      setUrlLoading(null);
+    }
+  }
+
+  if (loading) return <div className="flex items-center gap-2 text-slate-500 text-xs py-1"><Loader2 size={12} className="animate-spin" /> Loading documents…</div>;
+
+  return (
+    <div className="space-y-1.5">
+      <p className="text-slate-500 text-[11px] uppercase tracking-wider font-semibold flex items-center gap-1"><FileText size={11} /> Documents</p>
+      {docs.length === 0 ? (
+        <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-900/40 rounded-lg px-3 py-2">No documents uploaded yet.</div>
+      ) : docs.map((doc) => (
+        <div key={doc.id} className="flex items-center gap-2 text-xs bg-slate-900/60 rounded-lg px-3 py-2">
+          <FileText size={12} className="text-slate-400 shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-slate-200 font-medium truncate block">{doc.file_name}</span>
+            <span className="text-slate-500">{DOC_LABELS[doc.doc_type] ?? doc.doc_type} · {doc.source === "registration" ? "Registration" : "Profile"} · {new Date(doc.uploaded_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</span>
+          </div>
+          <span className={`shrink-0 text-[10px] font-semibold px-2 py-0.5 rounded-full ${doc.scan_status === "clean" ? "bg-green-400/10 text-green-400 border border-green-400/20" : doc.scan_status === "infected" ? "bg-red-400/10 text-red-400 border border-red-400/20" : "bg-gold-500/10 text-gold-400 border border-gold-500/20"}`}>
+            {doc.scan_status === "clean" ? "✓ Verified" : doc.scan_status === "infected" ? "⚠ Rejected" : "Pending"}
+          </span>
+          <button onClick={() => openDoc(doc.storage_path, doc.id)} disabled={!!urlLoading} className="shrink-0 flex items-center gap-1 text-brand-400 hover:text-brand-300 text-[11px] font-medium transition-colors disabled:opacity-50">
+            {urlLoading === doc.id ? <Loader2 size={11} className="animate-spin" /> : <ExternalLink size={11} />} View
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── JoiningDateRequestsPanel ──────────────────────────────────────────────────
+function JoiningDateRequestsPanel({ supabase }: { supabase: any }) {
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading]   = useState(true);
+  const [acting, setActing]     = useState<string | null>(null);
+
+  async function loadRequests() {
+    setLoading(true);
+    const { data } = await supabase
+      .from("joining_date_requests")
+      .select("id, requested_date, reason, status, created_at, member:member_id (id, full_legal_name, email, joining_date, created_at)")
+      .eq("status", "pending")
+      .order("created_at", { ascending: true });
+    setRequests(data ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => { loadRequests(); }, []);
+
+  async function approve(req: any) {
+    setActing(req.id);
+    await supabase.from("members").update({ joining_date: req.requested_date }).eq("id", req.member.id);
+    await supabase.from("joining_date_requests").update({ status: "approved", reviewed_at: new Date().toISOString() }).eq("id", req.id);
+    setActing(null); loadRequests();
+  }
+
+  async function reject(req: any) {
+    const note = window.prompt("Optional: reason for rejection") ?? undefined;
+    setActing(req.id);
+    await supabase.from("joining_date_requests").update({ status: "rejected", review_note: note || null, reviewed_at: new Date().toISOString() }).eq("id", req.id);
+    setActing(null); loadRequests();
+  }
+
+  if (loading || requests.length === 0) return null;
+
+  return (
+    <div className="glass-dark p-5 border border-gold-500/20 space-y-3">
+      <h3 className="text-white font-semibold text-sm flex items-center gap-2">
+        <Calendar size={15} className="text-gold-400" />
+        Joining Date Correction Requests
+        <span className="ml-1 bg-gold-500/20 text-gold-300 border border-gold-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">{requests.length} pending</span>
+      </h3>
+      <div className="space-y-3">
+        {requests.map((req) => {
+          const currentDate = req.member?.joining_date ? new Date(req.member.joining_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : req.member?.created_at ? new Date(req.member.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+          const requestedDate = new Date(req.requested_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+          return (
+            <div key={req.id} className="bg-slate-900/60 border border-white/[0.06] rounded-xl px-4 py-3 space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-white text-sm font-medium">{req.member?.full_legal_name ?? "Unknown"}</p>
+                  <p className="text-slate-500 text-xs">{req.member?.email}</p>
+                </div>
+                <span className="text-[10px] text-gold-400 bg-gold-500/10 border border-gold-500/20 px-2 py-0.5 rounded-full shrink-0">Pending</span>
+              </div>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-slate-500">Current: <span className="text-slate-300">{currentDate}</span></span>
+                <span className="text-slate-600">→</span>
+                <span className="text-slate-500">Requested: <span className="text-white font-medium">{requestedDate}</span></span>
+              </div>
+              {req.reason && <p className="text-slate-400 text-xs italic">"{req.reason}"</p>}
+              <div className="flex items-center gap-2 pt-1">
+                <button onClick={() => approve(req)} disabled={acting === req.id} className="btn-primary btn-sm text-xs flex items-center gap-1">
+                  {acting === req.id ? <Loader2 size={11} className="animate-spin" /> : <CheckCircle size={11} />} Approve — set {requestedDate}
+                </button>
+                <button onClick={() => reject(req)} disabled={acting === req.id} className="btn-ghost btn-sm text-xs text-slate-400 border border-white/[0.06] hover:text-red-400 hover:border-red-500/30">
+                  <XCircle size={11} /> Reject
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

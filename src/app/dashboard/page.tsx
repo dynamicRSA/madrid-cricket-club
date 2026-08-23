@@ -21,8 +21,9 @@ import { EmptyState } from "@/components/EmptyState";
 import {
   User, Calendar, CreditCard, LogOut, CheckCircle, XCircle, HelpCircle,
   Clock, ChevronRight, AlertCircle, Loader2, Settings, Bell, Utensils, Car, ShieldCheck,
-  Eye, EyeOff, Shirt, Lock
+  Eye, EyeOff, Shirt, Lock, FileText, Upload, Download, ExternalLink
 } from "lucide-react";
+import DocumentUploader, { type UploadedDocument } from "@/components/DocumentUploader";
 
 
 type Tab = "overview" | "confirmations" | "availability" | "charges" | "profile" | "notifications";
@@ -409,7 +410,7 @@ export default function DashboardPage({ initialTab }: { initialTab?: Tab } = {})
                 {[
                   { label: t("dash.overview.availability_set"), value: availability.length, icon: Calendar, color: "text-brand-400" },
                   { label: t("dash.overview.outstanding_charges"), value: `€${totalOutstanding.toFixed(0)}`, icon: CreditCard, color: "text-gold-400" },
-                  { label: t("dash.overview.member_since"), value: member?.created_at ? new Date(member.created_at).getFullYear().toString() : "—", icon: Clock, color: "text-blue-400" },
+                  { label: t("dash.overview.member_since"), value: member?.joining_date ? new Date(member.joining_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }) : member?.created_at ? new Date(member.created_at).getFullYear().toString() : "—", icon: Clock, color: "text-blue-400" },
                 ].map((stat) => (
                   <div key={stat.label} className="glass-dark p-4 flex items-center gap-4">
                     <div className={`w-10 h-10 rounded-lg bg-white/5 flex items-center justify-center ${stat.color}`}>
@@ -1205,7 +1206,8 @@ function ProfileEditor({ member, onUpdate, supabase: supabaseProp, extraSections
                 <input id="profile-idnum" name="id_number" className="input" value={form.id_number || ""} onChange={handleChange} placeholder="e.g. Y1234567X or Passport #" />
               </div>
             </div>
-            <DocumentUploader memberId={member?.id} />
+            <MemberDocumentsSection memberId={member?.id} supabase={supabaseProp} />
+            <JoiningDateWidget member={member} supabase={supabaseProp} />
           </div>
 
           {/* Medical / dietary */}
@@ -1512,65 +1514,248 @@ function AvatarUploadCard({
     </div>
   );
 }
-// ─── DocumentUploader ─────────────────────────────────────────────────────────
-// Referenced in ProfileEditor ID section but never defined — added here.
-function DocumentUploader({ memberId }: { memberId?: string }) {
-  const supabase = createClient();
-  const [uploading, setUploading] = useState(false);
-  const [uploaded, setUploaded] = useState(false);
-  const [uploadError, setUploadError] = useState("");
-  const [fileName, setFileName] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
+/** Fetch and display all member_documents rows, plus an uploader for new ones */
+function MemberDocumentsSection({ memberId, supabase }: { memberId?: string; supabase: any }) {
+  const [docs, setDocs]     = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showUploader, setShowUploader] = useState<"id_document" | "payment_proof" | "other" | null>(null);
 
-  async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !memberId) return;
-    setUploadError("");
-    setUploading(true);
-    try {
-      const ext = file.name.split(".").pop() ?? "pdf";
-      const path = `${memberId}/id-document.${ext}`;
-      const { error: uploadErr } = await supabase.storage
-        .from("documents")
-        .upload(path, file, { upsert: true, contentType: file.type });
-      if (uploadErr) throw uploadErr;
-      setFileName(file.name);
-      setUploaded(true);
-    } catch (err: any) {
-      setUploadError(err.message || "Upload failed.");
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+  async function loadDocs() {
+    if (!memberId) { setLoading(false); return; }
+    setLoading(true);
+    const { data } = await supabase
+      .from("member_documents")
+      .select("id, file_name, doc_type, storage_path, uploaded_at, scan_status, source, mime_type")
+      .eq("member_id", memberId)
+      .order("uploaded_at", { ascending: false });
+    setDocs(data ?? []);
+    setLoading(false);
+  }
+
+  useEffect(() => { loadDocs(); }, [memberId]);
+
+  const DOC_LABELS: Record<string, string> = {
+    id_document:   "ID Document",
+    payment_proof: "Payment Proof",
+    other:         "Other",
+  };
+
+  const SOURCE_LABELS: Record<string, string> = {
+    registration: "Registration",
+    profile:      "Profile",
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <h4 className="text-white font-semibold text-sm flex items-center gap-2">
+          <FileText size={15} className="text-brand-400" /> My Documents
+        </h4>
+        {showUploader ? (
+          <button type="button" onClick={() => setShowUploader(null)} className="text-xs text-slate-400 hover:text-white">
+            ✕ Cancel
+          </button>
+        ) : (
+          <button type="button" onClick={() => setShowUploader("other")} className="btn-outline btn-sm text-xs flex items-center gap-1">
+            <Upload size={13} /> Upload Document
+          </button>
+        )}
+      </div>
+
+      {/* Upload type selector */}
+      {showUploader && (
+        <div className="bg-slate-900/60 border border-white/[0.06] rounded-xl p-4 space-y-4">
+          <div className="flex items-center gap-2 mb-1">
+            {(["id_document", "payment_proof", "other"] as const).map((dt) => (
+              <button
+                key={dt}
+                type="button"
+                onClick={() => setShowUploader(dt)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  showUploader === dt
+                    ? "bg-brand-500/20 text-brand-300 border border-brand-500/40"
+                    : "text-slate-400 border border-white/[0.06] hover:text-white hover:bg-white/[0.04]"
+                }`}
+              >
+                {DOC_LABELS[dt]}
+              </button>
+            ))}
+          </div>
+          <DocumentUploader
+            memberId={memberId}
+            docType={showUploader}
+            source="profile"
+            label={DOC_LABELS[showUploader]}
+            onUploaded={() => { setShowUploader(null); loadDocs(); }}
+          />
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex items-center gap-2 text-slate-500 text-xs py-2">
+          <Loader2 size={13} className="animate-spin" /> Loading documents…
+        </div>
+      ) : docs.length === 0 ? (
+        <p className="text-slate-500 text-xs py-2">No documents uploaded yet. Use the button above to upload your ID or payment proof.</p>
+      ) : (
+        <div className="space-y-2">
+          {docs.map((doc) => (
+            <div key={doc.id} className="flex items-center gap-3 bg-slate-900/50 border border-white/[0.05] rounded-xl px-3 py-2.5">
+              <FileText size={15} className="text-slate-400 shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-xs font-medium truncate">{doc.file_name}</p>
+                <p className="text-slate-500 text-[11px]">
+                  {DOC_LABELS[doc.doc_type] ?? doc.doc_type}
+                  {" · "}{SOURCE_LABELS[doc.source] ?? doc.source}
+                  {" · "}{new Date(doc.uploaded_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                </p>
+              </div>
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                doc.scan_status === "clean" ? "bg-green-400/10 text-green-400 border border-green-400/20"
+                : doc.scan_status === "infected" ? "bg-red-400/10 text-red-400 border border-red-400/20"
+                : "bg-slate-500/20 text-slate-400 border border-white/[0.06]"
+              }`}>
+                {doc.scan_status === "clean" ? "✓ Verified" : doc.scan_status === "infected" ? "⚠ Rejected" : "Pending"}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Joining Date widget — shows official joining date and allows requesting a change */
+function JoiningDateWidget({ member, supabase }: { member: any; supabase: any }) {
+  const [showForm, setShowForm]   = useState(false);
+  const [date, setDate]           = useState("");
+  const [reason, setReason]       = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [existingRequest, setExistingRequest] = useState<any | null>(null);
+  const [loadingReq, setLoadingReq] = useState(true);
+
+  // Load any pending/recent request
+  useEffect(() => {
+    if (!member?.id) { setLoadingReq(false); return; }
+    supabase
+      .from("joining_date_requests")
+      .select("id, requested_date, reason, status, review_note, created_at")
+      .eq("member_id", member.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }: any) => {
+        setExistingRequest(data?.[0] ?? null);
+        setLoadingReq(false);
+      });
+  }, [member?.id]);
+
+  async function submitRequest() {
+    if (!date || !member?.id) return;
+    setSubmitting(true);
+    const { error } = await supabase
+      .from("joining_date_requests")
+      .insert({ member_id: member.id, requested_date: date, reason: reason || null });
+    setSubmitting(false);
+    if (!error) {
+      setSubmitted(true);
+      setShowForm(false);
+      setExistingRequest({ requested_date: date, reason, status: "pending", created_at: new Date().toISOString() });
     }
   }
 
+  const joiningDate = member?.joining_date
+    ? new Date(member.joining_date).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+    : member?.created_at
+      ? new Date(member.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })
+      : "—";
+
   return (
-    <div className="glass-dark p-5 rounded-2xl border border-white/[0.06] space-y-2">
-      <p className="text-white font-semibold text-sm">ID Document</p>
-      <p className="text-slate-500 text-xs">Upload a scan or photo of your DNI, NIE, or Passport (PDF, JPEG or PNG).</p>
-      {uploaded && (
-        <p className="text-green-400 text-xs flex items-center gap-1.5">
-          <CheckCircle size={12} /> {fileName} uploaded successfully
+    <div className="glass-dark p-5 sm:p-6 space-y-4">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <h3 className="text-white font-semibold flex items-center gap-2">
+          <Calendar size={16} className="text-brand-400" /> Joining Date
+        </h3>
+        {!showForm && !existingRequest?.status === "pending" && (
+          <button type="button" onClick={() => setShowForm(true)} className="btn-outline btn-sm text-xs">
+            Request Change
+          </button>
+        )}
+      </div>
+
+      <div className="flex items-center gap-3 bg-slate-900/40 rounded-xl px-4 py-3">
+        <Calendar size={16} className="text-slate-400 shrink-0" />
+        <div>
+          <p className="text-white font-medium text-sm">{joiningDate}</p>
+          <p className="text-slate-500 text-xs">Official membership joining date</p>
+        </div>
+      </div>
+
+      {/* Existing request status */}
+      {!loadingReq && existingRequest && (
+        <div className={`rounded-xl px-4 py-3 border text-sm ${
+          existingRequest.status === "approved" ? "bg-green-500/10 border-green-500/30 text-green-300"
+          : existingRequest.status === "rejected" ? "bg-red-500/10 border-red-500/30 text-red-300"
+          : "bg-gold-500/10 border-gold-500/30 text-gold-300"
+        }`}>
+          <p className="font-medium">
+            {existingRequest.status === "approved" ? "✓ Date change approved"
+            : existingRequest.status === "rejected" ? "✗ Date change request declined"
+            : "⏳ Date change request pending review"}
+          </p>
+          <p className="text-xs mt-0.5 opacity-80">
+            Requested: {new Date(existingRequest.requested_date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+            {existingRequest.review_note && <> · Note: {existingRequest.review_note}</>}
+          </p>
+        </div>
+      )}
+
+      {/* Change request form */}
+      {showForm && (
+        <div className="space-y-3 border-t border-white/[0.06] pt-4">
+          <p className="text-slate-400 text-xs">If your joining date is incorrect (e.g. you played before the current record shows), submit a correction request. The committee will verify and update it.</p>
+          <div>
+            <label className="label">Correct joining date *</label>
+            <input
+              type="date"
+              className="input"
+              value={date}
+              max={new Date().toISOString().split("T")[0]}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label">Reason (optional)</label>
+            <input
+              type="text"
+              className="input"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="e.g. I joined in 2021 but record shows 2023..."
+              maxLength={300}
+            />
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={!date || submitting}
+              onClick={submitRequest}
+              className="btn-primary btn-sm"
+            >
+              {submitting ? <><Loader2 size={13} className="animate-spin" /> Submitting…</> : "Submit Request"}
+            </button>
+            <button type="button" onClick={() => setShowForm(false)} className="text-slate-400 text-xs hover:text-white">
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {submitted && (
+        <p className="text-brand-400 text-xs flex items-center gap-1.5">
+          <CheckCircle size={13} /> Request submitted — the committee will review it shortly.
         </p>
       )}
-      {uploadError && <p className="text-red-400 text-xs">{uploadError}</p>}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="application/pdf,image/jpeg,image/png,image/webp"
-        className="hidden"
-        onChange={handleFile}
-      />
-      <button
-        type="button"
-        disabled={uploading || !memberId}
-        onClick={() => fileInputRef.current?.click()}
-        className="btn-outline btn-sm text-xs"
-      >
-        {uploading
-          ? <><Loader2 size={12} className="animate-spin" /> Uploading…</>
-          : uploaded ? "Replace Document" : "Upload Document"}
-      </button>
     </div>
   );
 }
