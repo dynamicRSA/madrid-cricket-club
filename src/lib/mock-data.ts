@@ -466,14 +466,14 @@ export const COMMITTEE = [
     name: "Jon Woodward",
     email: "jonwoodward1975@gmail.com",
     phone: "+34 655 069 911",
-    bio: "One of MCC's founding members, Jon has been a cornerstone of cricket in Madrid for over 30 years. As President, he sets the direction for the club and ensures it continues to grow in the right way — but his influence extends well beyond the committee room. Jon is deeply embedded in the Cricket España ecosystem, working at a national level to help shape the game's development across the country. Behind the scenes, he juggles an enormous amount: from navigating the logistics of registrations, tour planning, and venue coordination, to building the relationships with federations and partner clubs that keep MCC operating at the standard it does. Much of what makes the club function smoothly is Jon's doing — quietly, consistently, and without fanfare.",
+    bio: "One of MCC's founding members, Jon has been a cornerstone of cricket in Madrid for over 30 years. As President, he sets the direction for the club and ensures it continues to grow in the right way, but his influence extends well beyond the committee room. Jon is deeply embedded in the Cricket Espana ecosystem, working at a national level to help shape the game's development across the country.",
   },
   {
     role: "Vice President",
     name: "Lewis Clarke",
     email: "mail@lewclark.com",
     phone: "+34 687 424 539",
-    bio: "As Vice President, Lewis is the driving force behind MCC's growth beyond the senior game. He leads the club's Juniors setup — personally organising and running the Youth programme that has brought a new generation of cricketers through the ranks in Madrid. Alongside that, he plays a central role in developing and supporting Women's cricket at the club, helping to make MCC one of the most inclusive cricket communities in Spain.",
+    bio: "As Vice President, Lewis is the driving force behind MCC's growth beyond the senior game. He leads the club's Juniors setup, personally organising and running the Youth programme that has brought a new generation of cricketers through the ranks in Madrid. Alongside that, he plays a central role in developing and supporting Women's cricket at the club, helping to make MCC one of the most inclusive cricket communities in Spain.",
   },
   {
     role: "Treasurer",
@@ -483,7 +483,7 @@ export const COMMITTEE = [
   {
     role: "Secretary",
     name: "Victor Medina",
-    bio: "Victor is the engine room of MCC's day-to-day operations. As Club Secretary, he handles the lion's share of the club's administration — from managing correspondence and coordinating with Cricket España, to keeping player records in order and making sure everything behind the scenes runs without a hitch. If something needs doing, Victor has almost certainly already done it.",
+    bio: "Victor is the engine room of MCC's day-to-day operations. As Club Secretary, he handles the lion's share of the club's administration: managing correspondence, coordinating with Cricket Espana, keeping player records in order and making sure everything behind the scenes runs without a hitch. If something needs doing, Victor has almost certainly already done it.",
   },
   {
     role: "Captain (40-over)",
