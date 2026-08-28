@@ -64,13 +64,21 @@ export default function NewsPage() {
         <div className="container-wide">
           <div className="glass-dark overflow-hidden card-hover">
           <div className="grid md:grid-cols-2">
-              <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[320px] overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={imgSrc(featured.image!)}
-                  alt={featured.title}
-                  className="w-full h-full object-cover"
-                />
+              <div className="relative aspect-[16/9] md:aspect-auto md:min-h-[320px] overflow-hidden bg-[#1a0505]">
+                {featured.image ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imgSrc(featured.image)}
+                    alt={featured.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full border-2 border-dashed border-white/20 flex items-center justify-center text-slate-600 text-xs">
+                      No Image
+                    </div>
+                  </div>
+                )}
                 <div className="absolute top-4 left-4">
                   <span className="badge-red">{featured.category}</span>
                 </div>
