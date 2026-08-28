@@ -31,7 +31,7 @@ export const articles: NewsArticle[] = [
     title: "Remembering Ron Graham",
     category: "Club News",
     date: "28 Aug 2025",
-    image: "/images/real/ron-graham-ceremony.jpg",
+    image: "/images/real/ron-graham-portrait.jpg",
     excerpt:
       "It is with great sadness that Madrid Cricket Club marks the passing of our friend Ron Graham — our first tournament referee, who shaped every La Manga tournament that followed.",
     isPlaceholder: false,
@@ -51,12 +51,17 @@ export const articles: NewsArticle[] = [
       },
       {
         type: "image",
-        src: "/images/real/ron-graham-ceremony.jpg",
-        caption: "Ron presenting at a tournament prize-giving, La Manga",
+        src: "/images/real/ron-graham-speaking.jpg",
+        caption: "Ron addressing the tournament at the annual prize-giving",
       },
       {
         type: "paragraph",
         text: "He went on to referee the tournament for twelve years, stepping back only when his knee finally forced him to. Alongside that he umpired in the Spanish league for many years, and he was simply one of the best umpires to stand in it. He was not only a fixture at La Manga and Alfaz del Pi, but also at grounds all over the country, wherever the cricket needed him. Anyone who played in that time will have stood at the crease with Ron at the other end. His knowledge of the game was extraordinary, held lightly and shared freely, usually with a dry line attached. He gave decisions the way he did everything else, without fuss, and you accepted them because you knew he had seen it properly.",
+      },
+      {
+        type: "image",
+        src: "/images/real/ron-graham-ceremony.jpg",
+        caption: "Ron presenting at the La Manga tournament prize-giving",
       },
       {
         type: "paragraph",
@@ -84,17 +89,18 @@ export const articles: NewsArticle[] = [
       },
       {
         type: "callout",
-        title: "Service details",
+        title: "Service — Monday 31 August",
         lines: [
-          "The service will be held at 2pm on Monday 31 August at the Tanatorio de Novelda, with access to the chapel of rest from 12pm.",
-          "Afterwards, anyone who would like to join the family is welcome at the wake at Tipsy Terrace (TT) in Hondón de los Frailes, from around 3.30pm.",
-          "Recognising the short notice and the bank holiday, Babs and the family will also be arranging a memorial service in the UK at a later date. We will post details here as soon as we have them.",
+          "📍 Tanatorio de Novelda — service at 2pm; chapel of rest open from 12pm",
+          "🍺 Wake at Tipsy Terrace (TT), Hondón de los Frailes — from approximately 3.30pm",
+          "🇬🇧 A memorial service will also be held in the UK at a later date — details to follow here",
         ],
       },
     ],
   },
   {
     id: "mcc-25th-anniversary-2026",
+
     title: "Happy 25th Anniversary, Madrid Cricket Club!",
     category: "Club News",
     date: "23 Jul 2026",
