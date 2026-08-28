@@ -1,9 +1,10 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Link from "next/link";
-import { articles, getArticle } from "@/lib/articles";
+import Image from "next/image";
+import { articles, getArticle, type ArticleBlock } from "@/lib/articles";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Calendar, Tag, User } from "lucide-react";
+import { ArrowLeft, Calendar, Tag } from "lucide-react";
 import type { Metadata } from "next";
 import { imgSrc } from "@/lib/imgSrc";
 
@@ -29,6 +30,81 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       images: article.image ? [{ url: article.image }] : [],
     },
   };
+}
+
+function renderBlock(block: ArticleBlock, i: number) {
+  switch (block.type) {
+    case "paragraph":
+      return <p key={i} className="text-slate-300 leading-relaxed text-lg mb-6">{block.text}</p>;
+
+    case "italic":
+      return <p key={i} className="text-slate-400 italic leading-relaxed text-base mb-4">{block.text}</p>;
+
+    case "heading":
+      return (
+        <h2 key={i} className="text-2xl font-display font-bold text-white mt-10 mb-4 pb-2 border-b border-brand-500/30">
+          {block.text}
+        </h2>
+      );
+
+    case "image":
+      return (
+        <figure key={i} className="my-10">
+          <div className="relative w-full rounded-xl overflow-hidden">
+            <Image
+              src={imgSrc(block.src)}
+              alt={block.caption ?? ""}
+              width={900}
+              height={600}
+              className="w-full h-auto object-cover rounded-xl"
+              unoptimized
+            />
+          </div>
+          {block.caption && (
+            <figcaption className="text-center text-slate-500 text-sm mt-3 italic">
+              {block.caption}
+            </figcaption>
+          )}
+        </figure>
+      );
+
+    case "divider":
+      return (
+        <hr
+          key={i}
+          className="my-10 border-0 h-px bg-gradient-to-r from-transparent via-brand-500/40 to-transparent"
+        />
+      );
+
+    case "callout":
+      return (
+        <div
+          key={i}
+          className="my-8 rounded-xl border border-brand-500/30 bg-brand-900/20 p-6 pl-7 relative overflow-hidden"
+        >
+          <div className="absolute left-0 top-0 bottom-0 w-1 bg-brand-400 rounded-l-xl" />
+          <h3 className="text-brand-300 font-semibold text-sm uppercase tracking-wider mb-4">
+            {block.title}
+          </h3>
+          <ul className="space-y-3">
+            {block.lines.map((line, li) => (
+              <li key={li} className="text-slate-300 leading-relaxed text-base">{line}</li>
+            ))}
+          </ul>
+        </div>
+      );
+
+    case "signature":
+      return (
+        <div key={i} className="mt-8 mb-2 text-right">
+          <p className="text-white font-semibold text-base">{block.name}</p>
+          <p className="text-slate-400 text-sm italic">{block.role}</p>
+        </div>
+      );
+
+    default:
+      return null;
+  }
 }
 
 export default async function ArticlePage({ params }: Props) {
@@ -83,18 +159,14 @@ export default async function ArticlePage({ params }: Props) {
             </span>
           </div>
 
-          {/* Article body: use body if available, otherwise excerpt */}
-          <div className="prose prose-invert prose-lg max-w-none text-slate-300 leading-relaxed space-y-4"
-            style={{
-              "--tw-prose-body": "rgb(203 213 225)",
-              "--tw-prose-headings": "white",
-              "--tw-prose-bold": "white",
-              "--tw-prose-links": "#48b585",
-            } as React.CSSProperties}
-          >
-            {(article.body || article.excerpt).split("\n\n").map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
+          {/* Article body: rich blocks if available, otherwise plain paragraph split */}
+          <div className="max-w-none">
+            {article.blocks
+              ? article.blocks.map((block, i) => renderBlock(block, i))
+              : (article.body || article.excerpt).split("\n\n").map((para, i) => (
+                  <p key={i} className="text-slate-300 leading-relaxed text-lg mb-6">{para}</p>
+                ))
+            }
           </div>
         </div>
       </section>

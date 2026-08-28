@@ -1,6 +1,16 @@
 // Shared news articles — used by /news list and /news/[slug] detail pages
 // Add new articles here; they will automatically appear in both places.
 
+// Rich content block types for article bodies
+export type ArticleBlock =
+  | { type: "paragraph"; text: string }
+  | { type: "italic"; text: string }
+  | { type: "heading"; text: string }
+  | { type: "image"; src: string; caption?: string }
+  | { type: "divider" }
+  | { type: "callout"; title: string; lines: string[] }
+  | { type: "signature"; name: string; role: string };
+
 export interface NewsArticle {
   id: string;
   title: string;
@@ -11,9 +21,78 @@ export interface NewsArticle {
   isPlaceholder: boolean;
   isReal: boolean;
   body?: string;
+  /** Rich content blocks — if present, used instead of `body` */
+  blocks?: ArticleBlock[];
 }
 
-export const articles = [
+export const articles: NewsArticle[] = [
+  {
+    id: "ron-graham-tribute",
+    title: "Remembering Ron Graham",
+    category: "Club News",
+    date: "28 Aug 2025",
+    image: "/images/real/ron-graham-ceremony.jpg",
+    excerpt:
+      "It is with great sadness that Madrid Cricket Club marks the passing of our friend Ron Graham — our first tournament referee, who shaped every La Manga tournament that followed.",
+    isPlaceholder: false,
+    isReal: true,
+    blocks: [
+      {
+        type: "paragraph",
+        text: "It is with great sadness that Madrid Cricket Club marks the passing of our friend Ron Graham.",
+      },
+      {
+        type: "paragraph",
+        text: "Ron was there at the beginning. When we took our T20 tournament to La Manga for the first time in 2009, having started out with the embassy sides, Ron was our first tournament referee. He set the tone for everything that followed: calm, fair, and trusted by every side that played.",
+      },
+      {
+        type: "paragraph",
+        text: "What most people won't know is that the tournament might have been a one-off without him. At the end of that first year, Ron told me it was one of the best run events he had been involved in, and that we would be mad not to do it again. I had not until then thought of it as an annual fixture. Every tournament since has, in some real sense, come from a conversation with Ron.",
+      },
+      {
+        type: "image",
+        src: "/images/real/ron-graham-ceremony.jpg",
+        caption: "Ron presenting at a tournament prize-giving, La Manga",
+      },
+      {
+        type: "paragraph",
+        text: "He went on to referee the tournament for twelve years, stepping back only when his knee finally forced him to. Alongside that he umpired in the Spanish league for many years, and he was simply one of the best umpires to stand in it. He was not only a fixture at La Manga and Alfaz del Pi, but also at grounds all over the country, wherever the cricket needed him. Anyone who played in that time will have stood at the crease with Ron at the other end. His knowledge of the game was extraordinary, held lightly and shared freely, usually with a dry line attached. He gave decisions the way he did everything else, without fuss, and you accepted them because you knew he had seen it properly.",
+      },
+      {
+        type: "paragraph",
+        text: "Umpires occupy a strange position in cricket. They are essential and they are meant to go unnoticed, and the best of them are remembered less for any single decision than for what it felt like to have them out there. Ron was one of the best of them. Year after year of weekends in the Spanish sun, and the miles of driving to get to them, largely unthanked, purely for the love of the game.",
+      },
+      {
+        type: "paragraph",
+        text: "Beyond the white coat, he was simply a good man and a great friend, to this club and to many of us personally. We will miss him in the middle, and we will miss him in the bar afterwards.",
+      },
+      {
+        type: "paragraph",
+        text: "Our thoughts are with his family. Rest well, Ron. Thanks for everything.",
+      },
+      {
+        type: "signature",
+        name: "Jon Woodward",
+        role: "President, Madrid Cricket Club",
+      },
+      {
+        type: "divider",
+      },
+      {
+        type: "heading",
+        text: "Funeral details",
+      },
+      {
+        type: "callout",
+        title: "Service details",
+        lines: [
+          "The service will be held at 2pm on Monday 31 August at the Tanatorio de Novelda, with access to the chapel of rest from 12pm.",
+          "Afterwards, anyone who would like to join the family is welcome at the wake at Tipsy Terrace (TT) in Hondón de los Frailes, from around 3.30pm.",
+          "Recognising the short notice and the bank holiday, Babs and the family will also be arranging a memorial service in the UK at a later date. We will post details here as soon as we have them.",
+        ],
+      },
+    ],
+  },
   {
     id: "mcc-25th-anniversary-2026",
     title: "Happy 25th Anniversary, Madrid Cricket Club!",
