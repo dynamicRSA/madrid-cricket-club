@@ -127,7 +127,7 @@ export const articles: NewsArticle[] = [
     title: "Madrid Royals Make National League Debut",
     category: "Women's Cricket",
     date: "24 Apr 2024",
-    image: "/images/real/mcc-team-alicante.jpg",
+    image: null,
     excerpt:
       "El Madrid Royals debutó en el primer fin de semana de la liga nacional femenina en Barcelona: a historic milestone for women's cricket at MCC.",
     isPlaceholder: false,
