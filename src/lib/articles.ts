@@ -31,7 +31,7 @@ export const articles: NewsArticle[] = [
     title: "Remembering Ron Graham",
     category: "Club News",
     date: "28 Aug 2025",
-    image: "/images/real/ron-graham-portrait.jpg",
+    image: "/images/real/ron-graham-ceremony.jpg",
     excerpt:
       "It is with great sadness that Madrid Cricket Club marks the passing of our friend Ron Graham — our first tournament referee, who shaped every La Manga tournament that followed.",
     isPlaceholder: false,
@@ -50,18 +50,8 @@ export const articles: NewsArticle[] = [
         text: "What most people won't know is that the tournament might have been a one-off without him. At the end of that first year, Ron told me it was one of the best run events he had been involved in, and that we would be mad not to do it again. I had not until then thought of it as an annual fixture. Every tournament since has, in some real sense, come from a conversation with Ron.",
       },
       {
-        type: "image",
-        src: "/images/real/ron-graham-speaking.jpg",
-        caption: "Ron addressing the tournament at the annual prize-giving",
-      },
-      {
         type: "paragraph",
         text: "He went on to referee the tournament for twelve years, stepping back only when his knee finally forced him to. Alongside that he umpired in the Spanish league for many years, and he was simply one of the best umpires to stand in it. He was not only a fixture at La Manga and Alfaz del Pi, but also at grounds all over the country, wherever the cricket needed him. Anyone who played in that time will have stood at the crease with Ron at the other end. His knowledge of the game was extraordinary, held lightly and shared freely, usually with a dry line attached. He gave decisions the way he did everything else, without fuss, and you accepted them because you knew he had seen it properly.",
-      },
-      {
-        type: "image",
-        src: "/images/real/ron-graham-ceremony.jpg",
-        caption: "Ron presenting at the La Manga tournament prize-giving",
       },
       {
         type: "paragraph",
