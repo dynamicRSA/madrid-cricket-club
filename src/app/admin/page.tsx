@@ -492,10 +492,10 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
               {/* Member details grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                 {[
+                  { label: t("admin.member.mobile"), value: m.mobile || "—" },
                   { label: t("admin.member.nationality"), value: m.nationality || "—" },
                   { label: t("admin.member.playing_role"), value: m.playing_role || "—" },
                   { label: t("admin.member.dob"), value: m.date_of_birth ? new Date(m.date_of_birth).toLocaleDateString("en-GB") : "—" },
-                  { label: t("admin.member.mobile"), value: m.mobile || "—" },
                   { label: t("admin.member.joined"), value: m.created_at ? new Date(m.created_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
                   { label: "Last Updated", value: m.updated_at ? new Date(m.updated_at).toLocaleString("en-GB", { day:"2-digit", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit" }) : "—" },
                   { label: t("admin.member.dietary"), value: m.dietary_requirements || "None stated" },
@@ -508,8 +508,45 @@ function ApplicationsTab({ supabase, currentMember }: { supabase: any; currentMe
                 ))}
               </div>
 
+              {/* Join form application details */}
+              <div className="bg-slate-900/50 rounded-xl border border-white/[0.05] p-4 space-y-3">
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold">Application Details</p>
+
+                {/* Returning member badge */}
+                {(m as any).is_previous_member && (
+                  <div className="inline-flex items-center gap-1.5 bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold px-3 py-1 rounded-full">
+                    🔁 Returning Member
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  {(m as any).hear_about && (
+                    <div>
+                      <p className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">How They Found Us</p>
+                      <p className="text-slate-200 mt-0.5">{(m as any).hear_about}</p>
+                    </div>
+                  )}
+                  {(m as any).application_experience && (
+                    <div>
+                      <p className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">Cricket Experience</p>
+                      <p className="text-slate-200 mt-0.5">{(m as any).application_experience}</p>
+                    </div>
+                  )}
+                  {m.notes && (
+                    <div className="sm:col-span-2">
+                      <p className="text-slate-500 uppercase tracking-wider text-[10px] font-semibold">Message / Notes</p>
+                      <p className="text-slate-200 mt-0.5">{m.notes}</p>
+                    </div>
+                  )}
+                  {!(m as any).hear_about && !(m as any).application_experience && !m.notes && (
+                    <p className="text-slate-600 text-xs italic">No application details provided.</p>
+                  )}
+                </div>
+              </div>
+
               {/* Documents — fetched from member_documents table */}
               <MemberDocumentsAdminSection memberId={m.id} supabase={supabase} />
+
 
               {/* Emergency contact */}
               {m.emergency_name && (

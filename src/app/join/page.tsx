@@ -43,6 +43,7 @@ export default function JoinPage() {
   const [pendingMemberId, setPendingMemberId] = useState<string | null>(null);
   const [uploadedDocs, setUploadedDocs] = useState<UploadedDocument[]>([]);
   const [docsComplete, setDocsComplete] = useState(false);
+  const [isPreviousMember, setIsPreviousMember] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -102,9 +103,19 @@ export default function JoinPage() {
     // Honeypot check — bots fill hidden fields, humans don't
     if (form.honeypot) return;
 
-    // Phone validation
-    if (form.mobile && !PHONE_REGEX.test(form.mobile)) {
+    // Phone validation (required)
+    if (!form.mobile) {
+      setPhoneError("Phone number is required");
+      return;
+    }
+    if (!PHONE_REGEX.test(form.mobile)) {
       setPhoneError("Please enter a valid phone number");
+      return;
+    }
+
+    // Hear about required
+    if (!form.hear_about) {
+      setErrorMsg("Please tell us how you heard about us.");
       return;
     }
 
@@ -131,11 +142,12 @@ export default function JoinPage() {
           body: JSON.stringify({
             name: form.name,
             email: form.email,
-            phone: form.mobile || null,
+            phone: form.mobile,
             age_group: form.age_group,
             experience: form.experience || null,
             hear_about: hear,
             message: form.message || null,
+            is_previous_member: isPreviousMember,
             turnstile_token: turnstileToken,
           }),
         }
@@ -381,12 +393,13 @@ export default function JoinPage() {
                     <div>
                       <label className="label" htmlFor="join-phone">
                         <Phone size={13} className="inline mr-1" />
-                        Phone Number
+                        Phone Number *
                       </label>
                       <input
                         id="join-phone"
                         name="mobile"
                         type="tel"
+                        required
                         value={form.mobile}
                         onChange={handlePhoneChange}
                         placeholder="+34 600 000 000"
@@ -434,12 +447,13 @@ export default function JoinPage() {
 
                   <div>
                     <label className="label" htmlFor="join-hear">
-                      How did you hear about us?
+                      How did you hear about us? *
                     </label>
                     <div className="relative">
                       <select
                         id="join-hear"
                         name="hear_about"
+                        required
                         value={form.hear_about}
                         onChange={handleChange}
                         className="input appearance-none pr-10"
@@ -501,6 +515,20 @@ export default function JoinPage() {
                       />
                     </div>
                   )}
+
+                  {/* Previous member checkbox */}
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      id="join-previous-member"
+                      checked={isPreviousMember}
+                      onChange={(e) => setIsPreviousMember(e.target.checked)}
+                      className="mt-1 accent-brand-500"
+                    />
+                    <label htmlFor="join-previous-member" className="text-slate-300 text-sm">
+                      I am a previous member of Madrid Cricket Club
+                    </label>
+                  </div>
 
                   <div className="flex items-start gap-3">
                     <input type="checkbox" required id="join-privacy" className="mt-1 accent-brand-500" />

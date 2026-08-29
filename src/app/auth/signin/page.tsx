@@ -16,6 +16,7 @@ function SignInForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
+  const redirectTo = searchParams.get("redirect") || "/dashboard";
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
@@ -37,7 +38,7 @@ function SignInForm() {
       setError(err.message);
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push(redirectTo);
     }
   }
 

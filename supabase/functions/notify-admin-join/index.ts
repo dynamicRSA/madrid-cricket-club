@@ -13,6 +13,9 @@ const ADMIN_EMAIL     = Deno.env.get("ADMIN_EMAIL") ?? "svenprinsloo@gmail.com";
 const FROM_EMAIL      = "Madrid Cricket Club <onboarding@resend.dev>";
 const SITE_URL        = "https://madridcricketclub.com";
 
+// Deep-link that opens admin panel after sign-in
+const ADMIN_REVIEW_URL = `${SITE_URL}/auth/signin?redirect=%2Fadmin`;
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -31,7 +34,11 @@ serve(async (req) => {
     return new Response("Bad JSON", { status: 400, headers: corsHeaders });
   }
 
-  const { name, email, phone, age_group, experience, hear_about, message } = body;
+  const {
+    name, email, phone, age_group,
+    experience, hear_about, message,
+    is_previous_member,
+  } = body;
 
   if (!email || !name) {
     return new Response("Missing required fields", { status: 400, headers: corsHeaders });
@@ -40,16 +47,19 @@ serve(async (req) => {
   // ── 1. Insert member record using service role (bypasses RLS) ──────────────
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
 
-  const notes = [experience, message, hear_about].filter(Boolean).join(" | ");
-
   const { data: memberRow, error: insertError } = await supabase.from("members").insert({
-    full_legal_name: name,
-    email: email,
-    mobile: phone || null,
-    status: "pending_approval",
-    membership_category: age_group === "junior" ? "junior" : "senior",
-    registration_status: "applied",
-    notes: notes || null,
+    full_legal_name:         name,
+    email:                   email,
+    mobile:                  phone || null,
+    status:                  "pending_approval",
+    membership_category:     age_group === "junior" ? "junior" : "senior",
+    registration_status:     "applied",
+    // Structured join form fields — stored in dedicated columns
+    hear_about:              hear_about || null,
+    is_previous_member:      !!is_previous_member,
+    application_experience:  experience || null,
+    // Free-text notes: message only (experience/hear_about now in own columns)
+    notes:                   message || null,
   }).select("id").single();
 
   if (insertError) {
@@ -62,10 +72,14 @@ serve(async (req) => {
   // ── 2. Send admin notification email via Resend ───────────────────────────
   if (!RESEND_API_KEY) {
     console.warn("RESEND_API_KEY not set — skipping admin email");
-    return new Response(JSON.stringify({ inserted: !insertError, email_sent: false }), {
+    return new Response(JSON.stringify({ inserted: !insertError, email_sent: false, member_id: newMemberId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  const previousMemberBadge = is_previous_member
+    ? `<span style="display:inline-block;background:#1e3a5f;color:#60a5fa;font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px;letter-spacing:0.5px;margin-left:8px;">RETURNING MEMBER</span>`
+    : "";
 
   const html = `
 <!DOCTYPE html>
@@ -89,14 +103,14 @@ serve(async (req) => {
           <tr>
             <td style="padding:36px 40px;">
               <p style="margin:0 0 24px;color:#94a3b8;font-size:15px;line-height:1.6;">
-                A new membership application has been submitted and is now awaiting your review in the admin panel.
+                A new membership application has been submitted and is awaiting your review in the admin panel.
               </p>
               <table width="100%" cellpadding="0" cellspacing="0" style="background:#0d1420;border-radius:8px;border:1px solid #1e3050;margin-bottom:28px;">
                 <tr><td style="padding:20px 24px;">
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr><td style="padding:8px 0;border-bottom:1px solid #1e3050;">
                       <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Name</span><br/>
-                      <span style="color:#f1f5f9;font-size:15px;font-weight:600;">${name}</span>
+                      <span style="color:#f1f5f9;font-size:15px;font-weight:600;">${name}${previousMemberBadge}</span>
                     </td></tr>
                     <tr><td style="padding:8px 0;border-bottom:1px solid #1e3050;">
                       <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Email</span><br/>
@@ -110,13 +124,21 @@ serve(async (req) => {
                       <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Age Group</span><br/>
                       <span style="color:#f1f5f9;font-size:15px;text-transform:capitalize;">${age_group ?? "—"}</span>
                     </td></tr>
+                    <tr><td style="padding:8px 0;border-bottom:1px solid #1e3050;">
+                      <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Previous Member</span><br/>
+                      <span style="color:#f1f5f9;font-size:15px;">${is_previous_member ? "✅ Yes — returning member" : "No"}</span>
+                    </td></tr>
                     ${experience ? `<tr><td style="padding:8px 0;border-bottom:1px solid #1e3050;">
                       <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Cricket Experience</span><br/>
                       <span style="color:#f1f5f9;font-size:15px;">${experience}</span>
                     </td></tr>` : ""}
-                    ${hear_about ? `<tr><td style="padding:8px 0;">
+                    ${hear_about ? `<tr><td style="padding:8px 0;border-bottom:1px solid #1e3050;">
                       <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Heard About Us</span><br/>
                       <span style="color:#f1f5f9;font-size:15px;">${hear_about}</span>
+                    </td></tr>` : ""}
+                    ${message ? `<tr><td style="padding:8px 0;">
+                      <span style="color:#64748b;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Message</span><br/>
+                      <span style="color:#f1f5f9;font-size:15px;">${message}</span>
                     </td></tr>` : ""}
                   </table>
                 </td></tr>
@@ -124,10 +146,15 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td align="center">
-                    <a href="${SITE_URL}/admin"
+                    <a href="${ADMIN_REVIEW_URL}"
                        style="display:inline-block;background:#f0b429;color:#0d1420;font-weight:700;font-size:15px;padding:14px 32px;border-radius:8px;text-decoration:none;letter-spacing:0.5px;">
                       Review Application in Admin Panel →
                     </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td align="center" style="padding-top:12px;">
+                    <p style="margin:0;color:#475569;font-size:12px;">You will be prompted to sign in, then taken directly to the admin panel.</p>
                   </td>
                 </tr>
               </table>
@@ -156,7 +183,7 @@ serve(async (req) => {
     body: JSON.stringify({
       from: FROM_EMAIL,
       to: [ADMIN_EMAIL],
-      subject: `New membership application — ${name}`,
+      subject: `New membership application — ${name}${is_previous_member ? " (returning member)" : ""}`,
       html,
     }),
   });
