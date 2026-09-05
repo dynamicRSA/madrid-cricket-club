@@ -57,7 +57,6 @@ export const articles: NewsArticle[] = [
         type: "callout",
         title: "⭐ Imran Siddque — 62 off 34 balls (5×4, 5×6) | SR: 182.35",
         lines: [
-          "Another blistering innings from Madrid's most dangerous batter.",
           "Caught & bowled by Ram Kranti — but only after 62 stunning runs.",
           "Back-to-back star performances in the T20 double-header.",
         ],
