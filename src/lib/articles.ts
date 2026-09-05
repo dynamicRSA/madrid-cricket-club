@@ -27,6 +27,95 @@ export interface NewsArticle {
 
 export const articles: NewsArticle[] = [
   {
+    id: "barcelona-t20-2-win-sep2026",
+    title: "Double Delight: MCC Crush Barcelona Again to Complete T20 Sweep",
+    category: "Match Report",
+    date: "5 Sep 2026",
+    image: "/images/real/mcc-barcelona-t20-matchday.jpg",
+    excerpt:
+      "Imran Siddque struck a brutal 62 off 34 and Jon Woodward claimed 3 wickets as Madrid Cricket Club posted 229/6 and won by 73 runs to complete a magnificent T20 double-header sweep over Barcelona International CC.",
+    isPlaceholder: false,
+    isReal: true,
+    blocks: [
+      {
+        type: "heading",
+        text: "ECCL T20 2026 — Game 2 | 5 September 2026 | La Manga Club",
+      },
+      {
+        type: "paragraph",
+        text: "If the first T20 showed what Madrid Cricket Club are capable of, the second was confirmation of something more: this side is relentless. Facing a Barcelona outfit who had already been beaten by 82 runs earlier in the day, Madrid showed no mercy in the afternoon match — posting an imposing 229/6 and then skittling Barcelona for 156/8 to win by 73 runs.",
+      },
+      {
+        type: "heading",
+        text: "Madrid Innings — 229/6 (20 overs)",
+      },
+      {
+        type: "paragraph",
+        text: "Sumon Hossain (28 off 19, 4×4 2×6) and Utkarsh Bhatt (34 off 25, 5×4 1×6) put on a rapid opening stand, before two quick wickets — including Revat Naidoo for a duck — brought Gourav Saha and Imran Siddque together. Saha played the anchor role to perfection, retiring on 54 off 33 (7×4, 2×6), and the platform he set allowed Siddque to explode.",
+      },
+      {
+        type: "callout",
+        title: "⭐ Imran Siddque — 62 off 34 balls (5×4, 5×6) | SR: 182.35",
+        lines: [
+          "Another blistering innings from Madrid's most dangerous batter.",
+          "Caught & bowled by Ram Kranti — but only after 62 stunning runs.",
+          "Back-to-back star performances in the T20 double-header.",
+        ],
+      },
+      {
+        type: "paragraph",
+        text: "Jon Woodward was run out for 0 soon after, but Anand Kaul (2*) and Prabin Bensam (6*) kept the board ticking in the closing overs. An enormous extras haul of 43 (37 wides, 4 no-balls) also contributed significantly. Total: 229/6 off 20 overs.",
+      },
+      {
+        type: "heading",
+        text: "Barcelona Innings — 156/8 (20 overs)",
+      },
+      {
+        type: "paragraph",
+        text: "Barcelona's chase began dangerously. Ram Kranti (57 off 30, 5×4, 5×6) was in ferocious form, threatening to drag Barcelona into the game with a strike rate of 190. But Deepak Kumar Lamba (2 wickets) removed the threat early enough, and once the partnership with Vrishab Kandral was broken, wickets began to fall regularly.",
+      },
+      {
+        type: "callout",
+        title: "🎳 Jon Woodward — 3 wickets for 16 runs in 3 overs | Econ: 5.33",
+        lines: [
+          "Woodward's bowling proved decisive in the middle overs.",
+          "Removed Shriram Bhosale (c), Antriksh Kanwar (st), and Omar Ashfaq (c).",
+          "A superb captain's contribution with both bat and ball.",
+        ],
+      },
+      {
+        type: "paragraph",
+        text: "Sumon Hossain (1 wicket) and Deepak Kumar Lamba (2 wickets) shared the other wickets between them. Barcelona were restricted to 156/8 from their 20 overs — 73 runs short of the target.",
+      },
+      {
+        type: "callout",
+        title: "Fall of Wickets — Barcelona",
+        lines: [
+          "1-76 (R Kranti, 6.4) | 2-93 (V Kandral, 8.5) | 3-108 (C Raghavan, 11.1)",
+          "4-120 (U Razi, 12.2) | 5-130 (S Bhosale, 13.3) | 6-139 (A Kanwar, 15.1)",
+          "7-139 (S Sathyashankar, 15.2) | 8-139 (O Ashfaq, 15.4)",
+        ],
+      },
+      {
+        type: "heading",
+        text: "Series Wrapped Up",
+      },
+      {
+        type: "paragraph",
+        text: "Two T20 victories in a single day — by 82 runs and then 73 runs — represents an extraordinary performance from the Madrid squad. A 40-over match against Barcelona is scheduled for Sunday 6 September. The series has already been won on the day.",
+      },
+      {
+        type: "paragraph",
+        text: "Full scorecard: cricclubs.com (matchId=722). Man of the Match: Imran Siddque.",
+      },
+      {
+        type: "signature",
+        name: "Club Secretary",
+        role: "Madrid Cricket Club",
+      },
+    ],
+  },
+  {
     id: "barcelona-t20-win-sep2026",
     title: "El Clásico del Críquet: MCC Demolish Barcelona by 82 Runs",
     category: "Match Report",
