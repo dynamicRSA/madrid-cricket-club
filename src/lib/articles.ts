@@ -31,7 +31,7 @@ export const articles: NewsArticle[] = [
     title: "El Clásico del Críquet: MCC Demolish Barcelona by 82 Runs",
     category: "Match Report",
     date: "5 Sep 2026",
-    image: "/images/real/mcc-la-manga-pro.jpg",
+    image: "/images/real/mcc-barcelona-t20-matchday.jpg",
     excerpt:
       "Imran Siddque's blistering 61 off 30 balls lit up La Manga as Madrid Cricket Club crushed Barcelona International CC by 82 runs in the first T20 of the ECCL weekend series — a true El Clásico moment.",
     isPlaceholder: false,
