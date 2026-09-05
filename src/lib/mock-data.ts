@@ -76,7 +76,17 @@ export const EVENTS: ClubEvent[] = [
     late_changes_blocked: false,
     team: "seniors",
     notes: "Weekend trip to La Manga (5–6 Sep). 2× T20 + 1× 40-overs vs Barcelona International CC.",
-    status: "scheduled",
+    status: "completed",
+    result: {
+      id: "r-barca-t20-1",
+      event_id: "e-barca-lamanga-t20-1",
+      our_score: "194/5",
+      opposition_score: "112/8",
+      overs: "20/14.3",
+      result: "won",
+      margin: "82 runs",
+      summary: "Imran Siddque blazed a stunning 61 off 30 balls (5×4, 5×6) to power MCC to 194/5. Barcelona were bowled out for 112 in 14.3 overs. Adnan Shakib and Deepak Kumar Lamba each took 2 wickets. MCC won by 82 runs.",
+    },
   },
   {
     id: "e-barca-lamanga-t20-2",
@@ -96,6 +106,7 @@ export const EVENTS: ClubEvent[] = [
     late_changes_blocked: false,
     team: "seniors",
     status: "scheduled",
+    notes: "Second T20 of the day vs Barcelona. Result to be updated after the match.",
   },
   {
     id: "e-barca-lamanga-40",
@@ -451,11 +462,11 @@ export const AGM_DOCS: AGMDocument[] = [
 
 // ─── Season Stats ─────────────────────────────────────────────────────────────
 export const SEASON_STATS = {
-  played: 6,
-  won: 2,
+  played: 7,
+  won: 3,
   lost: 4,
   drew: 0,
-  nrr: "-0.42",
+  nrr: "-0.18",
   season: "2026",
 };
 

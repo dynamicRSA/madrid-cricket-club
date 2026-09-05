@@ -27,6 +27,82 @@ export interface NewsArticle {
 
 export const articles: NewsArticle[] = [
   {
+    id: "barcelona-t20-win-sep2026",
+    title: "El Clásico del Críquet: MCC Demolish Barcelona by 82 Runs",
+    category: "Match Report",
+    date: "5 Sep 2026",
+    image: "/images/real/mcc-la-manga-pro.jpg",
+    excerpt:
+      "Imran Siddque's blistering 61 off 30 balls lit up La Manga as Madrid Cricket Club crushed Barcelona International CC by 82 runs in the first T20 of the ECCL weekend series — a true El Clásico moment.",
+    isPlaceholder: false,
+    isReal: true,
+    blocks: [
+      {
+        type: "heading",
+        text: "ECCL T20 2026 — Game 1 | 5 September 2026 | La Manga Club",
+      },
+      {
+        type: "paragraph",
+        text: "If there is a El Clásico in Spanish cricket, this is it. Madrid Cricket Club travelled to La Manga for a full weekend double-header against Barcelona International Cricket Club — two T20s on Saturday and a 40-over on Sunday — and opened the series in emphatic, unmistakable style.",
+      },
+      {
+        type: "heading",
+        text: "Madrid Innings — 194/5 (20 overs)",
+      },
+      {
+        type: "paragraph",
+        text: "Prabin Bensam and Joe Healey opened the batting, with Bensam making a composed 31 off 28 balls before being caught. Gourav Saha steadied the innings with 33 off 36 balls. The innings shifted gear dramatically when Imran Siddque arrived at the crease.",
+      },
+      {
+        type: "callout",
+        title: "⭐ Imran Siddque — 61 off 30 balls (5×4, 5×6) | SR: 203.33",
+        lines: [
+          "Imran took the Barcelona attack apart with five fours and five sixes.",
+          "A matchwinning, momentum-shifting innings of rare power and timing.",
+          "Caught †S Bhosale b O Ashfaq — but only after the damage was well and truly done.",
+        ],
+      },
+      {
+        type: "paragraph",
+        text: "Anand Kaul (10* off 10) and Jon Woodward (3* off 2) kept the scoreboard ticking in the death overs. Extras of 44 (b2 lb2 w28 nb12) also contributed significantly to the total. Madrid posted 194/5 off 20 overs.",
+      },
+      {
+        type: "heading",
+        text: "Barcelona Innings — 112/8 (14.3 overs)",
+      },
+      {
+        type: "paragraph",
+        text: "Chasing 195, Barcelona were never in the hunt. V Kandral fell in the very first over for 3 with the score at just 3, and wickets tumbled regularly throughout. Adnan Shakib (4-0-25-2) and Deepak Kumar Lamba (3-0-25-2) were the pick of the bowlers, with Imran Siddque (3-1-11-1) again contributing with the ball. Revat Naidoo took a wicket in his only 3 balls.",
+      },
+      {
+        type: "callout",
+        title: "Barcelona Fall of Wickets",
+        lines: [
+          "1-3 (V Kandral, 0.1) | 2-21 (R Kranti, 2.6) | 3-43 (C Raghavan, 6.3)",
+          "4-56 (U Razi, 7.5) | 5-63 (A Kanwar, 9.1) | 6-74 (S Sathyashankar, 11.3)",
+          "7-85 (A Shindore, 12.6) | 8-112 (S Bhosale, 14.3)",
+        ],
+      },
+      {
+        type: "paragraph",
+        text: "Barcelona were dismissed for 112 in 14.3 overs. Madrid Cricket Club won by 82 runs — a dominant performance from first ball to last.",
+      },
+      {
+        type: "heading",
+        text: "The Weekend Continues",
+      },
+      {
+        type: "paragraph",
+        text: "The second T20 was due to be played later that afternoon, with the 40-over match scheduled for Sunday 6 September. The El Clásico series is very much alive — and Madrid have fired the first shot.",
+      },
+      {
+        type: "signature",
+        name: "Club Secretary",
+        role: "Madrid Cricket Club",
+      },
+    ],
+  },
+  {
     id: "ron-graham-tribute",
     title: "Remembering Ron Graham",
     category: "Club News",
